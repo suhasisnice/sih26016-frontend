@@ -12,7 +12,9 @@ import { ABOUT_PDF_URL } from '../lib/constants';
 import Button from '../components/ui/Button';
 import { Input } from '../components/ui/Field';
 import PublicHeader from '../components/public/PublicHeader';
+import FaceCaptureCard from '../components/auth/FaceCaptureCard';
 import '../components/public/public.css';
+import '../components/auth/auth.css';
 import './login.css';
 
 /* Registration, gated on an invitation.
@@ -63,6 +65,11 @@ export default function Signup() {
   const [errors, setErrors] = useState({});
   const [failure, setFailure] = useState(null);
   const [pending, setPending] = useState(false);
+
+  // A landowner's account has no camera enrolled against it and never will
+  // (Login.jsx draws the same line), so this only ever holds something for
+  // an officer signup, and stays null — not "skipped" — for a landowner.
+  const [faceFrame, setFaceFrame] = useState(null);
 
   function set(field, value) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -129,6 +136,23 @@ export default function Signup() {
       // Registration signs you in, so there is no second form to fill.
       setToken(created.access_token);
       adopt(created.user);
+
+      // POST /biometrics/face/enroll needs a bearer token, which does not
+      // exist until the line above — this is why the frame was only ever
+      // held in state rather than sent along with the registration itself.
+      // A capture problem here does not undo the account that already
+      // exists: it can always be added later from Security, so this is
+      // best-effort and silent on failure rather than another error the
+      // person has to read past on their way in.
+      if (faceFrame) {
+        try {
+          await authApi.enrollFace(faceFrame);
+        } catch {
+          /* Account creation already succeeded; face sign-in stays offered
+             from /security. */
+        }
+      }
+
       navigate(isLandowner(created.user) ? '/cases' : '/dashboard', { replace: true });
     } catch (err) {
       setFailure(err);
@@ -321,6 +345,20 @@ export default function Signup() {
                     error={errors.confirm}
                     onChange={(event) => set('confirm', event.target.value)}
                   />
+
+                  {/* Landowner accounts never get a camera or scanner enrolled
+                      — Login.jsx draws the identical line for the same
+                      reason — so this only appears for the officer path. */}
+                  {applicantKind === 'officer' && (
+                    <div className="signup__face">
+                      <p className="signup__grant-label">FACE SIGN-IN (OPTIONAL)</p>
+                      <p className="signup__grant-meta">
+                        Capture it now to sign in by looking at the camera next time, or skip
+                        this and add it later from Security.
+                      </p>
+                      <FaceCaptureCard onCapture={setFaceFrame} />
+                    </div>
+                  )}
 
                   <Button type="submit" variant="primary" block disabled={pending}>
                     {pending ? 'Creating the account…' : 'Create account'}

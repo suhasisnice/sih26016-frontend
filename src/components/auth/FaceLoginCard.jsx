@@ -43,6 +43,11 @@ export default function FaceLoginCard({ username, onSuccess }) {
 
   const [cameraState, setCameraState] = useState('starting'); // starting | ready | denied | unsupported
   const [status, setStatus] = useState('');
+  // Separate from `status`: the "keep still" animation below replaces the
+  // status line entirely while a request is in flight, rather than being
+  // one more string status could hold — the two can never show
+  // contradictory things at once this way.
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,7 +130,7 @@ export default function FaceLoginCard({ username, onSuccess }) {
       const frame = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
 
       busyRef.current = true;
-      setStatus('Checking…');
+      setChecking(true);
       try {
         const result = await authApi.faceLogin(username.trim(), frame);
         onSuccess(result);
@@ -137,6 +142,7 @@ export default function FaceLoginCard({ username, onSuccess }) {
         setStatus(err.code === 'validation_error' || err.status === 422 ? err.message : ' ');
       } finally {
         busyRef.current = false;
+        setChecking(false);
       }
     }, CAPTURE_INTERVAL_MS);
 
@@ -163,9 +169,22 @@ export default function FaceLoginCard({ username, onSuccess }) {
         )}
         <canvas ref={canvasRef} className="face-card__canvas" aria-hidden="true" />
       </div>
-      <p className="face-card__status" role="status">
-        {cameraState === 'ready' ? status || 'Look at the camera to sign in.' : ' '}
-      </p>
+      {checking && (
+        <p className="face-card__status face-card__keepstill" role="status">
+          <span>Keep still</span>
+          <span className="face-card__dots" aria-hidden="true">
+            <span className="face-card__dot" />
+            <span className="face-card__dot" />
+            <span className="face-card__dot" />
+            <span className="face-card__dot" />
+          </span>
+        </p>
+      )}
+      {!checking && (
+        <p className="face-card__status" role="status">
+          {cameraState === 'ready' ? status || 'Look at the camera to sign in.' : ' '}
+        </p>
+      )}
     </div>
   );
 }

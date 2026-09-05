@@ -240,6 +240,26 @@
 }
 .signup__grant-change:hover { text-decoration: underline; }
 
+/* The optional face-capture step on the officer signup form. Centred,
+   unlike the rest of the form's left-aligned fields, because FaceCaptureCard
+   is the same round camera frame used on Security and Login and looks odd
+   stretched to the field width either of those give it. */
+.signup__face {
+  margin-top: var(--s2);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s3);
+}
+
+.signup__face .signup__grant-label,
+.signup__face .signup__grant-meta {
+  align-self: stretch;
+}
+
 .signup__alt {
   margin-top: var(--s5);
   padding-top: var(--s4);
