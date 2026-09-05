@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import * as noticesApi from '../api/notices';
 import { useApi, useMutation } from '../hooks/useApi';
 import * as fmt from '../lib/format';
@@ -42,6 +43,15 @@ function LookupCard() {
     }
   }
 
+  /* Both /notices/subscribe and /notices/provision take the same
+     survey_number-or-ulpin identifier the search itself just used —
+     whichever the citizen actually typed, echoed straight back rather than
+     re-derived from the result (a result with no ulpin on file must still
+     be addressable by the survey number that found it). */
+  const identifier = ULPIN_RE.test(query.trim())
+    ? { ulpin: query.trim() }
+    : { survey_number: query.trim() };
+
   return (
     <section className="notice-lookup">
       <h2 className="notice-lookup__title">Find your land</h2>
@@ -84,6 +94,12 @@ function LookupCard() {
               <dt>Case</dt>
               <dd>{result.case_number}</dd>
             </div>
+            {result.ulpin && (
+              <div>
+                <dt>ULPIN</dt>
+                <dd>{result.ulpin}</dd>
+              </div>
+            )}
             <div>
               <dt>Location</dt>
               <dd>{result.village_name}, {result.district_name}</dd>
@@ -92,6 +108,18 @@ function LookupCard() {
               <dt>Project</dt>
               <dd>{result.project_name}</dd>
             </div>
+            {result.requiring_authority && (
+              <div>
+                <dt>Requiring authority</dt>
+                <dd>{result.requiring_authority}</dd>
+              </div>
+            )}
+            {result.area_ha != null && (
+              <div>
+                <dt>Area</dt>
+                <dd>{fmt.hectares(result.area_ha)}</dd>
+              </div>
+            )}
             {result.preliminary_notification_on && (
               <div>
                 <dt>Notified</dt>
@@ -127,9 +155,200 @@ function LookupCard() {
               </dd>
             </div>
           </dl>
+
+          <SubscribeSection identifier={identifier} />
+          <ProvisionSection identifier={identifier} />
         </div>
       )}
     </section>
+  );
+}
+
+/* "Get updates about this land" — WhatsApp and/or email, independent of
+   whether the citizen ever provisions a login below. Consent is a real
+   checkbox, not implied by clicking Subscribe: POST /notices/subscribe
+   refuses the request without it. */
+function SubscribeSection({ identifier }) {
+  const [wantsWhatsapp, setWantsWhatsapp] = useState(false);
+  const [wantsEmail, setWantsEmail] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [done, setDone] = useState(null);
+  const subscribeMutation = useMutation((payload) => noticesApi.subscribe(payload));
+
+  async function onSubscribe(event) {
+    event.preventDefault();
+    setDone(null);
+    try {
+      const result = await subscribeMutation.run({
+        ...identifier,
+        whatsapp_number: wantsWhatsapp ? whatsappNumber.trim() : undefined,
+        email: wantsEmail ? email.trim() : undefined,
+        consent,
+      });
+      setDone(result);
+    } catch {
+      /* subscribeMutation.error already carries the message to show */
+    }
+  }
+
+  const canSubmit =
+    consent && ((wantsWhatsapp && whatsappNumber.trim()) || (wantsEmail && email.trim()));
+
+  return (
+    <div className="notice-subscribe">
+      <h3 className="notice-subscribe__title">Get updates about this land</h3>
+      <p className="notice-subscribe__lede">
+        Be told by WhatsApp or email when this acquisition moves to its next stage.
+      </p>
+
+      {done ? (
+        <div className="notice-subscribe__done">
+          <p className="notice-subscribe__done-title">Notifications enabled successfully.</p>
+          {done.whatsapp_status && (
+            <p className="notice-subscribe__channel-result">
+              WhatsApp {done.whatsapp_status === 'sent' ? '✓' : '—'}{' '}
+              <span className="notice-subscribe__mode">(Prototype mode — logged, not actually delivered)</span>
+              {done.whatsapp_status === 'failed' && (
+                <span className="notice-subscribe__failed"> Unable to send notification. Please try again.</span>
+              )}
+            </p>
+          )}
+          {done.email_status && (
+            <p className="notice-subscribe__channel-result">
+              Email {done.email_status === 'sent' ? '✓' : '—'}{' '}
+              <span className="notice-subscribe__mode">(Prototype mode — logged, not actually delivered)</span>
+              {done.email_status === 'failed' && (
+                <span className="notice-subscribe__failed"> Unable to send notification. Please try again.</span>
+              )}
+            </p>
+          )}
+        </div>
+      ) : (
+        <form className="notice-subscribe__form" onSubmit={onSubscribe}>
+          <label className="notice-subscribe__check">
+            <input
+              type="checkbox"
+              checked={wantsWhatsapp}
+              onChange={(event) => setWantsWhatsapp(event.target.checked)}
+            />
+            WhatsApp
+          </label>
+          {wantsWhatsapp && (
+            <Input
+              label="Mobile number"
+              type="tel"
+              value={whatsappNumber}
+              placeholder="98765 43210"
+              onChange={(event) => setWhatsappNumber(event.target.value)}
+            />
+          )}
+
+          <label className="notice-subscribe__check">
+            <input
+              type="checkbox"
+              checked={wantsEmail}
+              onChange={(event) => setWantsEmail(event.target.checked)}
+            />
+            Email
+          </label>
+          {wantsEmail && (
+            <Input
+              label="Email address"
+              type="email"
+              value={email}
+              placeholder="you@example.com"
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          )}
+
+          <label className="notice-subscribe__check notice-subscribe__check--consent">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(event) => setConsent(event.target.checked)}
+            />
+            I agree to be contacted about this land's acquisition status.
+          </label>
+
+          {subscribeMutation.error && (
+            <p className="notice-subscribe__error" role="alert">
+              {subscribeMutation.error.message}
+            </p>
+          )}
+
+          <Button type="submit" variant="secondary" disabled={!canSubmit || subscribeMutation.pending}>
+            {subscribeMutation.pending ? 'Subscribing…' : 'Subscribe'}
+          </Button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+/* Landowner credentials are provisioned by BhoomiMitra, not chosen at a
+   public signup form — see Signup.jsx's own note on why that option isn't
+   there any more. This is the one place a landowner's account comes from:
+   a verified land record, not a code someone handed them. */
+function ProvisionSection({ identifier }) {
+  const [credentials, setCredentials] = useState(null);
+  const provisionMutation = useMutation((payload) => noticesApi.provision(payload));
+
+  async function onProvision() {
+    try {
+      setCredentials(await provisionMutation.run(identifier));
+    } catch {
+      /* provisionMutation.error already carries the message to show —
+         most commonly 409, "credentials already issued". */
+    }
+  }
+
+  if (credentials) {
+    return (
+      <div className="notice-credentials">
+        <h3 className="notice-credentials__title">Your BhoomiMitra login</h3>
+        <dl className="notice-credentials__facts">
+          <div>
+            <dt>Username</dt>
+            <dd className="notice-credentials__value">{credentials.username}</dd>
+          </div>
+          <div>
+            <dt>Temporary password</dt>
+            <dd className="notice-credentials__value">{credentials.temporary_password}</dd>
+          </div>
+          <div>
+            <dt>Verification code</dt>
+            <dd className="notice-credentials__value">{credentials.login_code_hint}</dd>
+          </div>
+        </dl>
+        <p className="notice-credentials__note">
+          Write these down now — the password will not be shown again. You will be asked to
+          set a new password the first time you sign in.
+        </p>
+        <Link to="/login">
+          <Button type="button" variant="primary">Go to sign in</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="notice-subscribe">
+      <h3 className="notice-subscribe__title">Get your BhoomiMitra login</h3>
+      <p className="notice-subscribe__lede">
+        See this case's full record, objections and documents by signing in — BhoomiMitra
+        issues the login itself, from this land record; there is no form to fill in.
+      </p>
+      {provisionMutation.error && (
+        <p className="notice-subscribe__error" role="alert">
+          {provisionMutation.error.message}
+        </p>
+      )}
+      <Button type="button" variant="secondary" onClick={onProvision} disabled={provisionMutation.pending}>
+        {provisionMutation.pending ? 'Creating your login…' : 'Get my login'}
+      </Button>
+    </div>
   );
 }
 

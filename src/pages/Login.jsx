@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, KeyRound, Lock, ShieldCheck, User, UserCheck2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { isLandowner } from '../auth/permissions';
+import * as authApi from '../api/auth';
 import { roleLabel } from '../lib/labels';
 import { required, validate } from '../lib/validate';
 import { setToken } from '../api/client';
@@ -105,6 +106,18 @@ export default function Login() {
   const [mfaError, setMfaError] = useState(null);
   const [mfaPending, setMfaPending] = useState(false);
 
+  /* Set once a login succeeds but the account's password was
+     BhoomiMitra-generated (see Notices.jsx's ProvisionSection) rather than
+     chosen by the person — the session is already real at this point
+     (verifyMfaCode/onBiometricSuccess already stored the token), but the
+     redirect-when-signed-in effect below is held off until this clears, so
+     the forced reset step below is shown instead of the dashboard. */
+  const [pendingReset, setPendingReset] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [resetError, setResetError] = useState(null);
+  const [resetPending, setResetPending] = useState(false);
+
   /* Who is signing in — decides which methods are even on offer, not just
      which demo accounts are listed. */
   const [accountKind, setAccountKind] = useState('landowner');
@@ -134,9 +147,13 @@ export default function Login() {
 
   useEffect(() => {
     // Already signed in and arriving at /login — send them where they belong
-    // rather than showing a form they do not need.
-    if (user) navigate(landingFor(user), { replace: true });
-  }, [user, navigate, landingFor]);
+    // rather than showing a form they do not need. Held off while a forced
+    // password reset is pending: the session is already real by that point,
+    // but the person still has to replace a generated password before
+    // anything else, so this effect would otherwise redirect straight past
+    // that screen the moment it appears.
+    if (user && !pendingReset) navigate(landingFor(user), { replace: true });
+  }, [user, pendingReset, navigate, landingFor]);
 
   function set(field, value) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -192,12 +209,40 @@ export default function Login() {
 
     setMfaPending(true);
     try {
-      const signedIn = await verifyMfaCode(mfaToken, mfaCode.trim());
-      navigate(landingFor(signedIn), { replace: true });
+      const { user: signedIn, mustChangePassword } = await verifyMfaCode(mfaToken, mfaCode.trim());
+      if (mustChangePassword) {
+        setPendingReset(signedIn);
+      } else {
+        navigate(landingFor(signedIn), { replace: true });
+      }
     } catch (err) {
       setMfaError(err.message);
     } finally {
       setMfaPending(false);
+    }
+  }
+
+  async function onSubmitPasswordReset(event) {
+    event.preventDefault();
+    setResetError(null);
+
+    if (newPassword.length < 12) {
+      setResetError('Use at least 12 characters.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setResetError('The two passwords do not match.');
+      return;
+    }
+
+    setResetPending(true);
+    try {
+      await authApi.setPassword(newPassword);
+      navigate(landingFor(pendingReset), { replace: true });
+    } catch (err) {
+      setResetError(err.message);
+    } finally {
+      setResetPending(false);
     }
   }
 
@@ -214,7 +259,11 @@ export default function Login() {
   function onBiometricSuccess(result) {
     setToken(result.access_token);
     adopt(result.user);
-    navigate(landingFor(result.user), { replace: true });
+    if (result.must_change_password) {
+      setPendingReset(result.user);
+    } else {
+      navigate(landingFor(result.user), { replace: true });
+    }
   }
 
   const passwordForm = (
@@ -362,6 +411,61 @@ export default function Login() {
     </form>
   );
 
+  /* Shown once, only for an account BhoomiMitra provisioned itself (see
+     Notices.jsx's ProvisionSection) — the session is already signed in at
+     this point, so there is no password field for the old one, only the
+     new one twice. */
+  const passwordResetForm = (
+    <form className="login-mfa" onSubmit={onSubmitPasswordReset} noValidate>
+      <p className="login-mfa__lede">
+        Your BhoomiMitra login was created with a temporary password. Set a new one to
+        continue.
+      </p>
+
+      {resetError && (
+        <p className="login-card__error" role="alert">
+          {resetError}
+        </p>
+      )}
+
+      <label className="login-field" htmlFor="new-password">
+        <span className="login-field__label">New password</span>
+        <span className="login-field__control">
+          <Lock size={17} strokeWidth={1.5} aria-hidden="true" />
+          <input
+            id="new-password"
+            name="new-password"
+            type="password"
+            autoComplete="new-password"
+            autoFocus
+            placeholder="At least 12 characters"
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+          />
+        </span>
+      </label>
+
+      <label className="login-field" htmlFor="confirm-new-password">
+        <span className="login-field__label">Confirm new password</span>
+        <span className="login-field__control">
+          <Lock size={17} strokeWidth={1.5} aria-hidden="true" />
+          <input
+            id="confirm-new-password"
+            name="confirm-new-password"
+            type="password"
+            autoComplete="new-password"
+            value={confirmNewPassword}
+            onChange={(event) => setConfirmNewPassword(event.target.value)}
+          />
+        </span>
+      </label>
+
+      <Button type="submit" variant="primary" block className="login-card__submit" disabled={resetPending}>
+        {resetPending ? 'Saving…' : 'Set password and continue'}
+      </Button>
+    </form>
+  );
+
   return (
     <div className="public">
       <PublicHeader />
@@ -405,89 +509,99 @@ export default function Login() {
 
           <main className="login-card__form" id="main">
             <h2 className="login-card__form-title">
-              {accountKind === 'landowner' ? 'Sign in with your password' : 'Sign in to your account'}
+              {pendingReset
+                ? 'Set a new password'
+                : accountKind === 'landowner'
+                  ? 'Sign in with your password'
+                  : 'Sign in to your account'}
             </h2>
 
-            {/* Which account this is decides which methods are even
-                offered — a landowner has no camera or scanner enrolled
-                against their account and never will. */}
-            <div className="login-role-tabs" role="tablist" aria-label="Account type">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={accountKind === 'landowner'}
-                className={`login-role-tabs__tab${accountKind === 'landowner' ? ' is-active' : ''}`}
-                onClick={() => chooseAccountKind('landowner')}
-              >
-                Land Owner
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={accountKind === 'officer'}
-                className={`login-role-tabs__tab${accountKind === 'officer' ? ' is-active' : ''}`}
-                onClick={() => chooseAccountKind('officer')}
-              >
-                Officer
-              </button>
-            </div>
-
-            {accountKind === 'landowner' && (mfaToken ? mfaCodeForm : passwordForm)}
-
-            {accountKind === 'officer' && (mode === 'face' || mode === 'fingerprint') && (
-              <div className="login-biometric-username">
-                <label className="login-field" htmlFor="biometric-username">
-                  <span className="login-field__label">Username</span>
-                  <span className="login-field__control">
-                    <User size={17} strokeWidth={1.5} aria-hidden="true" />
-                    <input
-                      id="biometric-username"
-                      name="username"
-                      autoComplete="username"
-                      autoFocus
-                      placeholder="Enter your username"
-                      value={values.username}
-                      onChange={(event) => set('username', event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          if (mode === 'face') faceCardRef.current?.submitNow();
-                        }
-                      }}
-                    />
-                  </span>
-                </label>
-              </div>
-            )}
-
-            {accountKind === 'officer' && mode === 'face' && (
+            {pendingReset ? (
+              passwordResetForm
+            ) : (
               <>
-                <FaceLoginCard ref={faceCardRef} username={values.username} onSuccess={onBiometricSuccess} />
-                <div className="login-biometric-fallbacks">
-                  <button type="button" className="login-biometric-fallback" onClick={() => setMode('fingerprint')}>
-                    Issues with face? Unlock through fingerprint
+                {/* Which account this is decides which methods are even
+                    offered — a landowner has no camera or scanner enrolled
+                    against their account and never will. */}
+                <div className="login-role-tabs" role="tablist" aria-label="Account type">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={accountKind === 'landowner'}
+                    className={`login-role-tabs__tab${accountKind === 'landowner' ? ' is-active' : ''}`}
+                    onClick={() => chooseAccountKind('landowner')}
+                  >
+                    Land Owner
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={accountKind === 'officer'}
+                    className={`login-role-tabs__tab${accountKind === 'officer' ? ' is-active' : ''}`}
+                    onClick={() => chooseAccountKind('officer')}
+                  >
+                    Officer
                   </button>
                 </div>
+
+                {accountKind === 'landowner' && (mfaToken ? mfaCodeForm : passwordForm)}
+
+                {accountKind === 'officer' && (mode === 'face' || mode === 'fingerprint') && (
+                  <div className="login-biometric-username">
+                    <label className="login-field" htmlFor="biometric-username">
+                      <span className="login-field__label">Username</span>
+                      <span className="login-field__control">
+                        <User size={17} strokeWidth={1.5} aria-hidden="true" />
+                        <input
+                          id="biometric-username"
+                          name="username"
+                          autoComplete="username"
+                          autoFocus
+                          placeholder="Enter your username"
+                          value={values.username}
+                          onChange={(event) => set('username', event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                              event.preventDefault();
+                              if (mode === 'face') faceCardRef.current?.submitNow();
+                            }
+                          }}
+                        />
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                {accountKind === 'officer' && mode === 'face' && (
+                  <>
+                    <FaceLoginCard ref={faceCardRef} username={values.username} onSuccess={onBiometricSuccess} />
+                    <div className="login-biometric-fallbacks">
+                      <button type="button" className="login-biometric-fallback" onClick={() => setMode('fingerprint')}>
+                        Issues with face? Unlock through fingerprint
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {accountKind === 'officer' && mode === 'fingerprint' && (
+                  <>
+                    <FingerprintFallback username={values.username} onSuccess={onBiometricSuccess} />
+                    <div className="login-biometric-fallbacks">
+                      <button type="button" className="login-biometric-fallback" onClick={() => setMode('password')}>
+                        Issues with fingerprint? Use password instead
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {accountKind === 'officer' && mode === 'password' && (mfaToken ? mfaCodeForm : passwordForm)}
+
+                {(accountKind === 'landowner' || mode === 'password') && !mfaToken && (
+                  <p className="login-card__signup">
+                    Been issued an invitation code? <Link to="/signup">Create an account</Link>
+                  </p>
+                )}
               </>
-            )}
-
-            {accountKind === 'officer' && mode === 'fingerprint' && (
-              <>
-                <FingerprintFallback username={values.username} onSuccess={onBiometricSuccess} />
-                <div className="login-biometric-fallbacks">
-                  <button type="button" className="login-biometric-fallback" onClick={() => setMode('password')}>
-                    Issues with fingerprint? Use password instead
-                  </button>
-                </div>
-              </>
-            )}
-
-            {accountKind === 'officer' && mode === 'password' && (mfaToken ? mfaCodeForm : passwordForm)}
-
-            {(accountKind === 'landowner' || mode === 'password') && !mfaToken && (
-              <p className="login-card__signup">
-                Been issued an invitation code? <Link to="/signup">Create an account</Link>
-              </p>
             )}
           </main>
         </div>

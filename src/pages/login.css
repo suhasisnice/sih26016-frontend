@@ -160,40 +160,6 @@
 }
 
 /* ---------- Signup ---------- */
-/* Which kind of account this is — orientation, not a real fork. Both cards
-   lead to the identical invitation-code form beneath; picking one only
-   changes which words describe it, since a landowner and an officer were
-   handed their code by very different offices for very different
-   reasons. */
-.signup__kind-choices { margin-top: var(--s6); display: grid; gap: var(--s3); }
-
-.signup__kind-choice {
-  display: flex;
-  align-items: center;
-  gap: var(--s4);
-  padding: var(--s4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  text-align: left;
-  transition: border-color 120ms ease, background-color 120ms ease;
-}
-.signup__kind-choice:hover { border-color: var(--brand-soft); background: var(--brand-tint); }
-
-.signup__kind-choice-icon {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r-pill);
-  background: var(--brand-tint);
-  color: var(--brand-hover);
-}
-
-.signup__kind-choice-label { display: block; font-family: var(--font-display); font-weight: 700; font-size: 15px; }
-.signup__kind-choice-detail { display: block; margin-top: 2px; font-size: 12.5px; color: var(--text-muted); }
 
 /* What the invitation grants, shown before the form. A panel rather than a
    line of text, because "this will make you a District Collector for
