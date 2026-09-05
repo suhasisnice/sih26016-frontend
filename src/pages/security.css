@@ -1,0 +1,49 @@
+.security-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--s5);
+  align-items: start;
+}
+
+.security-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s5);
+}
+
+.security-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  margin-bottom: var(--s5);
+}
+
+.security-card__icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  background: var(--brand-tint);
+  color: var(--brand-hover);
+}
+
+.security-card__title { font-size: 15px; font-weight: 700; }
+.security-card__lede { margin-top: 2px; font-size: 12.5px; color: var(--text-muted); }
+
+.security-card__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+  text-align: center;
+}
+
+.security-card__status-text { font-size: 13px; }
+.security-card__status-text.is-ok { color: var(--ok); }
+.security-card__status-text.is-success { color: var(--ok); }
+.security-card__status-text.is-error { color: var(--danger); }
+.security-card__status-text.is-info { color: var(--text-muted); }
