@@ -11,6 +11,7 @@ import Button from '../components/ui/Button';
 import PublicHeader from '../components/public/PublicHeader';
 import FaceLoginCard from '../components/auth/FaceLoginCard';
 import FingerprintFallback from '../components/auth/FingerprintFallback';
+import LoginSuccessOverlay from '../components/auth/LoginSuccessOverlay';
 import '../components/public/public.css';
 import '../components/auth/auth.css';
 import './login.css';
@@ -133,6 +134,12 @@ export default function Login() {
   // typed a full username they're confident in.
   const faceCardRef = useRef(null);
 
+  /* Set the instant any sign-in path succeeds — its presence swaps the
+     whole card for LoginSuccessOverlay and holds the actual navigate()
+     until that overlay's own beat finishes, rather than jumping to the
+     next page the moment the credential checks out. */
+  const [signingInAs, setSigningInAs] = useState(null);
+
   const from = location.state && location.state.from;
 
   /* Where a role belongs after signing in. A landowner has no dashboard, so
@@ -147,13 +154,19 @@ export default function Login() {
 
   useEffect(() => {
     // Already signed in and arriving at /login — send them where they belong
-    // rather than showing a form they do not need. Held off while a forced
-    // password reset is pending: the session is already real by that point,
-    // but the person still has to replace a generated password before
-    // anything else, so this effect would otherwise redirect straight past
-    // that screen the moment it appears.
-    if (user && !pendingReset) navigate(landingFor(user), { replace: true });
-  }, [user, pendingReset, navigate, landingFor]);
+    // rather than showing a form they do not need. Held off on two separate
+    // grounds: while a forced password reset is pending (the session is
+    // already real, but the person still has to replace a generated
+    // password first), and while signingInAs is set (a sign-in that just
+    // happened on this page adopts the user into context immediately, but
+    // navigation itself waits for the success overlay's own beat to finish
+    // — see finishSignIn below).
+    if (user && !pendingReset && !signingInAs) navigate(landingFor(user), { replace: true });
+  }, [user, pendingReset, signingInAs, navigate, landingFor]);
+
+  function finishSignIn() {
+    if (signingInAs) navigate(landingFor(signingInAs), { replace: true });
+  }
 
   function set(field, value) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -213,7 +226,7 @@ export default function Login() {
       if (mustChangePassword) {
         setPendingReset(signedIn);
       } else {
-        navigate(landingFor(signedIn), { replace: true });
+        setSigningInAs(signedIn);
       }
     } catch (err) {
       setMfaError(err.message);
@@ -238,7 +251,11 @@ export default function Login() {
     setResetPending(true);
     try {
       await authApi.setPassword(newPassword);
-      navigate(landingFor(pendingReset), { replace: true });
+      // Same landing beat every other sign-in gets, not a silent jump — the
+      // person just finished the one extra step a provisioned account
+      // requires, so nothing else about arriving should look different.
+      setSigningInAs(pendingReset);
+      setPendingReset(null);
     } catch (err) {
       setResetError(err.message);
     } finally {
@@ -262,7 +279,7 @@ export default function Login() {
     if (result.must_change_password) {
       setPendingReset(result.user);
     } else {
-      navigate(landingFor(result.user), { replace: true });
+      setSigningInAs(result.user);
     }
   }
 
@@ -465,6 +482,15 @@ export default function Login() {
       </Button>
     </form>
   );
+
+  if (signingInAs) {
+    return (
+      <LoginSuccessOverlay
+        label={`Signed in as ${signingInAs.full_name}`}
+        onDone={finishSignIn}
+      />
+    );
+  }
 
   return (
     <div className="public">
