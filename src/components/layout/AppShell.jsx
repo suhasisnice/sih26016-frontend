@@ -45,7 +45,7 @@ export default function AppShell({ children }) {
 
       <aside className="sidebar">
         <Link to="/dashboard" className="sidebar__brand">
-          <span className="sidebar__brand-mark" aria-hidden="true">B</span>
+          <img src="/brand/logo.png" alt="" className="sidebar__brand-mark" aria-hidden="true" />
           <span className="sidebar__brand-word">BHOOMIMITRA</span>
         </Link>
 

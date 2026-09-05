@@ -10,7 +10,10 @@ export default function PublicFooter() {
     <footer className="public-footer">
       <div className="public-footer__top">
         <div className="public-footer__brand">
-          <span className="public-footer__word">BHOOMIMITRA</span>
+          <div className="public-footer__brand-row">
+            <img src="/brand/logo.png" alt="" className="public-footer__mark" aria-hidden="true" />
+            <span className="public-footer__word">BHOOMIMITRA</span>
+          </div>
           <p className="public-footer__tagline">From land to lives.</p>
           <div className="public-footer__social">
             <a href="#" aria-label="Twitter"><Twitter size={16} strokeWidth={1.75} /></a>

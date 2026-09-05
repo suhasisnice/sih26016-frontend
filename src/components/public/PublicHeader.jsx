@@ -26,7 +26,7 @@ export default function PublicHeader() {
   return (
     <header className="public-header">
       <Link to="/" className="public-header__brand">
-        <span className="public-header__mark" aria-hidden="true">B</span>
+        <img src="/brand/logo.png" alt="" className="public-header__mark" aria-hidden="true" />
         <span className="public-header__word">BHOOMIMITRA</span>
       </Link>
 

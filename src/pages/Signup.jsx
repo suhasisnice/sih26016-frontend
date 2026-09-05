@@ -142,6 +142,7 @@ export default function Signup() {
 
         <main className="login__panel" id="main">
           <div className="login__panel-inner">
+            <img src="/brand/logo.png" alt="" className="login__panel-mark" aria-hidden="true" />
             <h1 className="login__title">Create an account</h1>
             <p className="login__sub">
               Accounts on this system carry authority over other people&rsquo;s land, so
