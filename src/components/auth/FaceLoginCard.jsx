@@ -135,11 +135,12 @@ export default function FaceLoginCard({ username, onSuccess }) {
         const result = await authApi.faceLogin(username.trim(), frame);
         onSuccess(result);
       } catch (err) {
-        // 422 = a capture problem (no face / too many faces / blurry) and
-        // is shown verbatim, since it tells the person what to change.
-        // Everything else (401 not-recognised, 429 rate-limited) gets a
-        // steady, unalarming line — this loop will just try again.
-        setStatus(err.code === 'validation_error' || err.status === 422 ? err.message : ' ');
+        // Every failure is shown verbatim now, not just a 422 capture
+        // problem — a silent retry on "face not recognised" reads as the
+        // camera being stuck, not as a fact about the match. The loop
+        // still retries regardless; this only changes what the status
+        // line says while it does.
+        setStatus(err.message);
       } finally {
         busyRef.current = false;
         setChecking(false);
