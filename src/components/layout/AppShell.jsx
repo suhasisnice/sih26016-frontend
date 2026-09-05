@@ -3,6 +3,7 @@ import {
   Bell,
   FileBarChart2,
   FolderKanban,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Map as MapIcon,
@@ -10,7 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-import { PROPOSAL_VIEWERS, REPORT_READERS, SUPERVISORY } from '../../auth/permissions';
+import { PROPOSAL_VIEWERS, REPORT_READERS, ROLES, SUPERVISORY } from '../../auth/permissions';
 import { roleLabel } from '../../lib/labels';
 
 /* Sidebar, top bar, current user and role, logout. Every authenticated page
@@ -24,6 +25,7 @@ const NAV = [
   { to: '/objections', label: 'Objections', icon: MessageSquareWarning, roles: null },
   { to: '/map', label: 'Map', icon: MapIcon, roles: SUPERVISORY },
   { to: '/reports', label: 'Reports', icon: FileBarChart2, roles: REPORT_READERS },
+  { to: '/admin', label: 'Admin', icon: KeyRound, roles: [ROLES.ADMIN] },
 ];
 
 export default function AppShell({ children }) {

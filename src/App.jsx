@@ -8,6 +8,7 @@ import {
   PROPOSAL_AUTHORS,
   PROPOSAL_VIEWERS,
   REPORT_READERS,
+  ROLES,
   SUPERVISORY,
 } from './auth/permissions';
 import AppShell from './components/layout/AppShell';
@@ -32,6 +33,7 @@ import ProposalDetail from './pages/ProposalDetail';
 import ProposalCreate from './pages/ProposalCreate';
 import Notifications from './pages/Notifications';
 import Security from './pages/Security';
+import Admin from './pages/Admin';
 import Reports from './pages/Reports';
 import NotAuthorised from './pages/NotAuthorised';
 import NotFound from './pages/NotFound';
@@ -226,6 +228,19 @@ export default function Root() {
                 <RequireRole>
                   <App>
                     <Security />
+                  </App>
+                </RequireRole>
+              }
+            />
+            {/* There is no open signup — issuing an invitation is how every
+                non-seeded account comes to exist, so this is admin-only the
+                same way /admin/invite-codes is on the backend. */}
+            <Route
+              path="/admin"
+              element={
+                <RequireRole roles={[ROLES.ADMIN]}>
+                  <App>
+                    <Admin />
                   </App>
                 </RequireRole>
               }

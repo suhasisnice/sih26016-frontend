@@ -13,3 +13,19 @@ import { api } from './client';
 export function runRules(opts) {
   return api.post('/admin/run-rules', undefined, opts);
 }
+
+/* Invitations are how every non-seeded account gets created — there is no
+   open signup. `createInviteCode`'s response is the only time the code
+   itself is readable; the list and revoke calls only ever see metadata, the
+   same asymmetry the backend enforces. */
+export function createInviteCode(payload, opts) {
+  return api.post('/admin/invite-codes', payload, opts);
+}
+
+export function listInviteCodes(opts) {
+  return api.get('/admin/invite-codes', opts);
+}
+
+export function revokeInviteCode(inviteId, opts) {
+  return api.post(`/admin/invite-codes/${inviteId}/revoke`, undefined, opts);
+}
