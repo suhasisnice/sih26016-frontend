@@ -43,16 +43,26 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = useCallback(async (username, password) => {
-    const result = await authApi.login(username, password);
+  /* The password step only — POST /auth/login now always answers
+     {mfa_required, mfa_token, totp_enabled} rather than a token, so
+     nothing here is signed in yet. The caller (Login.jsx) shows the code
+     step next and finishes with verifyMfaCode. */
+  const login = useCallback((username, password) => authApi.login(username, password), []);
+
+  /* The second step: redeem an mfa_token plus the code it asked for. This
+     is where a password login actually becomes a session, the same way
+     verifying a face or fingerprint capture does. */
+  const verifyMfaCode = useCallback(async (mfaToken, code) => {
+    const result = await authApi.verifyLoginCode(mfaToken, code);
     setToken(result.access_token);
     setUser(result.user);
     return result.user;
   }, []);
 
-  /* Registration already returns a token and a user, exactly as login does,
-     so this adopts that session without a second round trip to /auth/me.
-     The caller stores the token; this puts the user into context. */
+  /* Registration, and face/fingerprint login, already return a token and a
+     user in one response, so this adopts that session without a second
+     round trip to /auth/me. The caller stores the token; this puts the
+     user into context. */
   const adopt = useCallback((who) => setUser(who), []);
 
   const logout = useCallback(() => {
@@ -61,8 +71,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, ready, login, logout, adopt, isAuthenticated: Boolean(user) }),
-    [user, ready, login, logout, adopt],
+    () => ({ user, ready, login, verifyMfaCode, logout, adopt, isAuthenticated: Boolean(user) }),
+    [user, ready, login, verifyMfaCode, logout, adopt],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
