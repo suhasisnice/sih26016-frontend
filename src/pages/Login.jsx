@@ -144,13 +144,19 @@ export default function Login() {
                 this is the same mark at card scale, so the brand still
                 reads once you're this far into the flow. */}
             <div className="login-card__logo" aria-hidden="true">
-              <span className="login-card__logo-mark">B</span>
+              <img src="/brand/logo.png" alt="" className="login-card__logo-mark" />
               <span className="login-card__logo-word">BHOOMIMITRA</span>
             </div>
             <p className="login-card__welcome-sub">
               Sign in to continue managing land acquisition cases, wherever you left
               off.
             </p>
+
+            <img
+              src="/brand/logo.png"
+              alt="Bhoomimitra"
+              className="login-card__welcome-mark"
+            />
 
             <ul className="login-card__trust">
               {TRUST.map(({ icon: Icon, heading, detail }) => (
