@@ -1,0 +1,295 @@
+/* Landing, Notices, NotFound, NotAuthorised, and the header/footer Login and
+   Signup also share. Generous, low-density, serif-forward — the opposite
+   register from the application shell. CLAUDE.md 3.2. */
+
+.public { display: flex; flex-direction: column; min-height: 100%; }
+
+/* ---------- Header ---------- */
+.public-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s6);
+  padding: var(--s4) var(--s9);
+  background: var(--brand-chrome);
+  color: var(--text-on-chrome);
+}
+
+.public-header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  color: inherit;
+}
+.public-header__brand:hover { text-decoration: none; }
+.public-header__mark {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-md);
+  background: rgba(39, 32, 36, 0.14);
+  font-family: var(--font-wordmark);
+  font-weight: 700;
+}
+.public-header__word {
+  font-family: var(--font-wordmark);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+
+.public-header__nav {
+  display: flex;
+  gap: var(--s5);
+  flex: 1;
+}
+.public-header__nav a {
+  color: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+.public-header__nav a:hover, .public-header__nav a.is-active { opacity: 1; text-decoration: none; }
+
+.public-header__actions { display: flex; gap: var(--s3); }
+
+@media (max-width: 760px) {
+  .public-header { padding: var(--s4); gap: var(--s4); }
+  .public-header__nav { display: none; }
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  min-height: 560px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.hero__photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.7) brightness(1.04);
+}
+.hero__wash {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, rgba(247,239,231,0.86) 0%, rgba(247,239,231,0.42) 48%, rgba(247,239,231,0.08) 100%);
+}
+.hero__inner {
+  position: relative;
+  max-width: 640px;
+  padding: var(--s9);
+}
+.hero__title {
+  font-size: 42px;
+  line-height: 1.14;
+  margin-left: -2px;
+}
+.hero__body {
+  margin-top: var(--s5);
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  max-width: 52ch;
+}
+.hero__actions { margin-top: var(--s6); display: flex; gap: var(--s3); }
+
+@media (max-width: 760px) {
+  .hero { min-height: 420px; }
+  .hero__inner { padding: var(--s6); }
+  .hero__title { font-size: 30px; }
+}
+
+/* ---------- Statement band ---------- */
+.statement {
+  padding: var(--s9) var(--s9);
+  text-align: center;
+  background: var(--bg);
+}
+.statement__title { font-size: 30px; line-height: 1.25; max-width: 20ch; margin: 0 auto; }
+.statement__body {
+  margin: var(--s5) auto 0;
+  max-width: 56ch;
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+.statement__actions { margin-top: var(--s6); display: flex; gap: var(--s3); justify-content: center; }
+
+@media (max-width: 760px) {
+  .statement { padding: var(--s7) var(--s5); }
+  .statement__title { font-size: 24px; }
+}
+
+/* ---------- Photo strip ---------- */
+/* Bleeds off both edges and sits flush against its neighbours — no section
+   padding at all, which is deliberately the one place on the page that
+   looks different from every other band. CLAUDE.md 4.2. */
+.photo-strip {
+  display: flex;
+  height: 220px;
+  overflow: hidden;
+}
+.photo-strip__item {
+  flex: 1 0 12%;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.65) brightness(1.02);
+}
+
+@media (max-width: 760px) {
+  .photo-strip { height: 140px; }
+}
+
+/* ---------- Footer ---------- */
+.public-footer {
+  margin-top: auto;
+  background: var(--brand-chrome);
+  color: var(--text-on-chrome);
+  padding: var(--s9) var(--s9) var(--s6);
+}
+
+.public-footer__top {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: var(--s10);
+}
+
+.public-footer__word {
+  font-family: var(--font-wordmark);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+}
+.public-footer__tagline {
+  margin-top: var(--s3);
+  font-family: var(--font-display);
+  font-size: 14px;
+  opacity: 0.82;
+  max-width: 24ch;
+}
+.public-footer__social { display: flex; gap: var(--s3); margin-top: var(--s5); }
+.public-footer__social a { color: inherit; opacity: 0.75; }
+.public-footer__social a:hover { opacity: 1; }
+
+.public-footer__col { display: flex; flex-direction: column; gap: var(--s3); font-size: 13px; }
+.public-footer__col a, .public-footer__col span { color: inherit; opacity: 0.82; }
+.public-footer__col a:hover { opacity: 1; text-decoration: none; }
+.public-footer__heading {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin-bottom: 2px;
+}
+
+.public-footer__bottom {
+  margin-top: var(--s8);
+  padding-top: var(--s5);
+  border-top: 1px solid rgba(247, 239, 231, 0.22);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+@media (max-width: 860px) {
+  .public-footer { padding: var(--s6) var(--s5); }
+  .public-footer__top { grid-template-columns: 1fr 1fr; gap: var(--s6); }
+}
+
+/* ---------- Generic public content page (Notices, NotFound, NotAuthorised) ---------- */
+.public-page { flex: 1; padding: var(--s9); max-width: 880px; margin: 0 auto; width: 100%; }
+.public-page__title { font-size: 30px; }
+.public-page__rule { width: 64px; height: 2px; background: var(--brand-soft); margin: var(--s4) 0 var(--s5); }
+.public-page__lede {
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  max-width: 62ch;
+}
+.public-page__filters { display: flex; gap: var(--s4); flex-wrap: wrap; max-width: 440px; }
+
+@media (max-width: 760px) {
+  .public-page { padding: var(--s6) var(--s4); }
+}
+
+/* ---------- Citizen lookup ---------- */
+.notice-lookup {
+  margin-top: var(--s6);
+  padding: var(--s5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+.notice-lookup__title { font-size: 18px; }
+.notice-lookup__lede {
+  margin-top: var(--s2);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 62ch;
+}
+.notice-lookup__form {
+  margin-top: var(--s4);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  max-width: 480px;
+}
+.notice-lookup__form .field { flex: 1; margin-bottom: 0; }
+.notice-lookup__form .btn { margin-top: 24px; }
+
+.notice-lookup__result {
+  margin-top: var(--s5);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+}
+.notice-lookup__result-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+}
+.notice-lookup__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s4) var(--s5);
+  margin: 0;
+}
+.notice-lookup__facts dt {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+.notice-lookup__facts dd { margin: 0; font-size: 13px; }
+
+@media (max-width: 600px) {
+  .notice-lookup__form { flex-direction: column; }
+  .notice-lookup__form .btn { margin-top: 0; }
+}
+
+/* ---------- Notice ---------- */
+.notice {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) auto;
+  gap: var(--s5);
+  align-items: start;
+  padding: var(--s5) 0;
+  border-bottom: 1px solid var(--border);
+}
+.notice:first-of-type { margin-top: var(--s6); }
+
+.notice__date { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted); }
+.notice__title { font-size: 16px; margin-bottom: var(--s2); }
+.notice__meta { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+.notice__stage { padding-top: 2px; }
+
+@media (max-width: 700px) {
+  .notice { grid-template-columns: 1fr; gap: var(--s2); }
+}

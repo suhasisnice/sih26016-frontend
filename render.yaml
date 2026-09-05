@@ -1,0 +1,54 @@
+# Render blueprint for the built frontend. The API is a separate repository
+# with its own render.yaml.
+#
+# Vite inlines VITE_* at BUILD time, so VITE_API_URL has to be right before
+# the build runs. Changing it in the dashboard afterwards does nothing
+# until the next deploy — this is the single most common way a deployed
+# frontend ends up calling localhost.
+
+services:
+  - type: web
+    # The product name, because this is the URL people are given and read
+    # aloud; the API keeps the project codename since only the frontend
+    # ever calls it.
+    #
+    # Renaming here does not rename the service -- Render matches blueprint
+    # services by name, so a changed name creates a new one and strands the
+    # old. Deleting sih26016-frontend is a manual step in the dashboard.
+    name: bhoomimitra
+    runtime: static
+    # No `region` here, deliberately. Render rejects one on a static site --
+    # the built assets go to its CDN and are served from the edge, so there
+    # is no origin to place. Region only means something for the API, which
+    # pins singapore to sit next to the database.
+
+    # `npm ci` not `npm install`: it installs exactly what package-lock.json
+    # pins, so the deployed bundle is built from the same dependency tree
+    # that was tested here.
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+
+    envVars:
+      # The API service's real URL, no trailing slash. Pinned here rather
+      # than left `sync: false`: the API is deployed and this is what it
+      # actually is, so making it a dashboard prompt only creates a chance
+      # to typo it. Vite inlines it at BUILD time, so a wrong value ships
+      # in the bundle and needs a rebuild, not a restart.
+      - key: VITE_API_URL
+        value: https://sih26016-api.onrender.com
+
+      # VITE_SHOW_DEMO_ACCOUNTS is deliberately absent. The login page
+      # renders the demo-account list only when it is exactly "true", and
+      # that list publishes eleven working usernames plus the password they
+      # share -- among them a State Administrator, a state officer and a
+      # ministry officer, which between them can approve anything the
+      # workflow has. Leaving it unset is what keeps those credentials off
+      # a public URL.
+
+    routes:
+      # React Router owns the paths. Without this, a reload on /cases/12
+      # asks Render for a file that does not exist and gets a 404 — the
+      # app only ever ships one HTML file.
+      - type: rewrite
+        source: /*
+        destination: /index.html
