@@ -1,14 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CameraOff, ScanFace } from 'lucide-react';
 import * as authApi from '../../api/auth';
+import Button from '../ui/Button';
 import './auth.css';
-
-// How often a frame is captured and sent while the camera is live. Short
-// enough that signing in feels immediate once a face is actually in frame,
-// long enough that a few seconds of bad lighting or an empty chair in
-// front of the kiosk doesn't burn through /auth/login's shared
-// rate-limit budget before a real attempt gets a turn.
-const CAPTURE_INTERVAL_MS = 2500;
 
 // getUserMedia's DOMException.name maps onto one of five states in the
 // effect below; each gets its own message here rather than one generic
@@ -25,21 +19,29 @@ const CAMERA_ERROR_MESSAGE = {
 };
 
 /* The camera card. Requests the webcam once mounted, shows the live feed,
-   and quietly tries a login every CAPTURE_INTERVAL_MS as long as a
-   username is filled in — there is no separate "capture" button to click,
-   since the entire point of this factor is that looking at the camera is
-   the whole action.
+   and tries a login exactly once the moment a username is filled in and
+   the camera is ready.
 
-   Every failure here is shown as a small status line, never a blocking
-   error banner: "no face detected" and "face not recognised" are both
-   just the state between camera-on and signed-in, not something the
-   person did wrong. */
+   This used to poll /auth/login every 2.5 seconds for as long as the card
+   stayed open, on the theory that "just keep trying" was the friendliest
+   thing an unattended camera could do. In practice an empty chair in front
+   of a kiosk, or a face that plain doesn't match, burned through the
+   shared login rate limit in well under a minute with nobody watching —
+   the retries kept running in the background long after they'd stopped
+   being useful, and then the real next attempt (a person who actually
+   showed up) got a lockout instead of a login. One attempt per username,
+   then a Retry button the person has to actually click, means every
+   attempt against that budget was one somebody meant to make. */
 export default function FaceLoginCard({ username, onSuccess }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const busyRef = useRef(false);
-  const timerRef = useRef(null);
+  const mountedRef = useRef(true);
+  // Which username the automatic attempt already ran for. Typing a
+  // different username earns one fresh automatic try; retyping the same
+  // one after a failure does not — that's what the Retry button is for.
+  const autoAttemptedForRef = useRef(null);
 
   const [cameraState, setCameraState] = useState('starting'); // starting | ready | denied | unsupported
   const [status, setStatus] = useState('');
@@ -48,6 +50,14 @@ export default function FaceLoginCard({ username, onSuccess }) {
   // one more string status could hold — the two can never show
   // contradictory things at once this way.
   const [checking, setChecking] = useState(false);
+  const [canRetry, setCanRetry] = useState(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,7 +104,6 @@ export default function FaceLoginCard({ username, onSuccess }) {
     return () => {
       cancelled = true;
       if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
-      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
@@ -110,45 +119,70 @@ export default function FaceLoginCard({ username, onSuccess }) {
     }
   }, [cameraState]);
 
+  const attemptLogin = useCallback(async () => {
+    if (busyRef.current) return;
+    if (!username || !username.trim()) {
+      setStatus('Enter your username above, then look at the camera.');
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    busyRef.current = true;
+    setCanRetry(false);
+
+    // The stream's first real frame can lag a beat behind cameraState
+    // flipping to 'ready'. The old polling loop covered this for free by
+    // just trying again next tick; a one-shot attempt waits out that same
+    // brief window itself instead of failing on a technicality.
+    let waited = 0;
+    while (video.readyState < 2 && waited < 2000) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      waited += 100;
+    }
+    if (!mountedRef.current) return;
+    if (video.readyState < 2) {
+      setStatus("Couldn't read the camera. Try again.");
+      setCanRetry(true);
+      busyRef.current = false;
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const frame = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+
+    setChecking(true);
+    try {
+      const result = await authApi.faceLogin(username.trim(), frame);
+      onSuccess(result);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      // Shown verbatim, whatever it says — "face not recognised" and a
+      // rate-limit message are both real facts about what just happened,
+      // not something to hide behind a blank line while quietly retrying.
+      setStatus(err.message);
+      setCanRetry(true);
+    } finally {
+      busyRef.current = false;
+      if (mountedRef.current) setChecking(false);
+    }
+  }, [username, onSuccess]);
+
+  // The one automatic attempt: fires once the camera is ready and a
+  // username has been typed. Everything after that — including trying
+  // again with the exact same username — is the Retry button, never this
+  // effect firing a second time on its own.
   useEffect(() => {
-    if (cameraState !== 'ready') return undefined;
-
-    timerRef.current = setInterval(async () => {
-      if (busyRef.current) return;
-      if (!username || !username.trim()) {
-        setStatus('Enter your username above, then look at the camera.');
-        return;
-      }
-
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      if (!video || !canvas || video.readyState < 2) return;
-
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      const frame = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-
-      busyRef.current = true;
-      setChecking(true);
-      try {
-        const result = await authApi.faceLogin(username.trim(), frame);
-        onSuccess(result);
-      } catch (err) {
-        // Every failure is shown verbatim now, not just a 422 capture
-        // problem — a silent retry on "face not recognised" reads as the
-        // camera being stuck, not as a fact about the match. The loop
-        // still retries regardless; this only changes what the status
-        // line says while it does.
-        setStatus(err.message);
-      } finally {
-        busyRef.current = false;
-        setChecking(false);
-      }
-    }, CAPTURE_INTERVAL_MS);
-
-    return () => clearInterval(timerRef.current);
-  }, [cameraState, username, onSuccess]);
+    if (cameraState !== 'ready') return;
+    const trimmed = username && username.trim();
+    if (!trimmed || autoAttemptedForRef.current === trimmed) return;
+    autoAttemptedForRef.current = trimmed;
+    attemptLogin();
+  }, [cameraState, username, attemptLogin]);
 
   return (
     <div className="face-card">
@@ -183,8 +217,13 @@ export default function FaceLoginCard({ username, onSuccess }) {
       )}
       {!checking && (
         <p className="face-card__status" role="status">
-          {cameraState === 'ready' ? status || 'Look at the camera to sign in.' : ' '}
+          {cameraState === 'ready' ? status || 'Look at the camera to sign in.' : ' '}
         </p>
+      )}
+      {!checking && canRetry && cameraState === 'ready' && (
+        <Button type="button" variant="secondary" size="sm" onClick={attemptLogin}>
+          Retry
+        </Button>
       )}
     </div>
   );
