@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, ShieldCheck, User, UserCheck2 } from 'lucide-react';
+import { Eye, EyeOff, Fingerprint, Lock, ScanFace, ShieldCheck, User, UserCheck2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { isLandowner } from '../auth/permissions';
 import { roleLabel } from '../lib/labels';
@@ -15,18 +15,25 @@ import '../components/public/public.css';
 import '../components/auth/auth.css';
 import './login.css';
 
-/* Built to the Figma "login-page" frame's split card, with two deliberate
+/* Built to the Figma "login-page" frame's split card, with three deliberate
    departures from it:
 
    - The frame asks for a User-ID field and an Email-ID field as well as a
      password. This system issues one credential per officer — a username —
      and the API takes exactly that plus a password, so a second identity
      field would be asking for information nothing downstream uses.
-   - The frame's Land Owner / Officer toggle picks between two roles. This
-     system has nine, so the toggle survives as a filter over the demo
-     account list rather than a role picker — "Officer" narrows it to the
-     five staff accounts, "Landowner" to the one — which keeps it a real
-     control instead of a decorative two-state stand-in for nine roles. */
+   - The frame's Land Owner / Officer toggle picks between two roles. Here
+     it decides something real: which sign-in methods even apply. A
+     landowner's account has no camera or scanner enrolled against it and
+     never will — their credential is a username and a password issued by
+     the district office, full stop — so the toggle switches straight to
+     that form with nothing else offered. An officer instead sees the three
+     methods as an explicit first choice (face, fingerprint, password)
+     rather than being dropped straight into the camera, since which one
+     suits a given desk is exactly the kind of thing that shouldn't be
+     guessed for them.
+   - No OTP. Only three factors exist on this system: face, kiosk
+     fingerprint, and password. */
 
 /* The demo account list publishes working credentials — six usernames and
    the password they share, one of them a State Administrator. That is
@@ -73,6 +80,12 @@ const TRUST = [
   },
 ];
 
+const METHODS = [
+  { key: 'face', icon: ScanFace, label: 'Face recognition', detail: 'Look at the camera to sign in' },
+  { key: 'fingerprint', icon: Fingerprint, label: 'Fingerprint', detail: 'Scan at a kiosk with a scanner attached' },
+  { key: 'password', icon: Lock, label: 'Username and password', detail: 'Sign in with your issued credentials' },
+];
+
 export default function Login() {
   const { login, adopt, user } = useAuth();
   const navigate = useNavigate();
@@ -83,12 +96,17 @@ export default function Login() {
   const [failure, setFailure] = useState(null);
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [accountTab, setAccountTab] = useState('landowner');
-  // 'face' first, always — this screen's whole reason for existing.
-  // 'fingerprint' and 'password' are both one tap away below the card,
-  // and neither is "less" of a sign-in method than the other: fingerprint
-  // just depends on hardware most machines don't have.
-  const [mode, setMode] = useState('face');
+
+  /* Who is signing in — decides which methods are even on offer, not just
+     which demo accounts are listed. */
+  const [accountKind, setAccountKind] = useState('landowner');
+  /* Which method an officer has picked. null means "hasn't picked yet",
+     which is its own screen: three equal choices, not a camera defaulted
+     into with two small fallback links beside it. A landowner never has a
+     mode at all — there is only ever the one method for that account
+     kind, so asking them to choose it would be asking them to choose
+     nothing. */
+  const [mode, setMode] = useState(null);
 
   const from = location.state && location.state.from;
 
@@ -111,6 +129,12 @@ export default function Login() {
   function set(field, value) {
     setValues((current) => ({ ...current, [field]: value }));
     if (errors[field]) setErrors((current) => ({ ...current, [field]: null }));
+  }
+
+  function chooseAccountKind(kind) {
+    setAccountKind(kind);
+    setMode(null);
+    setFailure(null);
   }
 
   async function onSubmit(event) {
@@ -150,6 +174,104 @@ export default function Login() {
     adopt(result.user);
     navigate(landingFor(result.user), { replace: true });
   }
+
+  const passwordForm = (
+    <>
+      <form onSubmit={onSubmit} noValidate>
+        {failure && (
+          <p className="login-card__error" role="alert">
+            {failure.message}
+          </p>
+        )}
+
+        <label className="login-field" htmlFor="username">
+          <span className="login-field__label">Username</span>
+          <span className={`login-field__control${errors.username ? ' is-invalid' : ''}`}>
+            <User size={17} strokeWidth={1.5} aria-hidden="true" />
+            <input
+              id="username"
+              name="username"
+              autoComplete="username"
+              autoFocus
+              placeholder="Enter your username"
+              value={values.username}
+              onChange={(event) => set('username', event.target.value)}
+              aria-invalid={errors.username ? 'true' : undefined}
+            />
+          </span>
+          {errors.username && (
+            <span className="login-field__error" role="alert">
+              {errors.username}
+            </span>
+          )}
+        </label>
+
+        <label className="login-field" htmlFor="password">
+          <span className="login-field__label">Password</span>
+          <span className={`login-field__control${errors.password ? ' is-invalid' : ''}`}>
+            <Lock size={17} strokeWidth={1.5} aria-hidden="true" />
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              value={values.password}
+              onChange={(event) => set('password', event.target.value)}
+              aria-invalid={errors.password ? 'true' : undefined}
+            />
+            <button
+              type="button"
+              className="login-field__toggle"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
+            </button>
+          </span>
+          {errors.password && (
+            <span className="login-field__error" role="alert">
+              {errors.password}
+            </span>
+          )}
+        </label>
+
+        {/* Credentials come from the district office under the Act, not a
+            self-service reset — saying so plainly beats a "Forgot
+            password?" link that leads nowhere real. */}
+        <p className="login-card__reset">
+          {accountKind === 'landowner'
+            ? 'Your username and password were issued by your district office.'
+            : 'Forgotten your password? Contact your district office.'}
+        </p>
+
+        <Button type="submit" variant="primary" block className="login-card__submit" disabled={pending}>
+          {pending ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+
+      {SHOW_DEMO_ACCOUNTS && (
+        <div className="login-card__accounts">
+          <p className="login-card__accounts-heading">
+            {accountKind === 'landowner' ? 'Landowner account' : 'Officer accounts'}
+          </p>
+          <ul className="login-card__accounts-list">
+            {ACCOUNTS.filter((account) => account.tab === accountKind).map((account) => (
+              <li key={account.username}>
+                <button type="button" className="login-card__account" onClick={() => fillFromAccount(account.username)}>
+                  <span className="login-card__account-name">{account.username}</span>
+                  <span className="login-card__account-role">{roleLabel(account.role)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="login-card__accounts-note">
+            All use the password <code>{DEMO_PASSWORD}</code>.
+          </p>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div className="public">
@@ -194,10 +316,57 @@ export default function Login() {
 
           <main className="login-card__form" id="main">
             <h2 className="login-card__form-title">
-              {mode === 'password' ? 'Sign in with your password' : 'Sign in to your account'}
+              {accountKind === 'landowner' ? 'Sign in with your password' : 'Sign in to your account'}
             </h2>
 
-            {mode !== 'password' && (
+            {/* Which account this is decides which methods are even
+                offered — a landowner has no camera or scanner enrolled
+                against their account and never will. */}
+            <div className="login-role-tabs" role="tablist" aria-label="Account type">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={accountKind === 'landowner'}
+                className={`login-role-tabs__tab${accountKind === 'landowner' ? ' is-active' : ''}`}
+                onClick={() => chooseAccountKind('landowner')}
+              >
+                Land Owner
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={accountKind === 'officer'}
+                className={`login-role-tabs__tab${accountKind === 'officer' ? ' is-active' : ''}`}
+                onClick={() => chooseAccountKind('officer')}
+              >
+                Officer
+              </button>
+            </div>
+
+            {accountKind === 'landowner' && passwordForm}
+
+            {accountKind === 'officer' && mode === null && (
+              <div className="login-method-choices" role="radiogroup" aria-label="How would you like to sign in?">
+                {METHODS.map(({ key, icon: Icon, label, detail }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="login-method-choice"
+                    onClick={() => setMode(key)}
+                  >
+                    <span className="login-method-choice__icon" aria-hidden="true">
+                      <Icon size={20} strokeWidth={1.75} />
+                    </span>
+                    <span>
+                      <span className="login-method-choice__label">{label}</span>
+                      <span className="login-method-choice__detail">{detail}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {accountKind === 'officer' && (mode === 'face' || mode === 'fingerprint') && (
               <div className="login-biometric-username">
                 <label className="login-field" htmlFor="biometric-username">
                   <span className="login-field__label">Username</span>
@@ -217,205 +386,43 @@ export default function Login() {
               </div>
             )}
 
-            {mode === 'face' && (
+            {accountKind === 'officer' && mode === 'face' && (
               <>
                 <FaceLoginCard username={values.username} onSuccess={onBiometricSuccess} />
                 <div className="login-biometric-fallbacks">
-                  <button
-                    type="button"
-                    className="login-biometric-fallback"
-                    onClick={() => setMode('fingerprint')}
-                  >
-                    Issues with face? Unlock through fingerprint
-                  </button>
-                  <button
-                    type="button"
-                    className="login-biometric-fallback login-biometric-fallback--quiet"
-                    onClick={() => setMode('password')}
-                  >
-                    Use password instead
+                  <button type="button" className="login-biometric-fallback" onClick={() => setMode(null)}>
+                    Choose a different method
                   </button>
                 </div>
               </>
             )}
 
-            {mode === 'fingerprint' && (
+            {accountKind === 'officer' && mode === 'fingerprint' && (
               <>
                 <FingerprintFallback username={values.username} onSuccess={onBiometricSuccess} />
                 <div className="login-biometric-fallbacks">
-                  <button
-                    type="button"
-                    className="login-biometric-fallback"
-                    onClick={() => setMode('face')}
-                  >
-                    Use face recognition instead
-                  </button>
-                  <button
-                    type="button"
-                    className="login-biometric-fallback login-biometric-fallback--quiet"
-                    onClick={() => setMode('password')}
-                  >
-                    Use password instead
+                  <button type="button" className="login-biometric-fallback" onClick={() => setMode(null)}>
+                    Choose a different method
                   </button>
                 </div>
               </>
             )}
 
-            {mode === 'password' && (
+            {accountKind === 'officer' && mode === 'password' && (
               <>
-                {/* Filters the demo accounts below rather than picking a role
-                    on the form itself — this system issues one credential
-                    per officer, so which account is "yours" still comes
-                    from choosing an account, just narrowed to the right
-                    half of the list first.
-
-                    Hidden with the list it filters: with no accounts
-                    rendered these two buttons would control nothing, which
-                    is the exact kind of dead chrome worth not shipping. */}
-                {SHOW_DEMO_ACCOUNTS && (
-                  <div className="login-role-tabs" role="tablist" aria-label="Account type">
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={accountTab === 'landowner'}
-                      className={`login-role-tabs__tab${accountTab === 'landowner' ? ' is-active' : ''}`}
-                      onClick={() => setAccountTab('landowner')}
-                    >
-                      Land Owner
-                    </button>
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={accountTab === 'officer'}
-                      className={`login-role-tabs__tab${accountTab === 'officer' ? ' is-active' : ''}`}
-                      onClick={() => setAccountTab('officer')}
-                    >
-                      Officer
-                    </button>
-                  </div>
-                )}
-
-                <form onSubmit={onSubmit} noValidate>
-                  {failure && (
-                    <p className="login-card__error" role="alert">
-                      {failure.message}
-                    </p>
-                  )}
-
-                  <label className="login-field" htmlFor="username">
-                    <span className="login-field__label">Username</span>
-                    <span
-                      className={`login-field__control${errors.username ? ' is-invalid' : ''}`}
-                    >
-                      <User size={17} strokeWidth={1.5} aria-hidden="true" />
-                      <input
-                        id="username"
-                        name="username"
-                        autoComplete="username"
-                        autoFocus
-                        placeholder="Enter your username"
-                        value={values.username}
-                        onChange={(event) => set('username', event.target.value)}
-                        aria-invalid={errors.username ? 'true' : undefined}
-                      />
-                    </span>
-                    {errors.username && (
-                      <span className="login-field__error" role="alert">
-                        {errors.username}
-                      </span>
-                    )}
-                  </label>
-
-                  <label className="login-field" htmlFor="password">
-                    <span className="login-field__label">Password</span>
-                    <span
-                      className={`login-field__control${errors.password ? ' is-invalid' : ''}`}
-                    >
-                      <Lock size={17} strokeWidth={1.5} aria-hidden="true" />
-                      <input
-                        id="password"
-                        name="password"
-                        type={showPassword ? 'text' : 'password'}
-                        autoComplete="current-password"
-                        placeholder="Enter your password"
-                        value={values.password}
-                        onChange={(event) => set('password', event.target.value)}
-                        aria-invalid={errors.password ? 'true' : undefined}
-                      />
-                      <button
-                        type="button"
-                        className="login-field__toggle"
-                        onClick={() => setShowPassword((v) => !v)}
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? (
-                          <EyeOff size={16} strokeWidth={1.5} />
-                        ) : (
-                          <Eye size={16} strokeWidth={1.5} />
-                        )}
-                      </button>
-                    </span>
-                    {errors.password && (
-                      <span className="login-field__error" role="alert">
-                        {errors.password}
-                      </span>
-                    )}
-                  </label>
-
-                  {/* Credentials come from the district office under the
-                      Act, not a self-service reset — saying so plainly
-                      beats a "Forgot password?" link that leads nowhere
-                      real. */}
-                  <p className="login-card__reset">
-                    Forgotten your password? Contact your district office.
-                  </p>
-
-                  <Button type="submit" variant="primary" block className="login-card__submit" disabled={pending}>
-                    {pending ? 'Signing in…' : 'Sign in'}
-                  </Button>
-                </form>
-
-                <p className="login-card__signup">
-                  Been issued an invitation code? <Link to="/signup">Create an account</Link>
-                </p>
-
-                {SHOW_DEMO_ACCOUNTS && (
-                  <div className="login-card__accounts">
-                    <p className="login-card__accounts-heading">
-                      {accountTab === 'landowner' ? 'Landowner account' : 'Officer accounts'}
-                    </p>
-                    <ul className="login-card__accounts-list">
-                      {ACCOUNTS.filter((account) => account.tab === accountTab).map((account) => (
-                        <li key={account.username}>
-                          <button
-                            type="button"
-                            className="login-card__account"
-                            onClick={() => fillFromAccount(account.username)}
-                          >
-                            <span className="login-card__account-name">{account.username}</span>
-                            <span className="login-card__account-role">
-                              {roleLabel(account.role)}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="login-card__accounts-note">
-                      All use the password <code>{DEMO_PASSWORD}</code>.
-                    </p>
-                  </div>
-                )}
-
+                {passwordForm}
                 <div className="login-biometric-fallbacks">
-                  <button
-                    type="button"
-                    className="login-biometric-fallback login-biometric-fallback--quiet"
-                    onClick={() => setMode('face')}
-                  >
-                    Sign in with face recognition instead
+                  <button type="button" className="login-biometric-fallback" onClick={() => setMode(null)}>
+                    Choose a different method
                   </button>
                 </div>
               </>
+            )}
+
+            {(accountKind === 'landowner' || mode === 'password') && (
+              <p className="login-card__signup">
+                Been issued an invitation code? <Link to="/signup">Create an account</Link>
+              </p>
             )}
           </main>
         </div>
