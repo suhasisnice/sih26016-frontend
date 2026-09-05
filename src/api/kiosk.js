@@ -60,3 +60,28 @@ export function agentLogin(username) {
 export function agentCapture() {
   return request('/capture', {});
 }
+
+/* A live probe of the agent and the scanner it's talking to — not just
+   "is the agent process running", but "is the physical scanner attached
+   right now" (mantra-agent/device/mfs100.py's health() re-checks this on
+   every call, never caching a stale answer). Returns
+   {status, device, mode, connected, detail, device?: {model, serial_no}}
+   on success, or throws the same ApiError `request` throws when the agent
+   itself can't be reached at all — the caller treats both as "not
+   connected", just with a different reason. */
+export async function agentHealth() {
+  let res;
+  try {
+    res = await fetch(`${KIOSK_AGENT_URL}/health`);
+  } catch {
+    throw new ApiError(
+      'No fingerprint scanner agent found on this device.',
+      'agent_unreachable',
+      0,
+    );
+  }
+  if (!res.ok) {
+    throw new ApiError('The fingerprint scanner agent reported an error.', 'agent_error', res.status);
+  }
+  return res.json();
+}
