@@ -5,7 +5,6 @@ import { useAuth } from '../auth/AuthContext';
 import { isLandowner } from '../auth/permissions';
 import { roleLabel } from '../lib/labels';
 import { required, validate } from '../lib/validate';
-import { ABOUT_PDF_URL } from '../lib/constants';
 import { setToken } from '../api/client';
 import Button from '../components/ui/Button';
 import PublicHeader from '../components/public/PublicHeader';
@@ -405,19 +404,6 @@ export default function Login() {
         <p className="login-privacy">
           Your data is safe with us. We value your privacy.
         </p>
-
-        <div className="about-blurb">
-          <h2 className="about-blurb__title">About Bhoomimitra</h2>
-          <p className="about-blurb__text">
-            Bhoomimitra is a case-management platform built for India&rsquo;s land acquisition
-            process under the RFCTLARR Act, 2013. It gives officers and affected families a
-            single, transparent record of a case from preliminary notification through to
-            possession.{' '}
-            <a href={ABOUT_PDF_URL} target="_blank" rel="noopener noreferrer">
-              Read more
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );
