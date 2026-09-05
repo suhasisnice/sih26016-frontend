@@ -37,7 +37,6 @@ export default function FaceEnrollCard({ onEnrolled }) {
           return;
         }
         streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
         setCameraState('ready');
       } catch {
         if (!cancelled) setCameraState('denied');
@@ -51,6 +50,17 @@ export default function FaceEnrollCard({ onEnrolled }) {
       if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
     };
   }, []);
+
+  // The <video> element only exists in the DOM once cameraState flips to
+  // 'ready' (it's conditionally rendered below), so attaching the stream
+  // has to happen here, after that mount — doing it at the moment
+  // getUserMedia resolves hits videoRef.current while it is still null and
+  // silently does nothing, leaving the video element blank forever.
+  useEffect(() => {
+    if (cameraState === 'ready' && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [cameraState]);
 
   async function captureAndEnroll() {
     const video = videoRef.current;

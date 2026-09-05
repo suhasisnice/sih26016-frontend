@@ -48,7 +48,6 @@ export default function FaceLoginCard({ username, onSuccess }) {
           return;
         }
         streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
         setCameraState('ready');
       } catch {
         if (!cancelled) setCameraState('denied');
@@ -63,6 +62,18 @@ export default function FaceLoginCard({ username, onSuccess }) {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  // The <video> element only exists in the DOM once cameraState flips to
+  // 'ready' (it's conditionally rendered below), so attaching the stream
+  // has to happen here, after that mount — doing it in the effect above,
+  // at the moment getUserMedia resolves, hits videoRef.current while it is
+  // still null and silently does nothing, leaving the video element blank
+  // forever with a live stream sitting unattached in streamRef.
+  useEffect(() => {
+    if (cameraState === 'ready' && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [cameraState]);
 
   useEffect(() => {
     if (cameraState !== 'ready') return undefined;
