@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Fingerprint, Lock, ScanFace, ShieldCheck, User, UserCheck2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, ShieldCheck, User, UserCheck2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { isLandowner } from '../auth/permissions';
 import { roleLabel } from '../lib/labels';
@@ -27,13 +27,14 @@ import './login.css';
      landowner's account has no camera or scanner enrolled against it and
      never will — their credential is a username and a password issued by
      the district office, full stop — so the toggle switches straight to
-     that form with nothing else offered. An officer instead sees the three
-     methods as an explicit first choice (face, fingerprint, password)
-     rather than being dropped straight into the camera, since which one
-     suits a given desk is exactly the kind of thing that shouldn't be
-     guessed for them.
-   - No OTP. Only three factors exist on this system: face, kiosk
-     fingerprint, and password. */
+     that form with nothing else offered. An officer instead gets a fixed
+     precedence order, not a menu: face recognition first, a quiet
+     "issues with face?" link down to the kiosk fingerprint scanner,
+     and — if that has issues too — a further link down to username and
+     password. Nobody has to know which factor "suits their desk"; the
+     system just tries the strongest one first and steps down.
+   - No OTP yet. Password is the floor of that chain for now; an
+     authenticator code alongside it is planned but not built. */
 
 /* The demo account list publishes working credentials — six usernames and
    the password they share, one of them a State Administrator. That is
@@ -80,12 +81,6 @@ const TRUST = [
   },
 ];
 
-const METHODS = [
-  { key: 'face', icon: ScanFace, label: 'Face recognition', detail: 'Look at the camera to sign in' },
-  { key: 'fingerprint', icon: Fingerprint, label: 'Fingerprint', detail: 'Scan at a kiosk with a scanner attached' },
-  { key: 'password', icon: Lock, label: 'Username and password', detail: 'Sign in with your issued credentials' },
-];
-
 export default function Login() {
   const { login, adopt, user } = useAuth();
   const navigate = useNavigate();
@@ -100,13 +95,13 @@ export default function Login() {
   /* Who is signing in — decides which methods are even on offer, not just
      which demo accounts are listed. */
   const [accountKind, setAccountKind] = useState('landowner');
-  /* Which method an officer has picked. null means "hasn't picked yet",
-     which is its own screen: three equal choices, not a camera defaulted
-     into with two small fallback links beside it. A landowner never has a
-     mode at all — there is only ever the one method for that account
-     kind, so asking them to choose it would be asking them to choose
-     nothing. */
-  const [mode, setMode] = useState(null);
+  /* Where an officer is in the precedence order — 'face', then
+     'fingerprint', then 'password', moved down one at a time by the
+     "issues with X?" link under whichever is showing. Starts at the top
+     every time; there's no memory of "this desk has no camera" yet. A
+     landowner never has a mode at all — there is only ever the one method
+     for that account kind. */
+  const [mode, setMode] = useState('face');
 
   const from = location.state && location.state.from;
 
@@ -133,7 +128,7 @@ export default function Login() {
 
   function chooseAccountKind(kind) {
     setAccountKind(kind);
-    setMode(null);
+    setMode('face');
     setFailure(null);
   }
 
@@ -345,27 +340,6 @@ export default function Login() {
 
             {accountKind === 'landowner' && passwordForm}
 
-            {accountKind === 'officer' && mode === null && (
-              <div className="login-method-choices" role="radiogroup" aria-label="How would you like to sign in?">
-                {METHODS.map(({ key, icon: Icon, label, detail }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className="login-method-choice"
-                    onClick={() => setMode(key)}
-                  >
-                    <span className="login-method-choice__icon" aria-hidden="true">
-                      <Icon size={20} strokeWidth={1.75} />
-                    </span>
-                    <span>
-                      <span className="login-method-choice__label">{label}</span>
-                      <span className="login-method-choice__detail">{detail}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
             {accountKind === 'officer' && (mode === 'face' || mode === 'fingerprint') && (
               <div className="login-biometric-username">
                 <label className="login-field" htmlFor="biometric-username">
@@ -390,8 +364,8 @@ export default function Login() {
               <>
                 <FaceLoginCard username={values.username} onSuccess={onBiometricSuccess} />
                 <div className="login-biometric-fallbacks">
-                  <button type="button" className="login-biometric-fallback" onClick={() => setMode(null)}>
-                    Choose a different method
+                  <button type="button" className="login-biometric-fallback" onClick={() => setMode('fingerprint')}>
+                    Issues with face? Unlock through fingerprint
                   </button>
                 </div>
               </>
@@ -401,23 +375,14 @@ export default function Login() {
               <>
                 <FingerprintFallback username={values.username} onSuccess={onBiometricSuccess} />
                 <div className="login-biometric-fallbacks">
-                  <button type="button" className="login-biometric-fallback" onClick={() => setMode(null)}>
-                    Choose a different method
+                  <button type="button" className="login-biometric-fallback" onClick={() => setMode('password')}>
+                    Issues with fingerprint? Use password instead
                   </button>
                 </div>
               </>
             )}
 
-            {accountKind === 'officer' && mode === 'password' && (
-              <>
-                {passwordForm}
-                <div className="login-biometric-fallbacks">
-                  <button type="button" className="login-biometric-fallback" onClick={() => setMode(null)}>
-                    Choose a different method
-                  </button>
-                </div>
-              </>
-            )}
+            {accountKind === 'officer' && mode === 'password' && passwordForm}
 
             {(accountKind === 'landowner' || mode === 'password') && (
               <p className="login-card__signup">

@@ -447,39 +447,6 @@
    modes doesn't drag the rest of that form's markup along with it. */
 .login-biometric-username { margin-bottom: var(--s5); }
 
-/* An officer's first screen: three equal sign-in methods, not a camera
-   defaulted into with two small fallback links beside it — picking how you
-   sign in is a real choice here, not an afterthought. */
-.login-method-choices { display: grid; gap: var(--s3); }
-
-.login-method-choice {
-  display: flex;
-  align-items: center;
-  gap: var(--s4);
-  padding: var(--s4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  text-align: left;
-  transition: border-color 120ms ease, background-color 120ms ease;
-}
-.login-method-choice:hover { border-color: var(--brand-soft); background: var(--brand-tint); }
-
-.login-method-choice__icon {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r-pill);
-  background: var(--brand-tint);
-  color: var(--brand-hover);
-}
-
-.login-method-choice__label { display: block; font-family: var(--font-display); font-weight: 700; font-size: 15px; }
-.login-method-choice__detail { display: block; margin-top: 2px; font-size: 12.5px; color: var(--text-muted); }
-
 .login-card__error {
   padding: var(--s3) var(--s4);
   background: var(--danger-bg);
