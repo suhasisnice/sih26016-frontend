@@ -519,6 +519,17 @@
 
 .login-card__submit { margin-top: var(--s2); min-height: 52px; font-size: 15px; }
 
+/* The code step that replaces passwordForm once a password is accepted.
+   Its own lede rather than reusing .login-card__reset — this one changes
+   wording per account (real code vs. the fixed placeholder) and needs
+   room for that sentence, not a short right-aligned aside. */
+.login-mfa__lede {
+  margin-bottom: var(--s4);
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 .login-card__signup {
   margin-top: var(--s5);
   text-align: center;
