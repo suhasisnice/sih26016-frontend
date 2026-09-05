@@ -4,6 +4,11 @@ import * as kioskApi from '../../api/kiosk';
 import Button from '../ui/Button';
 import './auth.css';
 
+// How often the connection badge re-checks while this card is on screen —
+// often enough that plugging the scanner back in updates the badge without
+// a reload, rare enough it's not worth its own network log line per second.
+const HEALTH_POLL_MS = 5000;
+
 /* Talks to the local Mantra kiosk agent, never the backend directly — the
    agent does its own round trip to the backend (fetch the enrolled
    template, capture, match locally, report the result) and this component
@@ -17,6 +22,34 @@ import './auth.css';
 export default function FingerprintFallback({ username, onSuccess }) {
   const [state, setState] = useState('idle'); // idle | scanning | error
   const [message, setMessage] = useState('');
+  const [connection, setConnection] = useState(null); // null while checking | {connected, detail, device}
+
+  // The Mantra Client Service only has one scanner to talk to and doesn't
+  // queue overlapping requests cleanly — a health poll's GET /info landing
+  // mid-capture can make a genuine in-progress scan look like a dropped
+  // connection. Skipping polls while `state === 'scanning'` keeps the badge
+  // from lying about a scanner that's actually mid-scan, not disconnected.
+  useEffect(() => {
+    if (state === 'scanning') return undefined;
+
+    let cancelled = false;
+
+    async function checkHealth() {
+      try {
+        const health = await kioskApi.agentHealth();
+        if (!cancelled) setConnection(health);
+      } catch (err) {
+        if (!cancelled) setConnection({ connected: false, detail: err.message });
+      }
+    }
+
+    checkHealth();
+    const timer = setInterval(checkHealth, HEALTH_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [state]);
 
   const scan = useCallback(async () => {
     if (!username || !username.trim()) {
@@ -45,6 +78,15 @@ export default function FingerprintFallback({ username, onSuccess }) {
 
   return (
     <div className="fingerprint-card">
+      <p className={`fingerprint-card__connection${connection && !connection.connected ? ' is-disconnected' : ''}`}>
+        <span className="fingerprint-card__connection-dot" aria-hidden="true" />
+        {connection === null && 'Checking scanner…'}
+        {connection && connection.connected &&
+          (connection.device?.model
+            ? `Scanner connected — ${connection.device.model} (SN ${connection.device.serial_no})`
+            : 'Scanner connected')}
+        {connection && !connection.connected && 'Scanner not connected'}
+      </p>
       <div className={`fingerprint-card__icon${state === 'scanning' ? ' is-scanning' : ''}`}>
         <Fingerprint size={40} strokeWidth={1.5} />
       </div>
