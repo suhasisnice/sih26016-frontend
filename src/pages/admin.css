@@ -1,8 +1,20 @@
+/* A <button>, not a <span> — every row's code can be reopened, so it reads
+   as the clickable thing on the row rather than plain text. Reset to
+   nothing but colour and an underline on hover; CLAUDE.md 3.4 bans icons
+   and shadows on buttons, and this one shouldn't look like a pill button
+   either, just a link with a monospace face. */
 .admin__selector {
+  font: inherit;
   font-family: var(--font-mono);
   font-size: 12.5px;
   color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
+
+.admin__selector:hover { color: var(--brand-hover); text-decoration: underline; }
 
 .admin__note {
   margin-top: 2px;
