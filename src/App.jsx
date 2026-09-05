@@ -14,6 +14,8 @@ import AppShell from './components/layout/AppShell';
 import Loading from './components/states/Loading';
 
 import Landing from './pages/Landing';
+import Contact from './pages/Contact';
+import Support from './pages/Support';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Notices from './pages/Notices';
@@ -51,6 +53,8 @@ export default function Root() {
           <Routes>
             {/* Public */}
             <Route path="/" element={<Landing />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/support" element={<Support />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/notices" element={<Notices />} />

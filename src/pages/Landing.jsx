@@ -1,7 +1,9 @@
 import PublicHeader from '../components/public/PublicHeader';
 import PublicFooter from '../components/public/PublicFooter';
 import PhotoStrip from '../components/public/PhotoStrip';
+import LandingHighlights from '../components/public/LandingHighlights';
 import Button from '../components/ui/Button';
+import { ABOUT_PDF_URL } from '../lib/constants';
 import '../components/public/public.css';
 
 /* Built to the Figma "Home" frame: header, photo hero, cream statement band,
@@ -47,6 +49,8 @@ export default function Landing() {
         </div>
       </section>
 
+      <LandingHighlights />
+
       <section className="statement">
         <h2 className="statement__title">
           Making Every Acquisition Count.
@@ -64,6 +68,20 @@ export default function Landing() {
           <Button to="/notices" variant="secondary" size="public-lg">
             Case Studies
           </Button>
+        </div>
+
+        <div className="statement__about">
+          <h3 className="statement__about-title">About Us</h3>
+          <p className="statement__about-text">
+            Bhoomimitra follows a land acquisition from first notification to final mutation
+            as one continuous, auditable case, in place of the paperwork scattered today
+            across RFCTLARR, the National Highways Act and a dozen other statutes. Every
+            parcel carries a single national identity, every affected family is recorded
+            individually, and every statutory deadline is tracked before it lapses.{' '}
+            <a href={ABOUT_PDF_URL} target="_blank" rel="noopener noreferrer">
+              Read more
+            </a>
+          </p>
         </div>
       </section>
 
