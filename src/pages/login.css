@@ -387,6 +387,11 @@
 
 .login-card__form form { display: grid; gap: var(--s4); }
 
+/* The username field shown above the face/fingerprint cards — same
+   .login-field control as the password form's, on its own so switching
+   modes doesn't drag the rest of that form's markup along with it. */
+.login-biometric-username { margin-bottom: var(--s5); }
+
 .login-card__error {
   padding: var(--s3) var(--s4);
   background: var(--danger-bg);
