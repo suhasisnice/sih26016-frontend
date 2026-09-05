@@ -254,9 +254,9 @@ export default function Signup() {
                       ? `Scoped to ${invite.district_name}. You will see that district and no other.`
                       : 'Not restricted to a single district.'}
                   </p>
-                  {invite.expires_on && (
+                  {invite.expires_at && (
                     <p className="signup__grant-meta">
-                      Valid until {fmt.dateLong(invite.expires_on)}.
+                      Valid until {fmt.dateTime(invite.expires_at)}.
                     </p>
                   )}
                   <button

@@ -6,7 +6,7 @@ import { useApi, useMutation } from '../hooks/useApi';
 import { useEnums } from '../hooks/useEnums';
 import { roleLabel } from '../lib/labels';
 import * as fmt from '../lib/format';
-import { notInPast, required, validate } from '../lib/validate';
+import { required, validate } from '../lib/validate';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -23,6 +23,11 @@ import './admin.css';
 const DISTRICT_SCOPED_ROLES = ['district_officer', 'slao', 'field_officer', 'rnr_officer'];
 const STATE_SCOPED_ROLES = ['state_officer'];
 
+/* Mirrors invites.EXPIRY_HOURS — every code lives exactly this long, not a
+   value chosen per invitation. Shown so the policy is visible somewhere
+   even though there is no longer a field for it to live in. */
+const EXPIRY_HOURS = 48;
+
 const EMPTY_VALUES = {
   role: '',
   district_id: '',
@@ -30,20 +35,13 @@ const EMPTY_VALUES = {
   organisation: '',
   label: '',
   max_uses: '1',
-  expires_on: '',
 };
 
 function inviteStatus(invite) {
   if (invite.is_revoked) return { label: 'Revoked', tone: 'danger' };
-  // String comparison on YYYY-MM-DD, not `new Date(...) < new Date()` — the
-  // backend's own check (invites.redeem_reason) is a date-only comparison
-  // too, and comparing via Date objects parses expires_on as UTC midnight,
-  // which reads as already past for most of its actual last valid day
-  // anywhere east of Greenwich.
-  const today = new Date().toLocaleDateString('en-CA');
-  if (invite.expires_on && invite.expires_on < today) {
-    return { label: 'Expired', tone: 'idle' };
-  }
+  // A real timestamp now, not a bare date, so a plain Date comparison is
+  // exact rather than the UTC-midnight trap a date-only value would hit.
+  if (new Date(invite.expires_at) <= new Date()) return { label: 'Expired', tone: 'idle' };
   if (invite.used_count >= invite.max_uses) return { label: 'Used up', tone: 'idle' };
   return { label: 'Active', tone: 'ok' };
 }
@@ -58,8 +56,14 @@ export default function Admin() {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState(EMPTY_VALUES);
   const [errors, setErrors] = useState({});
-  const [issued, setIssued] = useState(null); // { code, invite } — shown once
+  const [issued, setIssued] = useState(null); // { code, invite } — just created
   const [copied, setCopied] = useState(false);
+
+  // A second, independent modal for reopening a code issued earlier — the
+  // create flow's `issued` is one-shot state for the form that just
+  // submitted, this is "the person clicked a row in the table below".
+  const [viewing, setViewing] = useState(null); // an invite row, or null
+  const [viewCopied, setViewCopied] = useState(false);
 
   const districts = useApi(
     (opts) => referenceApi.districts(values.state_id ? Number(values.state_id) : undefined, opts),
@@ -90,11 +94,7 @@ export default function Admin() {
   }
 
   async function onSubmit() {
-    const rules = {
-      role: [required('Role')],
-      max_uses: [required('Number of uses')],
-      expires_on: [notInPast('Expiry date')],
-    };
+    const rules = { role: [required('Role')], max_uses: [required('Number of uses')] };
     if (DISTRICT_SCOPED_ROLES.includes(values.role)) rules.district_id = [required('District')];
     if (STATE_SCOPED_ROLES.includes(values.role)) rules.state_id = [required('State')];
     if (values.role === 'requiring_body') rules.organisation = [required('Organisation')];
@@ -111,7 +111,6 @@ export default function Admin() {
         organisation: values.organisation.trim() || null,
         label: values.label.trim() || null,
         max_uses: Number(values.max_uses),
-        expires_on: values.expires_on || null,
       });
       setIssued(result_);
       invites.reload();
@@ -120,10 +119,10 @@ export default function Admin() {
     }
   }
 
-  async function copyCode() {
+  async function copy(text, onDone) {
     try {
-      await navigator.clipboard.writeText(issued.code);
-      setCopied(true);
+      await navigator.clipboard.writeText(text);
+      onDone(true);
     } catch {
       /* Clipboard access can be blocked; the code is still shown on screen
          to select and copy by hand. */
@@ -139,12 +138,21 @@ export default function Admin() {
     }
   }
 
+  function openViewer(invite) {
+    setViewCopied(false);
+    setViewing(invite);
+  }
+
   const columns = [
     {
       key: 'selector',
       header: 'Code',
       width: '110px',
-      render: (row) => <span className="admin__selector">{row.selector}…</span>,
+      render: (row) => (
+        <button type="button" className="admin__selector" onClick={() => openViewer(row)}>
+          {row.selector}…
+        </button>
+      ),
     },
     {
       key: 'role',
@@ -169,10 +177,10 @@ export default function Admin() {
       render: (row) => `${row.used_count} / ${row.max_uses}`,
     },
     {
-      key: 'expires_on',
+      key: 'expires_at',
       header: 'Expires',
-      width: '120px',
-      render: (row) => (row.expires_on ? fmt.date(row.expires_on) : 'Never'),
+      width: '150px',
+      render: (row) => fmt.dateTime(row.expires_at),
     },
     {
       key: 'status',
@@ -210,7 +218,7 @@ export default function Admin() {
     <>
       <PageHeader
         title="Admin"
-        subtitle="Issue registration invitations. There is no open signup — every account starts from a code issued here."
+        subtitle={`Issue registration invitations. There is no open signup — every account starts from a code issued here, and every code expires ${EXPIRY_HOURS} hours after it's issued.`}
         actions={<Button variant="primary" onClick={openModal}>New invite code</Button>}
       />
 
@@ -227,7 +235,7 @@ export default function Admin() {
           columns={columns}
           rows={invites.data.items}
           getRowKey={(row) => row.id}
-          caption={`${invites.data.total} invitations issued`}
+          caption={`${invites.data.total} invitations issued — click a code to view or copy it`}
         />
       )}
 
@@ -237,8 +245,8 @@ export default function Admin() {
         title={issued ? 'Invitation created' : 'New invite code'}
         subtitle={
           issued
-            ? 'This is the only time the code is shown — it cannot be recovered afterwards.'
-            : 'The person who redeems this gets exactly the role and scope chosen here.'
+            ? `Good for ${EXPIRY_HOURS} hours. You can come back and copy it again from the table until then.`
+            : `The person who redeems this gets exactly the role and scope chosen here. It expires ${EXPIRY_HOURS} hours after you issue it.`
         }
         busy={create.pending}
         error={create.error}
@@ -262,7 +270,7 @@ export default function Admin() {
         {issued ? (
           <div className="admin__reveal">
             <p className="admin__reveal-code">{issued.code}</p>
-            <Button variant="secondary" onClick={copyCode}>
+            <Button variant="secondary" onClick={() => copy(issued.code, setCopied)}>
               <Copy size={14} strokeWidth={1.75} aria-hidden="true" />
               {copied ? 'Copied' : 'Copy code'}
             </Button>
@@ -335,17 +343,46 @@ export default function Admin() {
               onChange={(event) => set('max_uses', event.target.value)}
               hint="How many times this one code can be redeemed."
             />
-
-            <Input
-              label="Expires on"
-              type="date"
-              min={new Date().toLocaleDateString('en-CA')}
-              value={values.expires_on}
-              error={errors.expires_on}
-              onChange={(event) => set('expires_on', event.target.value)}
-              hint="Optional — leave blank for a code that never expires."
-            />
           </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={Boolean(viewing)}
+        onClose={() => setViewing(null)}
+        title="Invite code"
+        subtitle={viewing ? `${roleLabel(viewing.role)} — issued ${fmt.dateTime(viewing.created_at)}` : undefined}
+        footer={
+          <Button variant="primary" onClick={() => setViewing(null)}>
+            Close
+          </Button>
+        }
+      >
+        {viewing && viewing.code && (
+          <div className="admin__reveal">
+            <p className="admin__reveal-code">{viewing.code}</p>
+            <Button variant="secondary" onClick={() => copy(viewing.code, setViewCopied)}>
+              <Copy size={14} strokeWidth={1.75} aria-hidden="true" />
+              {viewCopied ? 'Copied' : 'Copy code'}
+            </Button>
+          </div>
+        )}
+        {/* Revoked or expired is a real "it was cleared" — anything else
+            with no code just predates this feature, and saying "expired"
+            about a row the table itself still shows as Active would be a
+            straightforwardly false claim. */}
+        {viewing && !viewing.code && (
+          <Empty
+            center
+            title="No longer available"
+            body={
+              viewing.is_revoked
+                ? 'This invitation was revoked, so its code was cleared.'
+                : new Date(viewing.expires_at) <= new Date()
+                  ? 'This invitation has expired, so its code was cleared. Issue a new one instead.'
+                  : 'No saved copy exists for this invitation.'
+            }
+          />
         )}
       </Modal>
     </>
