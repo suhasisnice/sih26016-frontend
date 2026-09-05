@@ -1,0 +1,93 @@
+/* One editorial sentence rather than a row of KPI tiles — this is the
+   public site's register (CLAUDE.md 3.2), not the dashboard's. */
+.case-studies__summary {
+  margin-top: var(--s5);
+  padding: var(--s4) var(--s5);
+  background: var(--surface);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-width: 70ch;
+}
+
+.public-page .public-page__filters { margin-top: var(--s6); }
+
+.case-study-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  margin-top: var(--s6);
+}
+
+.case-study {
+  padding: var(--s5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.case-study__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-bottom: var(--s2);
+}
+
+.case-study__title {
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.case-study__meta {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-top: 2px;
+}
+
+.case-study__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--s4);
+  margin: var(--s4) 0 0;
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+.case-study__stats dt {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+.case-study__stats dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.case-study__source {
+  margin-top: var(--s4);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.6;
+}
+
+.case-studies__footnote {
+  margin-top: var(--s7);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+@media (max-width: 600px) {
+  .case-study__head { flex-direction: column; }
+}

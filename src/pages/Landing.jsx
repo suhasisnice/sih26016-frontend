@@ -65,7 +65,7 @@ export default function Landing() {
           <Button to="/notices" variant="primary" size="public-lg">
             Notices
           </Button>
-          <Button to="/notices" variant="secondary" size="public-lg">
+          <Button to="/case-studies" variant="secondary" size="public-lg">
             Case Studies
           </Button>
         </div>
