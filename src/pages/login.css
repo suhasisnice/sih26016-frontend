@@ -612,30 +612,3 @@
   .login-card__trust { margin-top: var(--s5); gap: var(--s4); }
   .login-card__form { padding: var(--s5) var(--s4); overflow-y: visible; }
 }
-
-/* ---------- About Us blurb — below the form, on Login and Signup ---------- */
-.about-blurb {
-  width: 100%;
-  max-width: 640px;
-  margin-top: var(--s6);
-  padding: var(--s5) var(--s6);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  text-align: left;
-}
-
-.about-blurb__title {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.about-blurb__text {
-  margin-top: var(--s2);
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--text-muted);
-}
-.about-blurb__text a { color: var(--brand-hover); font-weight: 600; text-decoration: underline; }
-.about-blurb__text a:hover { color: var(--brand); }
