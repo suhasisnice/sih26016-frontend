@@ -120,39 +120,35 @@ export default function Signup() {
       result.errors.confirm = 'The two passwords do not match';
       result.isValid = false;
     }
+    // Mandatory for every officer account — landowners never see this field
+    // at all (set below, when applicantKind === 'officer'), the same line
+    // Login.jsx draws for the same reason.
+    if (applicantKind === 'officer' && !faceFrame) {
+      result.errors.face = 'Face capture is required to create this account.';
+      result.isValid = false;
+    }
 
     setErrors(result.errors);
     if (!result.isValid) return;
 
     setPending(true);
     try {
+      // face_image_base64 travels in the same request as everything else —
+      // the backend validates and enrolls it in the same transaction as
+      // the account, so a bad photo fails registration cleanly instead of
+      // leaving a password-only account behind with a missing mandatory
+      // credential.
       const created = await authApi.register({
         invite_code: code.trim(),
         username: values.username.trim(),
         full_name: values.full_name.trim(),
         password: values.password,
+        face_image_base64: faceFrame,
       });
 
       // Registration signs you in, so there is no second form to fill.
       setToken(created.access_token);
       adopt(created.user);
-
-      // POST /biometrics/face/enroll needs a bearer token, which does not
-      // exist until the line above — this is why the frame was only ever
-      // held in state rather than sent along with the registration itself.
-      // A capture problem here does not undo the account that already
-      // exists: it can always be added later from Security, so this is
-      // best-effort and silent on failure rather than another error the
-      // person has to read past on their way in.
-      if (faceFrame) {
-        try {
-          await authApi.enrollFace(faceFrame);
-        } catch {
-          /* Account creation already succeeded; face sign-in stays offered
-             from /security. */
-        }
-      }
-
       navigate(isLandowner(created.user) ? '/cases' : '/dashboard', { replace: true });
     } catch (err) {
       setFailure(err);
@@ -351,12 +347,17 @@ export default function Signup() {
                       reason — so this only appears for the officer path. */}
                   {applicantKind === 'officer' && (
                     <div className="signup__face">
-                      <p className="signup__grant-label">FACE SIGN-IN (OPTIONAL)</p>
+                      <p className="signup__grant-label">FACE SIGN-IN — REQUIRED</p>
                       <p className="signup__grant-meta">
-                        Capture it now to sign in by looking at the camera next time, or skip
-                        this and add it later from Security.
+                        Every officer account signs in by face. Centre your face in the frame,
+                        then capture, before creating the account.
                       </p>
                       <FaceCaptureCard onCapture={setFaceFrame} />
+                      {errors.face && (
+                        <p className="login__error" role="alert">
+                          {errors.face}
+                        </p>
+                      )}
                     </div>
                   )}
 
