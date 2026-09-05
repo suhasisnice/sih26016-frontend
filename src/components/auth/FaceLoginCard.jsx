@@ -106,7 +106,6 @@ export default function FaceLoginCard({ username, onSuccess }) {
     <div className="face-card">
       <div className="face-card__frame">
         {cameraState === 'ready' && (
-          /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <video ref={videoRef} autoPlay playsInline muted className="face-card__video" />
         )}
         {cameraState === 'starting' && (
