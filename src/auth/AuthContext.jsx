@@ -51,12 +51,18 @@ export function AuthProvider({ children }) {
 
   /* The second step: redeem an mfa_token plus the code it asked for. This
      is where a password login actually becomes a session, the same way
-     verifying a face or fingerprint capture does. */
+     verifying a face or fingerprint capture does.
+
+     Returns the whole {user, must_change_password} shape, not just the
+     user — a BhoomiMitra-provisioned landowner's session is real the
+     instant this resolves (set below, same as any other login), but
+     Login.jsx still has to route them to a forced "set a new password"
+     step instead of the dashboard before they do anything else. */
   const verifyMfaCode = useCallback(async (mfaToken, code) => {
     const result = await authApi.verifyLoginCode(mfaToken, code);
     setToken(result.access_token);
     setUser(result.user);
-    return result.user;
+    return { user: result.user, mustChangePassword: result.must_change_password };
   }, []);
 
   /* Registration, and face/fingerprint login, already return a token and a
