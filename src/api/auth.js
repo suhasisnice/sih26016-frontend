@@ -2,8 +2,15 @@ import { api } from './client';
 
 /* POST /auth/login is OAuth2 password flow: form-encoded username/password,
    returning {access_token, token_type, user}. */
+/* Every password login now returns {mfa_required, mfa_token, totp_enabled}
+   instead of a token directly — verifyLoginCode redeems that mfa_token for
+   the real session once the code step passes. */
 export function login(username, password) {
   return api.postForm('/auth/login', { username, password });
+}
+
+export function verifyLoginCode(mfaToken, code, opts) {
+  return api.post('/auth/login/verify', { mfa_token: mfaToken, code }, opts);
 }
 
 export function me(opts) {
