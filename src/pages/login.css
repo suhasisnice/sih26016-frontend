@@ -56,6 +56,8 @@
 
 .login__panel-inner { width: 100%; max-width: 380px; }
 
+.login__panel-mark { width: 44px; height: 44px; margin-bottom: var(--s4); object-fit: contain; }
+
 .login__title {
   font-family: var(--font-display);
   font-size: 32px;
@@ -264,17 +266,20 @@
 
 .login-card__logo-mark {
   flex: none;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--r-sm);
-  background: rgba(247, 239, 231, 0.16);
-  color: var(--text-on-brand);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-wordmark);
-  font-weight: 700;
-  font-size: 15px;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+/* Fills the open space below the intro copy and above the trust list — a
+   soft cream mat behind it so the mark reads clearly against the solid
+   brand panel rather than blending into it. */
+.login-card__welcome-mark {
+  width: 132px;
+  height: 132px;
+  margin: var(--s7) auto 0;
+  display: block;
+  object-fit: contain;
 }
 
 .login-card__logo-word {

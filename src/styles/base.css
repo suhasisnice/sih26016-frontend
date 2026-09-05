@@ -496,12 +496,10 @@ table { border-collapse: collapse; width: 100%; }
 }
 .sidebar__brand:hover { text-decoration: none; }
 .sidebar__brand-mark {
-  width: 30px; height: 30px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: var(--r-md);
-  background: rgba(255,255,255,0.22);
-  font-family: var(--font-wordmark);
-  font-weight: 700;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 .sidebar__brand-word {
   font-family: var(--font-wordmark);
