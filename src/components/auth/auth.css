@@ -179,3 +179,78 @@
   font-size: 12.5px;
   color: var(--text-faint);
 }
+
+/* The post-sign-in beat — see LoginSuccessOverlay.jsx. Full-viewport, over
+   everything, since this is the one moment on the whole site where
+   nothing behind it should be interactable. */
+.login-success {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s5);
+  background: var(--bg);
+  animation: login-success-fade-in 200ms ease-out;
+}
+
+.login-success__ring {
+  width: 96px;
+  height: 96px;
+}
+
+/* Circumference of r=36 is ~226.2 — the ring draws itself clockwise from
+   the top by animating that whole length off to zero, the same trick the
+   "keep still" dots elsewhere in this file use for a fill instead of a
+   stroke. */
+.login-success__circle {
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 226.2;
+  stroke-dashoffset: 226.2;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  animation: login-success-draw 500ms ease-out forwards;
+}
+
+/* ~48px of path length in the checkmark below (measured, not exact —
+   slightly over-budgeting the dasharray just means the stroke finishes
+   drawing a hair before the animation's clock runs out, not that it cuts
+   off short). Starts once the ring is most of the way drawn, not after
+   it finishes, so the two read as one continuous motion. */
+.login-success__check {
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: login-success-draw 350ms ease-out 400ms forwards;
+}
+
+.login-success__label {
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text);
+  opacity: 0;
+  animation: login-success-label-in 400ms ease-out 700ms forwards;
+}
+
+@keyframes login-success-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes login-success-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes login-success-label-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

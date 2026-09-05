@@ -11,6 +11,7 @@ import Button from '../components/ui/Button';
 import PublicHeader from '../components/public/PublicHeader';
 import FaceLoginCard from '../components/auth/FaceLoginCard';
 import FingerprintFallback from '../components/auth/FingerprintFallback';
+import LoginSuccessOverlay from '../components/auth/LoginSuccessOverlay';
 import '../components/public/public.css';
 import '../components/auth/auth.css';
 import './login.css';
@@ -121,6 +122,12 @@ export default function Login() {
   // typed a full username they're confident in.
   const faceCardRef = useRef(null);
 
+  /* Set the instant any sign-in path succeeds — its presence swaps the
+     whole card for LoginSuccessOverlay and holds the actual navigate()
+     until that overlay's own beat finishes, rather than jumping to the
+     next page the moment the credential checks out. */
+  const [signingInAs, setSigningInAs] = useState(null);
+
   const from = location.state && location.state.from;
 
   /* Where a role belongs after signing in. A landowner has no dashboard, so
@@ -135,9 +142,16 @@ export default function Login() {
 
   useEffect(() => {
     // Already signed in and arriving at /login — send them where they belong
-    // rather than showing a form they do not need.
-    if (user) navigate(landingFor(user), { replace: true });
-  }, [user, navigate, landingFor]);
+    // rather than showing a form they do not need. Guarded on signingInAs
+    // so this doesn't race the success overlay below: a sign-in that just
+    // happened on this page adopts the user into context immediately, but
+    // navigation itself waits for that overlay's own beat to finish.
+    if (user && !signingInAs) navigate(landingFor(user), { replace: true });
+  }, [user, signingInAs, navigate, landingFor]);
+
+  function finishSignIn() {
+    if (signingInAs) navigate(landingFor(signingInAs), { replace: true });
+  }
 
   function set(field, value) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -194,7 +208,7 @@ export default function Login() {
     setMfaPending(true);
     try {
       const signedIn = await verifyMfaCode(mfaToken, mfaCode.trim());
-      navigate(landingFor(signedIn), { replace: true });
+      setSigningInAs(signedIn);
     } catch (err) {
       setMfaError(err.message);
     } finally {
@@ -215,7 +229,7 @@ export default function Login() {
   function onBiometricSuccess(result) {
     setToken(result.access_token);
     adopt(result.user);
-    navigate(landingFor(result.user), { replace: true });
+    setSigningInAs(result.user);
   }
 
   const passwordForm = (
@@ -362,6 +376,15 @@ export default function Login() {
       </div>
     </form>
   );
+
+  if (signingInAs) {
+    return (
+      <LoginSuccessOverlay
+        label={`Signed in as ${signingInAs.full_name}`}
+        onDone={finishSignIn}
+      />
+    );
+  }
 
   return (
     <div className="public">
