@@ -109,6 +109,28 @@
   color: var(--ok);
 }
 
+/* Status is always colour plus a word — never colour alone (tokens.css's
+   rule for StatusBadge applies here too, this just isn't a pill since it
+   sits above the scan icon rather than inside a table). */
+.fingerprint-card__connection {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 12.5px;
+  color: var(--ok);
+}
+
+.fingerprint-card__connection.is-disconnected {
+  color: var(--danger);
+}
+
+.fingerprint-card__connection-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 .fingerprint-card__icon {
   width: 96px;
   height: 96px;
