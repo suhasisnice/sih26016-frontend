@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Landmark, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as authApi from '../api/auth';
 import { useAuth } from '../auth/AuthContext';
@@ -16,17 +17,38 @@ import './login.css';
 
 /* Registration, gated on an invitation.
 
-   Two steps on one screen. The code is checked first, on its own, so the
-   person can see which role and district it grants before choosing a
-   password — and so a wrong code fails immediately instead of after they
-   have filled a form.
+   Three steps on one screen, not two. Which are you — landowner or
+   officer — comes first, but it is orientation, not a real fork: the
+   invitation code underneath is the same field either way and the backend
+   checks it identically regardless of which card was clicked. The role is
+   never a field the browser sends; it comes from the invitation itself,
+   read server-side. Picking a card just puts the right words in front of
+   the right person before they go looking for the code they were handed —
+   "your district office" reads differently to someone who already works
+   there than to someone whose land is the subject of a notice.
 
-   The role is never a field. It comes from the invitation, which the backend
-   reads server-side; nothing this page sends can change it. */
+   The code is checked next, on its own, so the person can see which role
+   and district it actually grants before choosing a password — and so a
+   wrong code fails immediately instead of after they have filled a form. */
+
+const APPLICANT_COPY = {
+  landowner: {
+    intro:
+      'Landowner accounts are issued when land recorded in your name enters an acquisition case — the notice you received names the office that can give you a code.',
+    hint: 'From the notice you received, or your district office.',
+  },
+  officer: {
+    intro:
+      'Officer accounts are issued by your district or state office. Register with the invitation code you were given when your access was set up.',
+    hint: 'Issued by an administrator. It decides which role your account gets.',
+  },
+};
+
 export default function Signup() {
   const navigate = useNavigate();
   const { adopt } = useAuth();
 
+  const [applicantKind, setApplicantKind] = useState(null); // null | 'landowner' | 'officer'
   const [code, setCode] = useState('');
   const [invite, setInvite] = useState(null);
   const [checking, setChecking] = useState(false);
@@ -146,34 +168,82 @@ export default function Signup() {
             <h1 className="login__title">Create an account</h1>
             <p className="login__sub">
               Accounts on this system carry authority over other people&rsquo;s land, so
-              they are not self-serve. Register with the invitation code issued to
-              you by your district office.
+              they are not self-serve. Every one is issued by invitation.
             </p>
 
-            {!invite ? (
-              <form className="login__form" onSubmit={onCheckCode} noValidate>
-                {codeError && (
-                  <p className="login__error" role="alert">
-                    {codeError}
-                  </p>
-                )}
+            {!applicantKind ? (
+              <div className="signup__kind-choices">
+                <button
+                  type="button"
+                  className="signup__kind-choice"
+                  onClick={() => setApplicantKind('landowner')}
+                >
+                  <span className="signup__kind-choice-icon" aria-hidden="true">
+                    <User size={20} strokeWidth={1.75} />
+                  </span>
+                  <span>
+                    <span className="signup__kind-choice-label">I&rsquo;m a landowner</span>
+                    <span className="signup__kind-choice-detail">
+                      Land recorded in my name is part of an acquisition case
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="signup__kind-choice"
+                  onClick={() => setApplicantKind('officer')}
+                >
+                  <span className="signup__kind-choice-icon" aria-hidden="true">
+                    <Landmark size={20} strokeWidth={1.75} />
+                  </span>
+                  <span>
+                    <span className="signup__kind-choice-label">I&rsquo;m an officer</span>
+                    <span className="signup__kind-choice-detail">
+                      I work for a district or state office running cases
+                    </span>
+                  </span>
+                </button>
+              </div>
+            ) : !invite ? (
+              <>
+                <p className="login__sub">{APPLICANT_COPY[applicantKind].intro}</p>
 
-                <Input
-                  label="Invitation code"
-                  name="invite_code"
-                  autoFocus
-                  autoComplete="off"
-                  spellCheck="false"
-                  value={code}
-                  placeholder="BHM-XXXXXXXXXXXX-…"
-                  onChange={(event) => setCode(event.target.value)}
-                  hint="Issued by an administrator. It decides which role your account gets."
-                />
+                <form className="login__form" onSubmit={onCheckCode} noValidate>
+                  {codeError && (
+                    <p className="login__error" role="alert">
+                      {codeError}
+                    </p>
+                  )}
 
-                <Button type="submit" variant="primary" block disabled={checking}>
-                  {checking ? 'Checking…' : 'Continue'}
-                </Button>
-              </form>
+                  <Input
+                    label="Invitation code"
+                    name="invite_code"
+                    autoFocus
+                    autoComplete="off"
+                    spellCheck="false"
+                    value={code}
+                    placeholder="BHM-XXXXXXXXXXXX-…"
+                    onChange={(event) => setCode(event.target.value)}
+                    hint={APPLICANT_COPY[applicantKind].hint}
+                  />
+
+                  <Button type="submit" variant="primary" block disabled={checking}>
+                    {checking ? 'Checking…' : 'Continue'}
+                  </Button>
+                </form>
+
+                <button
+                  type="button"
+                  className="signup__grant-change"
+                  onClick={() => {
+                    setApplicantKind(null);
+                    setCode('');
+                    setCodeError(null);
+                  }}
+                >
+                  Not {applicantKind === 'landowner' ? 'a landowner' : 'an officer'}?
+                </button>
+              </>
             ) : (
               <>
                 <div className="signup__grant">
