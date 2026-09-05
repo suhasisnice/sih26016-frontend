@@ -22,6 +22,17 @@ export const isNumber = (label) => (value) =>
 export const notNegative = (label) => (value) =>
   value !== '' && Number(value) < 0 ? `${label} cannot be negative` : null;
 
+/* An HTML date input's value is already `YYYY-MM-DD`, so comparing it as a
+   string against today's own `YYYY-MM-DD` avoids the timezone trap of
+   parsing either one through `new Date()` — a bare date string parses as
+   UTC midnight, which reads as "yesterday" for most of the day anywhere
+   east of Greenwich. Optional field: empty passes, required() covers that. */
+export const notInPast = (label) => (value) => {
+  if (!value) return null;
+  const today = new Date().toLocaleDateString('en-CA'); // en-CA is YYYY-MM-DD
+  return value < today ? `${label} is in the past` : null;
+};
+
 /* Indian mobile numbers are ten digits starting 6–9. Optional field, so an
    empty value passes — required() is what makes a field mandatory. */
 export const phone = (label) => (value) => {

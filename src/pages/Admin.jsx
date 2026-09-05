@@ -6,7 +6,7 @@ import { useApi, useMutation } from '../hooks/useApi';
 import { useEnums } from '../hooks/useEnums';
 import { roleLabel } from '../lib/labels';
 import * as fmt from '../lib/format';
-import { required, validate } from '../lib/validate';
+import { notInPast, required, validate } from '../lib/validate';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -35,7 +35,13 @@ const EMPTY_VALUES = {
 
 function inviteStatus(invite) {
   if (invite.is_revoked) return { label: 'Revoked', tone: 'danger' };
-  if (invite.expires_on && new Date(invite.expires_on) < new Date()) {
+  // String comparison on YYYY-MM-DD, not `new Date(...) < new Date()` — the
+  // backend's own check (invites.redeem_reason) is a date-only comparison
+  // too, and comparing via Date objects parses expires_on as UTC midnight,
+  // which reads as already past for most of its actual last valid day
+  // anywhere east of Greenwich.
+  const today = new Date().toLocaleDateString('en-CA');
+  if (invite.expires_on && invite.expires_on < today) {
     return { label: 'Expired', tone: 'idle' };
   }
   if (invite.used_count >= invite.max_uses) return { label: 'Used up', tone: 'idle' };
@@ -84,7 +90,11 @@ export default function Admin() {
   }
 
   async function onSubmit() {
-    const rules = { role: [required('Role')], max_uses: [required('Number of uses')] };
+    const rules = {
+      role: [required('Role')],
+      max_uses: [required('Number of uses')],
+      expires_on: [notInPast('Expiry date')],
+    };
     if (DISTRICT_SCOPED_ROLES.includes(values.role)) rules.district_id = [required('District')];
     if (STATE_SCOPED_ROLES.includes(values.role)) rules.state_id = [required('State')];
     if (values.role === 'requiring_body') rules.organisation = [required('Organisation')];
@@ -329,7 +339,9 @@ export default function Admin() {
             <Input
               label="Expires on"
               type="date"
+              min={new Date().toLocaleDateString('en-CA')}
               value={values.expires_on}
+              error={errors.expires_on}
               onChange={(event) => set('expires_on', event.target.value)}
               hint="Optional — leave blank for a code that never expires."
             />
