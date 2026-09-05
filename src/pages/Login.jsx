@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, ShieldCheck, User, UserCheck2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
@@ -102,6 +102,10 @@ export default function Login() {
      landowner never has a mode at all — there is only ever the one method
      for that account kind. */
   const [mode, setMode] = useState('face');
+  // Enter in the username field below calls faceCardRef.current.submitNow()
+  // — the fast path past FaceLoginCard's own debounce, for anyone who
+  // typed a full username they're confident in.
+  const faceCardRef = useRef(null);
 
   const from = location.state && location.state.from;
 
@@ -354,6 +358,12 @@ export default function Login() {
                       placeholder="Enter your username"
                       value={values.username}
                       onChange={(event) => set('username', event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          if (mode === 'face') faceCardRef.current?.submitNow();
+                        }
+                      }}
                     />
                   </span>
                 </label>
@@ -362,7 +372,7 @@ export default function Login() {
 
             {accountKind === 'officer' && mode === 'face' && (
               <>
-                <FaceLoginCard username={values.username} onSuccess={onBiometricSuccess} />
+                <FaceLoginCard ref={faceCardRef} username={values.username} onSuccess={onBiometricSuccess} />
                 <div className="login-biometric-fallbacks">
                   <button type="button" className="login-biometric-fallback" onClick={() => setMode('fingerprint')}>
                     Issues with face? Unlock through fingerprint

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { CameraOff, ScanFace } from 'lucide-react';
 import * as authApi from '../../api/auth';
 import Button from '../ui/Button';
@@ -18,6 +18,14 @@ const CAMERA_ERROR_MESSAGE = {
   constraints: "This camera doesn't support the settings requested. Use another sign-in method below.",
 };
 
+// How long to wait after the last keystroke before treating the username
+// as "entered" and firing the automatic attempt. Without this, every
+// character typed produces a different string from the one before it, so
+// the auto-attempt effect below fired on every keystroke — "dc", "dc.",
+// "dc.b" each counted as a fresh username and each burned one try against
+// the shared login rate limit before anyone had finished typing.
+const USERNAME_DEBOUNCE_MS = 700;
+
 /* The camera card. Requests the webcam once mounted, shows the live feed,
    and tries a login exactly once the moment a username is filled in and
    the camera is ready.
@@ -31,13 +39,19 @@ const CAMERA_ERROR_MESSAGE = {
    being useful, and then the real next attempt (a person who actually
    showed up) got a lockout instead of a login. One attempt per username,
    then a Retry button the person has to actually click, means every
-   attempt against that budget was one somebody meant to make. */
-export default function FaceLoginCard({ username, onSuccess }) {
+   attempt against that budget was one somebody meant to make.
+
+   The wait can be skipped: Login.jsx forwards a ref and calls
+   submitNow() when Enter is pressed in the username field above, for
+   anyone who typed a full username they're confident in and doesn't want
+   to sit through the debounce. */
+const FaceLoginCard = forwardRef(function FaceLoginCard({ username, onSuccess }, ref) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const busyRef = useRef(false);
   const mountedRef = useRef(true);
+  const debounceTimerRef = useRef(null);
   // Which username the automatic attempt already ran for. Typing a
   // different username earns one fresh automatic try; retyping the same
   // one after a failure does not — that's what the Retry button is for.
@@ -172,17 +186,42 @@ export default function FaceLoginCard({ username, onSuccess }) {
     }
   }, [username, onSuccess]);
 
-  // The one automatic attempt: fires once the camera is ready and a
-  // username has been typed. Everything after that — including trying
-  // again with the exact same username — is the Retry button, never this
-  // effect firing a second time on its own.
+  // The one automatic attempt: fires once the camera is ready and the
+  // username has sat unchanged for USERNAME_DEBOUNCE_MS — not on every
+  // keystroke. Everything after that — including trying again with the
+  // exact same username — is the Retry button, never this effect firing a
+  // second time on its own.
   useEffect(() => {
-    if (cameraState !== 'ready') return;
+    if (cameraState !== 'ready') return undefined;
     const trimmed = username && username.trim();
-    if (!trimmed || autoAttemptedForRef.current === trimmed) return;
-    autoAttemptedForRef.current = trimmed;
-    attemptLogin();
+    if (!trimmed) return undefined;
+
+    debounceTimerRef.current = setTimeout(() => {
+      if (autoAttemptedForRef.current === trimmed) return;
+      autoAttemptedForRef.current = trimmed;
+      attemptLogin();
+    }, USERNAME_DEBOUNCE_MS);
+
+    return () => clearTimeout(debounceTimerRef.current);
   }, [cameraState, username, attemptLogin]);
+
+  // The fast path: Enter in the username field above skips the rest of
+  // the debounce wait and attempts right away. attemptLogin's own busyRef
+  // guard makes this safe even if the debounced attempt is already
+  // mid-flight for the same value.
+  useImperativeHandle(
+    ref,
+    () => ({
+      submitNow() {
+        const trimmed = username && username.trim();
+        if (!trimmed || cameraState !== 'ready') return;
+        clearTimeout(debounceTimerRef.current);
+        autoAttemptedForRef.current = trimmed;
+        attemptLogin();
+      },
+    }),
+    [username, cameraState, attemptLogin],
+  );
 
   return (
     <div className="face-card">
@@ -227,4 +266,6 @@ export default function FaceLoginCard({ username, onSuccess }) {
       )}
     </div>
   );
-}
+});
+
+export default FaceLoginCard;
