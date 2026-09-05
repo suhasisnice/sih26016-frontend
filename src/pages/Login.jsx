@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, ShieldCheck, User, UserCheck2 } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, Lock, ShieldCheck, User, UserCheck2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { isLandowner } from '../auth/permissions';
 import { roleLabel } from '../lib/labels';
@@ -33,8 +33,12 @@ import './login.css';
      and — if that has issues too — a further link down to username and
      password. Nobody has to know which factor "suits their desk"; the
      system just tries the strongest one first and steps down.
-   - No OTP yet. Password is the floor of that chain for now; an
-     authenticator code alongside it is planned but not built. */
+   - The floor of that chain is two steps now, not one: password, then a
+     code. POST /auth/login never returns a token any more, only an
+     mfa_token good for the follow-up at /auth/login/verify — an
+     authenticator app's real rotating code if one is enrolled, or a fixed
+     placeholder if it isn't yet (see app.services.totp on the backend for
+     why that placeholder exists and how temporary it's meant to be). */
 
 /* The demo account list publishes working credentials — six usernames and
    the password they share, one of them a State Administrator. That is
@@ -82,7 +86,7 @@ const TRUST = [
 ];
 
 export default function Login() {
-  const { login, adopt, user } = useAuth();
+  const { login, verifyMfaCode, adopt, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -91,6 +95,16 @@ export default function Login() {
   const [failure, setFailure] = useState(null);
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  /* Set once the password step passes — its presence is what switches the
+     password form over to the code form below, for both the landowner
+     path and the officer password-fallback path, since both share
+     passwordForm and now share mfaCodeForm the same way. */
+  const [mfaToken, setMfaToken] = useState(null);
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaError, setMfaError] = useState(null);
+  const [mfaPending, setMfaPending] = useState(false);
 
   /* Who is signing in — decides which methods are even on offer, not just
      which demo accounts are listed. */
@@ -134,6 +148,13 @@ export default function Login() {
     setAccountKind(kind);
     setMode('face');
     setFailure(null);
+    resetMfaStep();
+  }
+
+  function resetMfaStep() {
+    setMfaToken(null);
+    setMfaCode('');
+    setMfaError(null);
   }
 
   async function onSubmit(event) {
@@ -149,12 +170,35 @@ export default function Login() {
 
     setPending(true);
     try {
-      const signedIn = await login(values.username.trim(), values.password);
-      navigate(landingFor(signedIn), { replace: true });
+      // Never a signed-in session directly any more — see the module
+      // comment on why every password login now stops here and waits for
+      // the code step below.
+      const step = await login(values.username.trim(), values.password);
+      setMfaToken(step.mfa_token);
+      setTotpEnabled(step.totp_enabled);
     } catch (err) {
       setFailure(err);
     } finally {
       setPending(false);
+    }
+  }
+
+  async function onSubmitMfaCode(event) {
+    event.preventDefault();
+    setMfaError(null);
+    if (!mfaCode.trim()) {
+      setMfaError('Enter the code to continue.');
+      return;
+    }
+
+    setMfaPending(true);
+    try {
+      const signedIn = await verifyMfaCode(mfaToken, mfaCode.trim());
+      navigate(landingFor(signedIn), { replace: true });
+    } catch (err) {
+      setMfaError(err.message);
+    } finally {
+      setMfaPending(false);
     }
   }
 
@@ -272,6 +316,53 @@ export default function Login() {
     </>
   );
 
+  /* The code step. Shown in exactly the two places passwordForm is, once
+     mfaToken is set — never its own separate mode, since it isn't a
+     factor on the precedence order beside face/fingerprint/password, it's
+     the second half of "password" itself. */
+  const mfaCodeForm = (
+    <form className="login-mfa" onSubmit={onSubmitMfaCode} noValidate>
+      {mfaError && (
+        <p className="login-card__error" role="alert">
+          {mfaError}
+        </p>
+      )}
+
+      <p className="login-mfa__lede">
+        {totpEnabled
+          ? 'Enter the 6-digit code from your authenticator app.'
+          : "This account hasn't set up an authenticator app yet. Enter the temporary access code 123456 to continue — set up a real one from Security once you're signed in."}
+      </p>
+
+      <label className="login-field" htmlFor="mfa-code">
+        <span className="login-field__label">Verification code</span>
+        <span className={`login-field__control${mfaError ? ' is-invalid' : ''}`}>
+          <KeyRound size={17} strokeWidth={1.5} aria-hidden="true" />
+          <input
+            id="mfa-code"
+            name="mfa-code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            placeholder="123456"
+            value={mfaCode}
+            onChange={(event) => setMfaCode(event.target.value)}
+          />
+        </span>
+      </label>
+
+      <Button type="submit" variant="primary" block className="login-card__submit" disabled={mfaPending}>
+        {mfaPending ? 'Verifying…' : 'Verify and sign in'}
+      </Button>
+
+      <div className="login-biometric-fallbacks">
+        <button type="button" className="login-biometric-fallback" onClick={resetMfaStep}>
+          Wrong account? Start over
+        </button>
+      </div>
+    </form>
+  );
+
   return (
     <div className="public">
       <PublicHeader />
@@ -342,7 +433,7 @@ export default function Login() {
               </button>
             </div>
 
-            {accountKind === 'landowner' && passwordForm}
+            {accountKind === 'landowner' && (mfaToken ? mfaCodeForm : passwordForm)}
 
             {accountKind === 'officer' && (mode === 'face' || mode === 'fingerprint') && (
               <div className="login-biometric-username">
@@ -392,9 +483,9 @@ export default function Login() {
               </>
             )}
 
-            {accountKind === 'officer' && mode === 'password' && passwordForm}
+            {accountKind === 'officer' && mode === 'password' && (mfaToken ? mfaCodeForm : passwordForm)}
 
-            {(accountKind === 'landowner' || mode === 'password') && (
+            {(accountKind === 'landowner' || mode === 'password') && !mfaToken && (
               <p className="login-card__signup">
                 Been issued an invitation code? <Link to="/signup">Create an account</Link>
               </p>
