@@ -4,6 +4,17 @@ import * as authApi from '../../api/auth';
 import Button from '../ui/Button';
 import './auth.css';
 
+// See FaceLoginCard.jsx's identical constant for why getUserMedia's
+// DOMException.name gets its own message per cause instead of one
+// generic "camera blocked" line.
+const CAMERA_ERROR_MESSAGE = {
+  denied: 'Camera access was blocked. Check your browser’s site settings for this page (the icon in the address bar) and allow the camera, then reload.',
+  unsupported: "This browser can't access a camera.",
+  'no-device': 'No camera was found on this device.',
+  'in-use': 'The camera is already in use by another app or browser tab. Close it and reload this page.',
+  constraints: "This camera doesn't support the settings requested.",
+};
+
 /* Enrollment's camera card, not FaceLoginCard's. Login fires a capture
    silently every couple of seconds because the point of that screen is to
    need no action at all; enrollment is the opposite — a deliberate "take
@@ -38,8 +49,17 @@ export default function FaceEnrollCard({ onEnrolled }) {
         }
         streamRef.current = stream;
         setCameraState('ready');
-      } catch {
-        if (!cancelled) setCameraState('denied');
+      } catch (err) {
+        if (cancelled) return;
+        if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setCameraState('no-device');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setCameraState('in-use');
+        } else if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+          setCameraState('constraints');
+        } else {
+          setCameraState('denied');
+        }
       }
     }
 
@@ -102,14 +122,10 @@ export default function FaceEnrollCard({ onEnrolled }) {
             <span>Starting camera…</span>
           </div>
         )}
-        {(cameraState === 'denied' || cameraState === 'unsupported') && (
+        {CAMERA_ERROR_MESSAGE[cameraState] && (
           <div className="face-card__placeholder">
             <CameraOff size={32} strokeWidth={1.5} />
-            <span>
-              {cameraState === 'denied'
-                ? 'Camera access was blocked. Allow it in your browser to enroll a face.'
-                : "This browser can't access a camera."}
-            </span>
+            <span>{CAMERA_ERROR_MESSAGE[cameraState]}</span>
           </div>
         )}
         <canvas ref={canvasRef} className="face-card__canvas" aria-hidden="true" />
