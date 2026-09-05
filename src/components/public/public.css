@@ -485,6 +485,104 @@
   .notice-lookup__form .btn { margin-top: 0; }
 }
 
+/* ---------- Subscribe, and get a login — both under a found result ---------- */
+.notice-subscribe {
+  margin-top: var(--s5);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+  max-width: 420px;
+}
+.notice-subscribe__title { font-size: 15px; font-weight: 700; }
+.notice-subscribe__lede {
+  margin-top: var(--s1);
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+.notice-subscribe__form {
+  margin-top: var(--s4);
+  display: grid;
+  gap: var(--s3);
+}
+.notice-subscribe__check {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 13px;
+}
+.notice-subscribe__check--consent {
+  margin-top: var(--s2);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-muted);
+  align-items: flex-start;
+}
+.notice-subscribe__check--consent input { margin-top: 2px; }
+.notice-subscribe__form .btn { justify-self: start; }
+.notice-subscribe__error {
+  padding: var(--s2) var(--s3);
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+}
+.notice-subscribe__done {
+  margin-top: var(--s3);
+}
+.notice-subscribe__done-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ok);
+}
+.notice-subscribe__channel-result {
+  margin-top: var(--s2);
+  font-size: 12.5px;
+  color: var(--text);
+}
+.notice-subscribe__mode {
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+.notice-subscribe__failed {
+  color: var(--danger);
+}
+
+.notice-credentials {
+  margin-top: var(--s5);
+  padding: var(--s4) var(--s5);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--r-md);
+  max-width: 420px;
+}
+.notice-credentials__title { font-size: 15px; font-weight: 700; }
+.notice-credentials__facts {
+  margin: var(--s3) 0 0;
+  display: grid;
+  gap: var(--s2);
+}
+.notice-credentials__facts dt {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.notice-credentials__value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.notice-credentials__note {
+  margin-top: var(--s3);
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.notice-credentials .btn { margin-top: var(--s4); }
+
 /* ---------- Notice ---------- */
 .notice {
   display: grid;

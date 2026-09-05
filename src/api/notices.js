@@ -25,3 +25,17 @@ export function issue(payload, opts) {
 export function lookup(params, opts) {
   return api.get(`/notices/lookup${qs(params)}`, opts);
 }
+
+/* "Get updates about this land" — saves a subscription against the parcel,
+   independent of any account. Unauthenticated, like the lookup above. */
+export function subscribe(payload, opts) {
+  return api.post('/notices/subscribe', payload, opts);
+}
+
+/* Creates a landowner login for whoever owns the parcel just looked up.
+   Unauthenticated by necessity — the whole point is that this is how a
+   landowner gets a login in the first place. Returns {username,
+   temporary_password, login_code_hint}, shown exactly once. */
+export function provision(payload, opts) {
+  return api.post('/notices/provision', payload, opts);
+}

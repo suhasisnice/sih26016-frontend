@@ -17,6 +17,13 @@ export function me(opts) {
   return api.get('/auth/me', opts);
 }
 
+/* Replaces a BhoomiMitra-generated temporary password (see
+   api/notices.js's provision) with one the person actually chose. Always
+   the signed-in user's own account — there is no target-user id to pass. */
+export function setPassword(newPassword, opts) {
+  return api.post('/auth/set-password', { new_password: newPassword }, opts);
+}
+
 /* The invitation is checked before the form is filled, so the person can see
    which role and district the code grants them rather than discovering it
    after they have chosen a password. Unauthenticated by necessity — they
