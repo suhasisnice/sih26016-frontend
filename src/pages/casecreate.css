@@ -1,0 +1,31 @@
+/* A single-column form at a readable measure rather than a wide grid: this
+   is three fields, and stretching them across the page would make them
+   harder to fill, not easier. */
+
+.create-form {
+  display: grid;
+  gap: var(--s5);
+  max-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s6);
+}
+
+.create-form__actions {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s2);
+}
+
+.create-form__note {
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.6;
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 860px) {
+  .create-form { padding: var(--s5) var(--s4); }
+}

@@ -1,0 +1,97 @@
+/* Dashboard: scope selector, KPI row (styles/base.css), sections, stage
+   bars, trend chart, forecast panel. */
+
+.scope-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-bottom: var(--s5);
+}
+.scope-bar .field { margin-bottom: 0; min-width: 170px; }
+
+.sweep {
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-md);
+  background: var(--info-bg);
+  color: var(--text);
+  font-size: 12.5px;
+  margin-bottom: var(--s5);
+}
+.sweep.is-error { background: var(--danger-bg); color: var(--danger); }
+
+.section { margin-bottom: var(--s7); }
+
+.section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-bottom: var(--s4);
+  flex-wrap: wrap;
+}
+.section__title { font-size: 17px; }
+.section__count { font-size: 12px; color: var(--text-muted); }
+
+/* ---------- Stage bars ---------- */
+/* Statutory order, never sorted by size — the sequence is the point. */
+.stage-bars { display: grid; gap: var(--s2); }
+
+.stage-bar {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s2) var(--s3);
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.stage-bar:hover:not(:disabled) { background: var(--brand-tint); }
+.stage-bar:disabled { cursor: default; opacity: 0.55; }
+
+.stage-bar__label { font-size: 12.5px; color: var(--text-muted); }
+.stage-bar__track {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-alt);
+  overflow: hidden;
+}
+.stage-bar__fill { height: 100%; background: var(--brand); border-radius: var(--r-pill); }
+.stage-bar__count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.stage-bar.is-empty .stage-bar__count { color: var(--text-faint); }
+
+@media (max-width: 760px) {
+  .stage-bar { grid-template-columns: 120px minmax(0, 1fr) 36px; gap: var(--s2); }
+}
+
+/* ---------- Trend chart ---------- */
+.trend-chart {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s5);
+}
+.trend-chart svg { width: 100%; height: auto; display: block; }
+
+.trend-chart__area { fill: var(--brand-tint); opacity: 0.55; stroke: none; }
+.trend-chart__line { fill: none; stroke: var(--brand); stroke-width: 2; }
+.trend-chart__dot { fill: var(--surface); stroke: var(--brand); stroke-width: 1.75; }
+.trend-chart__label { font-size: 9px; fill: var(--text-faint); font-family: var(--font-ui); }
+
+.trend-chart__latest {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+.trend-chart__latest-value { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+.trend-chart__latest-label { font-size: 11.5px; color: var(--text-muted); }

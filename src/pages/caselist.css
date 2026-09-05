@@ -1,0 +1,104 @@
+/* Case list: filter bar, KPI row, status tab strip, then a dense table.
+   Built to the Figma "Case List" frame.
+
+   .filters/.filters__clear below predate that rebuild and are kept only
+   because Objections.jsx still imports this file for them — that page
+   hasn't been rebuilt to the design yet. Remove once it has. */
+.filters {
+  display: grid;
+  grid-template-columns: minmax(210px, 1.4fr) repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--s4);
+  align-items: end;
+  margin-bottom: var(--s5);
+}
+.filters__clear { padding-bottom: 10px; }
+@media (max-width: 860px) {
+  .filters { grid-template-columns: 1fr; gap: var(--s3); }
+  .filters__clear { padding-bottom: 0; }
+}
+
+.kpis--case-list { margin-bottom: var(--s5); }
+
+/* The status tab strip: a pill for the active tab, plain text with a muted
+   count for the rest, and the "showing N of M" line pinned to the far end.
+   Deliberately not the Proposals page's boxed pipeline chips — the frame
+   treats this one as a low-profile row directly above the table it filters,
+   not as its own card. */
+.case-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin-bottom: var(--s4);
+}
+
+.case-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px var(--s4);
+  border-radius: var(--r-pill);
+  border: none;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.case-tabs__tab:hover { color: var(--text); }
+.case-tabs__tab.is-active {
+  background: var(--text);
+  color: var(--text-on-brand);
+  font-weight: 600;
+}
+
+.case-tabs__count { font-variant-numeric: tabular-nums; opacity: 0.85; }
+
+.case-tabs__showing {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* .case-number now lives in styles/base.css — used by five pages. */
+
+.case-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.case-cell--num { align-items: flex-end; }
+
+.case-cell__title {
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.case-cell__meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.case-stage { color: var(--text-muted); }
+
+/* The mark on an overdue figure is the colour of the number itself, paired
+   with the 3px rule on the row. No pink wash. */
+.is-overdue { color: var(--danger); font-weight: 500; }
+
+/* ---------- Pagination ---------- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-top: var(--s4);
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.pager__controls { display: flex; align-items: center; gap: var(--s3); }
+.pager__page { font-variant-numeric: tabular-nums; color: var(--text-muted); }
+
+@media (max-width: 860px) {
+  .case-tabs__showing { display: none; }
+  .pager { flex-direction: column; align-items: flex-start; gap: var(--s2); }
+}
