@@ -10,6 +10,20 @@ import './auth.css';
 // rate-limit budget before a real attempt gets a turn.
 const CAPTURE_INTERVAL_MS = 2500;
 
+// getUserMedia's DOMException.name maps onto one of five states in the
+// effect below; each gets its own message here rather than one generic
+// "camera blocked" line, since the fix for "Chrome's per-site permission
+// is set to Block" is nothing like the fix for "another app already has
+// the webcam open" or "this machine has no camera at all" — telling them
+// apart is the whole point of catching the real error.
+const CAMERA_ERROR_MESSAGE = {
+  denied: 'Camera access was blocked. Check your browser’s site settings for this page (the icon in the address bar) and allow the camera, then reload.',
+  unsupported: "This browser can't access a camera. Use another sign-in method below.",
+  'no-device': 'No camera was found on this device. Use another sign-in method below.',
+  'in-use': 'The camera is already in use by another app or browser tab. Close it and reload this page.',
+  constraints: "This camera doesn't support the settings requested. Use another sign-in method below.",
+};
+
 /* The camera card. Requests the webcam once mounted, shows the live feed,
    and quietly tries a login every CAPTURE_INTERVAL_MS as long as a
    username is filled in — there is no separate "capture" button to click,
@@ -49,8 +63,24 @@ export default function FaceLoginCard({ username, onSuccess }) {
         }
         streamRef.current = stream;
         setCameraState('ready');
-      } catch {
-        if (!cancelled) setCameraState('denied');
+      } catch (err) {
+        if (cancelled) return;
+        // getUserMedia's own DOMException.name distinguishes "you said no"
+        // from "there's no camera" from "something else already has it
+        // open" — collapsing all three into "blocked" sends someone
+        // chasing browser permission settings that were never the problem.
+        if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setCameraState('no-device');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setCameraState('in-use');
+        } else if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+          setCameraState('constraints');
+        } else {
+          // NotAllowedError / PermissionDeniedError / SecurityError, and
+          // anything unrecognised — genuinely a permission or origin
+          // problem, or unknown enough not to guess further.
+          setCameraState('denied');
+        }
       }
     }
 
@@ -125,14 +155,10 @@ export default function FaceLoginCard({ username, onSuccess }) {
             <span>Starting camera…</span>
           </div>
         )}
-        {(cameraState === 'denied' || cameraState === 'unsupported') && (
+        {CAMERA_ERROR_MESSAGE[cameraState] && (
           <div className="face-card__placeholder">
             <CameraOff size={32} strokeWidth={1.5} />
-            <span>
-              {cameraState === 'denied'
-                ? 'Camera access was blocked. Allow it in your browser, or use another sign-in method below.'
-                : "This browser can't access a camera. Use another sign-in method below."}
-            </span>
+            <span>{CAMERA_ERROR_MESSAGE[cameraState]}</span>
           </div>
         )}
         <canvas ref={canvasRef} className="face-card__canvas" aria-hidden="true" />
