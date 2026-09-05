@@ -31,6 +31,7 @@ import Proposals from './pages/Proposals';
 import ProposalDetail from './pages/ProposalDetail';
 import ProposalCreate from './pages/ProposalCreate';
 import Notifications from './pages/Notifications';
+import Security from './pages/Security';
 import Reports from './pages/Reports';
 import NotAuthorised from './pages/NotAuthorised';
 import NotFound from './pages/NotFound';
@@ -212,6 +213,19 @@ export default function Root() {
                 <RequireRole>
                   <App>
                     <Notifications />
+                  </App>
+                </RequireRole>
+              }
+            />
+            {/* Unguarded by role — enrolling a face or fingerprint is
+                something every account does to itself, the same as owning
+                a password. */}
+            <Route
+              path="/security"
+              element={
+                <RequireRole>
+                  <App>
+                    <Security />
                   </App>
                 </RequireRole>
               }

@@ -7,6 +7,7 @@ import {
   LogOut,
   Map as MapIcon,
   MessageSquareWarning,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { PROPOSAL_VIEWERS, REPORT_READERS, SUPERVISORY } from '../../auth/permissions';
@@ -70,6 +71,13 @@ export default function AppShell({ children }) {
       <div className="shell__main">
         <header className="topbar">
           <span className="topbar__spacer" />
+          <Link
+            to="/security"
+            className={`topbar__icon${location.pathname === '/security' ? ' is-active' : ''}`}
+            aria-label="Security settings"
+          >
+            <ShieldCheck size={18} strokeWidth={1.75} />
+          </Link>
           <Link
             to="/notifications"
             className={`topbar__icon${location.pathname === '/notifications' ? ' is-active' : ''}`}
