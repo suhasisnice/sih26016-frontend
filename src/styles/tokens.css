@@ -1,0 +1,108 @@
+/* The palette, type and spacing for the whole product.
+   CLAUDE.md 3.1 is the source of this file. Nothing outside it defines a
+   colour, and no spacing value exists outside the scale below. If you need
+   something that isn't here, ask — don't add it quietly.
+
+   Rebuilt from the Figma file "UI-design-page" (Style Guide page + the
+   Home/login-page/case-list frames) — every hex below is read off an actual
+   layer, not eyeballed from a screenshot. Three things the frames settled
+   that the old tokens didn't have:
+
+   1. Three distinct mauve surfaces, not one. The public header/footer, the
+      primary button, and the secondary button are three different values in
+      the design (--brand-chrome, --brand, --brand-soft) — collapsing them
+      to one hue loses a real distinction the designer made.
+   2. Cards sit on pure white, not an off-white. CLAUDE.md 3.3 previously
+      banned pure white; the frames use it deliberately against the cream
+      page, so that rule is retired below (see the surfaces block).
+   3. Two text colours needed darkening for the same reason the old file
+      darkened its own spec colours: they carry small text and measured
+      under 4.5:1. Contrast-checked with WCAG's formula, not guessed. */
+
+:root {
+  /* ---- Brand ---- */
+  --brand:            #6B5560;  /* primary buttons, links, the one accent that means "click me" */
+  --brand-hover:      #59454F;  /* one step darker, so hover still reads as a change */
+  --brand-soft:       #C7A9A3;  /* secondary buttons, selected rows — dusty rose */
+  --brand-tint:       #E8D2C4;  /* active nav pill, faintest wash, default icon-badge fill */
+  /* The public header/footer bar specifically — lighter than --brand, and a
+     large-enough surface (nav links are 24px+) that dark text sits on it
+     directly rather than --text-on-brand. Figma keeps this distinct from
+     the button colour; collapsing the two would flatten a real decision. */
+  --brand-chrome:     #9E8189;
+
+  /* ---- Surfaces ---- */
+  --bg:               #F7EFE7;  /* warm cream — the page */
+  --surface:          #FFFFFF;  /* cards, tables, panels — pure white against the cream page */
+  --surface-alt:      #F7EFE7;  /* table header rows, inset panels — same as page, reads as recessed */
+  --border:           #E8D2C4;  /* hairlines: row dividers, search divider, header rule */
+  --border-strong:    #D6C4BD;  /* card and panel outlines */
+
+  /* ---- Text ---- */
+  --text:             #3E3239;  /* warm near-black — never pure black */
+  --text-muted:       #6B5560;  /* subcopy, inactive nav links, field labels */
+  /* Spec value #9E8189 measured 3.10:1 on --bg — this carries 12-14px table
+     headers and placeholder text, which needs 4.5:1. Darkened along the same
+     hue to 4.62:1 on --bg (5.26:1 on --surface). */
+  --text-faint:       #82646D;
+  --text-on-brand:    #F7EFE7;  /* only for text on --brand itself — --brand-chrome and --brand-soft are light enough for --text */
+  /* --brand-chrome sits almost exactly midway in luminance between --text and
+     --text-on-brand, so NEITHER clears 4.5:1 on it — only --text's 3.46:1,
+     which is fine for the header's large wordmark and nav links but not for
+     the footer's smaller tagline and column links. Darkened further, off the
+     same hue, until it does: 4.52:1. */
+  --text-on-chrome:   #272024;
+
+  /* ---- Status ---- */
+  --ok:               #29784F;  /* closed, low priority, resolved */
+  --ok-bg:            #E3F2E8;
+  /* Spec value #A66614 measured 4.12:1 on --warn-bg — under the 4.5:1 an
+     11-13px badge needs. Darkened to 4.53:1, same background. */
+  --warn:             #9D6013;  /* pending, medium priority */
+  --warn-bg:          #FFF0D4;
+  --danger:           #B2382E;  /* overdue, high/critical priority */
+  --danger-bg:        #FFE3DE;
+  /* Critical priority gets a visibly deeper tint than high/overdue in the
+     frame (#FFD6D1 vs #FFE3DE) — one severity tier up, same danger text. */
+  --danger-bg-strong: #FFD6D1;
+  --info:             #6B5560;  /* in-progress status */
+  --info-bg:          #EDE3E8;
+  /* No frame needed an idle/not-applicable state, so this is extrapolated
+     from the same warm-neutral family as --text-faint rather than copied
+     off a layer. Contrast-checked the same way: 4.55:1 on --bg. */
+  --idle:             #7A6D68;
+  --idle-bg:          #EDE6E1;
+
+  /* ---- Type ---- */
+  /* Judson replaces Source Serif 4 — every heading, label and button in the
+     frames is set in it. */
+  --font-display: "Judson", Georgia, "Times New Roman", serif;
+  --font-ui:      "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  /* The BHOOMIMITRA wordmark specifically, everywhere it appears — per
+     request, matching how the Figma layer itself is tagged ("Tamil
+     MN:Bold"). Tamil MN is an Apple system font: it ships with macOS/iOS,
+     is not distributable on the web, and cannot be loaded here the way
+     Judson/Inter are (CLAUDE.md's CDN allowlist is Google Fonts only, and
+     Tamil MN isn't on it). It renders correctly on Mac/iPhone/iPad, where
+     it is pre-installed, and falls back to Judson everywhere else — there
+     is no way to make a proprietary system font render on Windows/Android
+     from a web page. */
+  --font-wordmark: "Tamil MN", "Judson", Georgia, "Times New Roman", serif;
+
+  /* ---- Spacing scale — never use a value outside this ---- */
+  /* s9/s10 added: the footer's column gap (120px) and container padding
+     (80px) in the frames don't fit the old 4..64 scale. */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+  --s9: 80px; --s10: 120px;
+
+  /* ---- Radius & elevation ---- */
+  /* The frames round far more than the old 4/6/10 scale: buttons and inputs
+     sit around 9-10px, panels and tables at 14px, KPI cards at 20px, the
+     login card at 30px, and pills (badges, avatars, active tabs) at full
+     round. */
+  --r-sm: 8px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px; --r-2xl: 30px;
+  --r-pill: 999px;
+  --shadow: 0 1px 2px rgba(62,50,57,0.06), 0 1px 8px rgba(62,50,57,0.04);
+}

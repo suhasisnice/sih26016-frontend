@@ -1,0 +1,304 @@
+/* Proposals: the pipeline strip, the queue table, and the detail file.
+
+   The strip is the one piece of chrome unique to this screen. It is a
+   pipeline, not a filter bar: the chips sit in the order a proposal moves
+   through them, so the shape of the row is itself information — a bulge at
+   "Under scrutiny" means the state is the bottleneck, and that reads before
+   any number does. */
+
+.pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-bottom: var(--s5);
+}
+
+.pipeline__chip {
+  flex: 1 1 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  border-top: 2px solid var(--border-strong);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.pipeline__chip:hover { background: var(--brand-tint); }
+
+.pipeline__chip:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.pipeline__chip.is-active {
+  background: var(--brand-tint);
+  border-color: var(--brand);
+}
+
+/* The top rule carries the status colour. A 2px edge rather than a filled
+   background: seven filled chips in a row would be louder than the table
+   they sit above, and the table is the thing being read. */
+.pipeline__chip.is-draft          { border-top-color: var(--idle); }
+.pipeline__chip.is-submitted      { border-top-color: var(--info); }
+.pipeline__chip.is-under_scrutiny { border-top-color: var(--info); }
+.pipeline__chip.is-returned       { border-top-color: var(--warn); }
+.pipeline__chip.is-approved       { border-top-color: var(--ok); }
+.pipeline__chip.is-rejected       { border-top-color: var(--danger); }
+.pipeline__chip.is-withdrawn      { border-top-color: var(--idle); }
+
+.pipeline__count {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.pipeline__label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.proposals__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s4);
+  align-items: flex-end;
+  margin-bottom: var(--s4);
+}
+
+.proposals__search {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+}
+
+.proposals__search input {
+  min-width: 240px;
+  padding: 7px var(--s3);
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+.proposals__search input:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+  border-color: var(--brand);
+}
+
+.proposals__number {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.proposals__title { line-height: 1.35; }
+
+.proposals__body {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.proposals__held {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.proposals__waiting { font-variant-numeric: tabular-nums; }
+
+/* Not "late" in any statutory sense — there is no clock on scrutiny — but
+   three weeks without movement is what a reviewer should have their eye
+   drawn to. */
+.proposals__waiting.is-long { color: var(--danger); font-weight: 500; }
+
+.proposals__foot {
+  margin-top: var(--s5);
+  font-size: 12.5px;
+  color: var(--text-faint);
+  max-width: 68ch;
+}
+
+/* ---------------- detail ---------------- */
+
+.proposal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--s5);
+  align-items: start;
+}
+
+.proposal__main { min-width: 0; }
+
+.proposal__purpose {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s4);
+  line-height: 1.6;
+  max-width: 70ch;
+}
+
+.proposal__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin: var(--s4) 0;
+}
+
+.proposal__fact {
+  background: var(--surface);
+  padding: var(--s3) var(--s4);
+}
+
+.proposal__fact dt {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 3px;
+}
+
+.proposal__fact dd {
+  margin: 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The routing panel: where the file is, and what this user may do with it. */
+.routing {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s4);
+  position: sticky;
+  top: var(--s4);
+}
+
+.routing__where {
+  font-size: 12px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--s1);
+}
+
+.routing__holder {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.3;
+  margin-bottom: var(--s3);
+}
+
+.routing__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: var(--s4);
+}
+
+.routing__note {
+  width: 100%;
+  min-height: 70px;
+  padding: var(--s2) var(--s3);
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  resize: vertical;
+}
+
+.routing__idle {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  padding: var(--s3);
+  background: var(--bg);
+  border-radius: var(--r-sm);
+}
+
+/* The review trail. A rail with a node per hand-off — the same visual
+   language as the case stage timeline, deliberately: they are the same kind
+   of object and should not look like two unrelated inventions. */
+.trail { list-style: none; margin: 0; padding: 0; }
+
+.trail__item {
+  position: relative;
+  padding: 0 0 var(--s4) var(--s5);
+  border-left: 1px solid var(--border);
+}
+
+.trail__item:last-child { border-left-color: transparent; padding-bottom: 0; }
+
+.trail__item::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+}
+
+.trail__item.is-current::before {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.trail__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  align-items: baseline;
+}
+
+.trail__actor { font-size: 12.5px; color: var(--text-muted); }
+.trail__date  { font-size: 12px; color: var(--text-faint); margin-left: auto; }
+
+.trail__note {
+  margin: var(--s2) 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 62ch;
+}
+
+@media (max-width: 1000px) {
+  .proposal { grid-template-columns: minmax(0, 1fr); }
+  .routing { position: static; }
+}
+
+.proposal__section {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  margin: var(--s6) 0 var(--s4);
+}
+
+/* Two notes that sit in the routing panel but are not the panel's idle
+   state: one reports where the file went, the other why a move failed. */
+.routing__sanctioned { margin-top: var(--s4); }
+
+.routing__failed {
+  margin-top: var(--s4);
+  color: var(--danger);
+  background: var(--danger-bg);
+}

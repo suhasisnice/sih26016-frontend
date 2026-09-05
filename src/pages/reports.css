@@ -1,0 +1,99 @@
+/* Reports.
+
+   Four rows, not four cards in a grid. A grid of equal boxes is the shape
+   this page most wants to become and the one thing CLAUDE.md 4.1 rules out;
+   it is also wrong on its own terms, because these registers are not peers —
+   the compensation one carries names against amounts and the KPI one carries
+   no personal data at all. A list lets each say what it is at its own
+   length. */
+
+.reports__scope {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+.reports__scope-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: var(--s3);
+}
+
+.reports__scope-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s4);
+  align-items: flex-end;
+}
+
+.reports__scope-fields .field { min-width: 200px; }
+
+.reports {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.report {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--s5);
+  align-items: end;
+  padding: var(--s5);
+}
+
+.report + .report { border-top: 1px solid var(--border); }
+
+.report__text { min-width: 0; }
+
+.report__title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: var(--s1);
+}
+
+.report__body {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  max-width: 62ch;
+}
+
+.report__error {
+  margin-top: var(--s2);
+  font-size: 12.5px;
+  color: var(--danger);
+}
+
+.report__filters {
+  display: flex;
+  gap: var(--s3);
+  align-items: flex-end;
+}
+
+.report__filters .field { min-width: 160px; }
+
+.report__action { white-space: nowrap; }
+
+.reports__foot {
+  margin-top: var(--s4);
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+@media (max-width: 900px) {
+  .report {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s4);
+    align-items: stretch;
+  }
+  .report__filters { flex-wrap: wrap; }
+}

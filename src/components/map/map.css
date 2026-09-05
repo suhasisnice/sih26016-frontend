@@ -1,0 +1,85 @@
+/* The parcel map. No Figma frame exists for this screen — see the comment
+   at the top of pages/MapView.jsx — so this follows the design tokens and
+   the rest of the application shell's density rather than a layout brief. */
+
+.map-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--s5);
+  height: calc(100vh - 260px);
+  min-height: 480px;
+}
+
+.map-frame {
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.map-canvas { width: 100%; height: 100%; background: var(--surface-alt); }
+
+.map-chip {
+  position: absolute;
+  left: var(--s4);
+  bottom: var(--s4);
+  z-index: 500;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  box-shadow: var(--shadow);
+}
+.map-chip--warn { color: var(--warn); border-color: var(--warn); }
+.map-chip--offline { left: auto; right: var(--s4); }
+
+.map-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  overflow-y: auto;
+}
+
+.map-selected {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s4);
+  box-shadow: var(--shadow);
+}
+.map-selected__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  margin-bottom: var(--s3);
+}
+.map-selected dl { display: grid; gap: var(--s2); margin: 0 0 var(--s4); }
+.map-selected dl div { display: flex; justify-content: space-between; gap: var(--s3); font-size: 12.5px; }
+.map-selected dt { color: var(--text-faint); }
+.map-selected dd { margin: 0; text-align: right; color: var(--text); }
+
+.map-hint { font-size: 12px; color: var(--text-muted); line-height: 1.55; }
+
+.legend { display: grid; gap: var(--s2); }
+.legend__item { display: flex; align-items: center; gap: var(--s2); font-size: 12.5px; color: var(--text-muted); }
+.legend__swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.legend__count { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--text); }
+
+@media (max-width: 960px) {
+  .map-shell { grid-template-columns: 1fr; height: auto; }
+  .map-frame { height: 420px; }
+}
+
+/* ---------- Leaflet parcel paths ---------- */
+/* Presentation attributes on an SVG path cannot take a var(), so the colour
+   comes from a class here rather than an inline style on the element. */
+.leaflet-container { font-family: var(--font-ui); }
+
+.parcel { stroke-opacity: 0.9; fill-opacity: 0.55; }
+.parcel--notified { stroke: var(--idle); fill: var(--idle); }
+.parcel--under-acquisition { stroke: var(--warn); fill: var(--warn); }
+.parcel--acquired { stroke: var(--ok); fill: var(--ok); }
+.parcel--possession-taken { stroke: var(--info); fill: var(--info); }
+.parcel.is-selected { fill-opacity: 0.8; stroke-opacity: 1; }

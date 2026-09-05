@@ -1,0 +1,135 @@
+/* Objection detail: facts strip, grounds summary, status stepper, activity.
+   Built to the Figma "Objection Detail" frame. */
+
+.objection-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: var(--s5);
+}
+
+.objection-facts div { background: var(--surface); padding: var(--s4); }
+
+.objection-facts dt {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-bottom: 3px;
+}
+
+.objection-facts dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.objection-summary {
+  background: var(--brand-tint);
+  border-radius: var(--r-md);
+  padding: var(--s4) var(--s5);
+  margin-bottom: var(--s6);
+  max-width: 72ch;
+}
+
+.objection-summary__label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: var(--s2);
+}
+
+.objection-summary p:last-child {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* ---------- Stepper ---------- */
+/* Three nodes, keyed off the real objection_status enum rather than the
+   frame's invented Submitted/Assigned/Under-review sequence — see the note
+   at the top of ObjectionDetail.jsx for why. */
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: var(--s7);
+  max-width: 640px;
+}
+
+.stepper__node {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s2);
+}
+
+.stepper__marker {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-strong);
+  color: var(--text-faint);
+  z-index: 1;
+}
+
+.stepper__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.stepper__date {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepper__connector {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border-strong);
+  z-index: 0;
+}
+
+.stepper__node.is-done .stepper__marker {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--text-on-brand);
+}
+.stepper__node.is-done .stepper__label { color: var(--text); }
+.stepper__node.is-done .stepper__connector { background: var(--ok); }
+
+.stepper__node.is-current .stepper__marker {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--text-on-brand);
+}
+.stepper__node.is-current .stepper__label { color: var(--text); font-weight: 700; }
+
+.objection-section {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: var(--s4);
+}
+
+.objection-trail__waiting {
+  color: var(--text-faint);
+}
+.objection-trail__waiting .trail__head { gap: var(--s2); align-items: center; }
+.objection-trail__waiting .trail__actor { font-style: italic; }

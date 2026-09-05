@@ -1,0 +1,549 @@
+/* NOTE: everything below down to the "Signup" section is the OLD split
+   photo/panel layout. Signup.jsx still imports this file and still uses
+   these classes (.login, .login__photo, .login__panel, ...) — it has not
+   been rebuilt to the design yet, so they stay untouched. The new Login
+   page below uses its own .login-page/.login-card namespace instead of
+   colliding with them. */
+
+/* Login is the one place inside the public register that carries a
+   photograph next to a working form. The split is 44/56 rather than half and
+   half — asymmetry reads as considered. */
+
+.login {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.login__photo {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.6) brightness(1.05);
+  display: flex;
+  align-items: flex-end;
+  min-height: 420px;
+}
+
+.login__photo-wash {
+  position: absolute;
+  inset: 0;
+  background: rgba(246, 238, 231, 0.3);
+}
+
+.login__quote {
+  position: relative;
+  margin: 0;
+  padding: var(--s7);
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.45;
+  color: var(--text);
+  max-width: 30ch;
+  /* The opening quotation mark hangs outside the measure so the first letter
+     of the line aligns with everything beneath it. */
+  text-indent: -0.42em;
+}
+
+.login__panel {
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s8) var(--s7);
+}
+
+.login__panel-inner { width: 100%; max-width: 380px; }
+
+.login__title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-left: -1px;
+}
+
+.login__sub {
+  margin-top: var(--s3);
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.login__form {
+  margin-top: var(--s6);
+  display: grid;
+  gap: var(--s4);
+}
+
+.login__error {
+  padding: var(--s3) var(--s4);
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+}
+
+.login__accounts {
+  margin-top: var(--s7);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+}
+
+.login__accounts-heading {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  margin-bottom: var(--s3);
+}
+
+.login__accounts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.login__account {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  background: var(--surface);
+  border: none;
+  text-align: left;
+  transition: background-color 120ms ease;
+}
+.login__account:hover { background: var(--brand-tint); }
+
+.login__account-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.login__account-role {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.login__accounts-note {
+  margin-top: var(--s3);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.login__accounts-note code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 860px) {
+  .login { grid-template-columns: 1fr; }
+  .login__photo { min-height: 190px; }
+  .login__quote { padding: var(--s5); font-size: 16px; }
+  .login__panel { padding: var(--s6) var(--s4) var(--s7); }
+}
+
+/* ---------- Signup ---------- */
+/* What the invitation grants, shown before the form. A panel rather than a
+   line of text, because "this will make you a District Collector for
+   Tumakuru" is the most consequential thing on the screen. */
+.signup__grant {
+  margin-top: var(--s6);
+  padding: var(--s4) var(--s5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--r-md);
+}
+
+.signup__grant-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.signup__grant-role {
+  margin-top: var(--s2);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.signup__grant-meta {
+  margin-top: var(--s2);
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.signup__grant-change {
+  margin-top: var(--s3);
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--brand-hover);
+}
+.signup__grant-change:hover { text-decoration: underline; }
+
+.signup__alt {
+  margin-top: var(--s5);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Login — built to the Figma "login-page" frame's split card.
+   ========================================================================== */
+
+.login-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s5);
+  padding: var(--s8) var(--s5);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 1080px;
+  min-height: 620px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+  background: var(--surface);
+  border-radius: var(--r-2xl);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(62, 50, 57, 0.1), 0 24px 48px rgba(62, 50, 57, 0.12);
+}
+
+/* ---------- Left: welcome / trust panel ---------- */
+.login-card__welcome {
+  background: var(--brand);
+  color: var(--text-on-brand);
+  padding: var(--s7) var(--s6);
+  display: flex;
+  flex-direction: column;
+}
+
+.login-card__welcome-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-on-brand);
+}
+
+/* The card-scale echo of the page header's wordmark — same brand, smaller
+   register, so it still reads as the product once you're inside the card. */
+.login-card__logo {
+  margin-top: var(--s3);
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.login-card__logo-mark {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  background: rgba(247, 239, 231, 0.16);
+  color: var(--text-on-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-wordmark);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.login-card__logo-word {
+  font-family: var(--font-wordmark);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--text-on-brand);
+  opacity: 0.92;
+}
+
+.login-card__welcome-sub {
+  margin-top: var(--s4);
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-on-brand);
+  opacity: 0.88;
+  max-width: 34ch;
+}
+
+.login-card__trust {
+  list-style: none;
+  margin: auto 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s6);
+}
+
+.login-card__trust li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s4);
+}
+
+.login-card__trust-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
+  background: rgba(247, 239, 231, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-on-brand);
+}
+
+.login-card__trust-heading {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-on-brand);
+}
+
+.login-card__trust-detail {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-on-brand);
+  opacity: 0.82;
+}
+
+/* ---------- Right: the working form ---------- */
+.login-card__form {
+  padding: var(--s7) var(--s6);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.login-card__form-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: var(--s5);
+}
+
+/* Filters the demo accounts list further down — see the comment at its
+   call site in Login.jsx for why this isn't a role picker on the form
+   itself. */
+.login-role-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+  margin-bottom: var(--s5);
+}
+
+.login-role-tabs__tab {
+  padding: 11px var(--s4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--brand-soft);
+  background: var(--brand-tint);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
+.login-role-tabs__tab:hover { background: var(--brand-soft); }
+.login-role-tabs__tab.is-active {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--text-on-brand);
+}
+
+.login-card__form form { display: grid; gap: var(--s4); }
+
+.login-card__error {
+  padding: var(--s3) var(--s4);
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+}
+
+.login-field { display: grid; gap: var(--s2); }
+
+.login-field__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.login-field__control {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 0 var(--s4);
+  height: 50px;
+  background: var(--bg);
+  border: 1px solid var(--brand-soft);
+  border-radius: var(--r-md);
+  color: var(--text-muted);
+}
+.login-field__control:focus-within {
+  border-color: var(--brand);
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+.login-field__control.is-invalid { border-color: var(--danger); }
+
+.login-field__control input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14.5px;
+  color: var(--text);
+}
+.login-field__control input::placeholder { color: var(--text-faint); }
+
+.login-field__toggle {
+  flex: none;
+  display: inline-flex;
+  padding: var(--s1);
+  color: var(--text-muted);
+  background: none;
+  border: none;
+}
+.login-field__toggle:hover { color: var(--text); }
+
+.login-field__error {
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.login-card__reset {
+  margin-top: calc(var(--s2) * -1);
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.login-card__submit { margin-top: var(--s2); min-height: 52px; font-size: 15px; }
+
+.login-card__signup {
+  margin-top: var(--s5);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.login-card__accounts {
+  margin-top: var(--s6);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+}
+
+.login-card__accounts-heading {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: var(--s3);
+}
+
+.login-card__accounts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.login-card__account {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  background: var(--surface);
+  border: none;
+  text-align: left;
+  transition: background-color 120ms ease;
+}
+.login-card__account:hover { background: var(--brand-tint); }
+
+.login-card__account-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.login-card__account-role {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.login-card__accounts-note {
+  margin-top: var(--s3);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.login-card__accounts-note code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ---------- Privacy pill ---------- */
+.login-privacy {
+  padding: var(--s3) var(--s6);
+  background: var(--brand-tint);
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--text);
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .login-page { padding: var(--s6) var(--s4); }
+  .login-card {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    min-height: 0;
+  }
+  .login-card__welcome { padding: var(--s5) var(--s4); }
+  .login-card__trust { margin-top: var(--s5); gap: var(--s4); }
+  .login-card__form { padding: var(--s5) var(--s4); overflow-y: visible; }
+}
