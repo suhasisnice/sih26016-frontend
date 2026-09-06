@@ -1,38 +1,30 @@
 import { useState } from 'react';
 import * as personsApi from '../../api/persons';
 import { useMutation } from '../../hooks/useApi';
-import { useEnums } from '../../hooks/useEnums';
 import * as fmt from '../../lib/format';
-import { compensationStatusLabel } from '../../lib/labels';
-import { isNumber, notNegative, validate } from '../../lib/validate';
+import { isNumber, notNegative, required, validate } from '../../lib/validate';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
-import { Input, Select } from '../ui/Field';
+import { Input } from '../ui/Field';
 
-/* Record a payment or correct an award. Compensation is edited on its own,
-   never alongside R&R (see RnrModal) — a merged form would misrepresent
-   exactly the households the two figures exist to tell apart.
+/* Open the first award for a household that has none yet. Only shown for a
+   household that actually owns acquired land here (PeoplePanel checks
+   parcel_count before offering this) — awarding a household with nothing
+   taken from it is not a state the Act allows.
 
-   The award itself is never a typed-in total: Sec. 26-30 build it from
-   market value plus a statutory solatium (fixed at 100% of market value by
-   Sec. 30(1)) plus Sec. 34 delay interest, so this form edits those three
-   inputs and shows the resulting award as a computed read-out rather than
-   a field — matching what the backend actually accepts. */
-export default function CompensationModal({ person, onClose, onDone }) {
-  const { compensation_statuses: statuses } = useEnums();
-  const c = person.compensation;
-
+   Sec. 30(1) fixes solatium at 100% of market value, so it is pre-filled
+   rather than left blank; interest defaults to zero since an award is not
+   yet late the moment it is first declared. */
+export default function DeclareAwardModal({ person, caseId, onClose, onDone }) {
   const [values, setValues] = useState({
-    market_value_amount: String(c.market_value_amount),
-    solatium_rate_pct: String(c.solatium_rate_pct),
-    interest_amount: String(c.interest_amount),
-    amount_paid: String(c.amount_paid),
-    status: c.status,
-    awarded_on: c.awarded_on || '',
+    market_value_amount: '',
+    solatium_rate_pct: '100',
+    interest_amount: '0',
+    awarded_on: new Date().toISOString().slice(0, 10),
   });
   const [errors, setErrors] = useState({});
 
-  const save = useMutation((payload) => personsApi.updateCompensation(c.id, payload));
+  const save = useMutation((payload) => personsApi.createCompensation(payload));
 
   function set(field, value) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -47,17 +39,12 @@ export default function CompensationModal({ person, onClose, onDone }) {
 
   async function onSave() {
     const result = validate(values, {
-      market_value_amount: [isNumber('Market value'), notNegative('Market value')],
+      market_value_amount: [required('Market value'), isNumber('Market value'), notNegative('Market value')],
       solatium_rate_pct: [isNumber('Solatium rate'), notNegative('Solatium rate')],
       interest_amount: [isNumber('Interest'), notNegative('Interest')],
-      amount_paid: [isNumber('Amount paid'), notNegative('Amount paid')],
     });
     if (!result.errors.solatium_rate_pct && solatiumRate > 100) {
       result.errors.solatium_rate_pct = 'Cannot exceed 100% (Sec. 30(1))';
-      result.isValid = false;
-    }
-    if (!result.errors.amount_paid && Number(values.amount_paid) > projectedAward) {
-      result.errors.amount_paid = 'Cannot exceed the awarded amount';
       result.isValid = false;
     }
     setErrors(result.errors);
@@ -65,11 +52,11 @@ export default function CompensationModal({ person, onClose, onDone }) {
 
     try {
       await save.run({
+        case_id: caseId,
+        person_id: person.person_id,
         market_value_amount: marketValue,
         solatium_rate_pct: solatiumRate,
         interest_amount: interest,
-        amount_paid: Number(values.amount_paid),
-        status: values.status,
         awarded_on: values.awarded_on || null,
       });
       onDone();
@@ -84,7 +71,7 @@ export default function CompensationModal({ person, onClose, onDone }) {
       onClose={onClose}
       busy={save.pending}
       error={save.error}
-      title="Update compensation"
+      title="Declare award"
       subtitle={person.name}
       footer={
         <>
@@ -92,7 +79,7 @@ export default function CompensationModal({ person, onClose, onDone }) {
             Cancel
           </Button>
           <Button variant="primary" onClick={onSave} disabled={save.pending}>
-            {save.pending ? 'Saving…' : 'Save'}
+            {save.pending ? 'Saving…' : 'Declare'}
           </Button>
         </>
       }
@@ -130,23 +117,6 @@ export default function CompensationModal({ person, onClose, onDone }) {
         </span>
       </div>
 
-      <Input
-        label="Amount paid (₹)"
-        value={values.amount_paid}
-        error={errors.amount_paid}
-        inputMode="numeric"
-        onChange={(event) => set('amount_paid', event.target.value)}
-        hint="Cannot exceed the computed award."
-      />
-      <Select
-        label="Status"
-        value={values.status}
-        options={(statuses.length ? statuses : [c.status]).map((value) => ({
-          value,
-          label: compensationStatusLabel(value),
-        }))}
-        onChange={(event) => set('status', event.target.value)}
-      />
       <Input
         label="Awarded on"
         type="date"
