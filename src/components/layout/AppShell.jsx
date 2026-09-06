@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bell,
+  Building2,
   FileBarChart2,
   FolderKanban,
   KeyRound,
@@ -20,6 +21,7 @@ import { roleLabel } from '../../lib/labels';
    page a role will then be bounced from. */
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: SUPERVISORY },
+  { to: '/projects', label: 'Projects', icon: Building2, roles: SUPERVISORY },
   { to: '/cases', label: 'Cases', icon: FolderKanban, roles: null },
   { to: '/proposals', label: 'Proposals', icon: FileBarChart2, roles: PROPOSAL_VIEWERS },
   { to: '/objections', label: 'Objections', icon: MessageSquareWarning, roles: null },

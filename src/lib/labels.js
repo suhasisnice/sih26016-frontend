@@ -79,6 +79,13 @@ const OBJECTION_STATUS = {
   rejected: 'Rejected',
 };
 
+const DOCUMENT_VERIFICATION_STATUS = {
+  pending: 'Pending review',
+  verified: 'Verified',
+  rejected: 'Rejected',
+  correction_requested: 'Correction requested',
+};
+
 const SEVERITY = {
   low: 'Low',
   medium: 'Medium',
@@ -182,6 +189,7 @@ export const parcelStatusLabel = lookup(PARCEL_STATUS);
 export const compensationStatusLabel = lookup(COMPENSATION_STATUS);
 export const rnrStatusLabel = lookup(RNR_STATUS);
 export const objectionStatusLabel = lookup(OBJECTION_STATUS);
+export const documentVerificationStatusLabel = lookup(DOCUMENT_VERIFICATION_STATUS);
 export const severityLabel = lookup(SEVERITY);
 export const roleLabel = lookup(ROLE);
 export const docTypeLabel = lookup(DOC_TYPE);
@@ -240,6 +248,10 @@ const TONE = {
   moderate: 'info',
   elevated: 'warn',
   severe: 'danger',
+  // document verification. pending and rejected are shared with
+  // compensation/objection above and already correct for this too.
+  verified: 'ok',
+  correction_requested: 'warn',
 };
 
 export function tone(value) {

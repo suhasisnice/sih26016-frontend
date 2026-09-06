@@ -36,6 +36,9 @@ const RNR_WRITERS = [ADMIN, DISTRICT_OFFICER, RNR_OFFICER];
 const PERSON_WRITERS = [ADMIN, DISTRICT_OFFICER, SLAO, FIELD_OFFICER];
 /* Mirrors documents.DOCUMENT_UPLOADERS and cases.CASE_AUDIT_READERS */
 const DOCUMENT_UPLOADERS = OFFICERS;
+/* Mirrors documents.DOCUMENT_VERIFIERS — reviewing is narrower than
+   filing: whoever can move a case's stage is who verifies its documents. */
+const DOCUMENT_VERIFIERS = CASE_WRITERS;
 const AUDIT_READERS = OFFICERS;
 /* Mirrors objections.OBJECTION_RESPONDERS */
 const OBJECTION_RESPONDERS = [ADMIN, DISTRICT_OFFICER, SLAO];
@@ -79,6 +82,7 @@ export const can = {
   editRnr: has(RNR_WRITERS),
   addPerson: has(PERSON_WRITERS),
   uploadDocument: has(DOCUMENT_UPLOADERS),
+  verifyDocument: has(DOCUMENT_VERIFIERS),
   readAudit: has(AUDIT_READERS),
   respondToObjection: has(OBJECTION_RESPONDERS),
   runRules: has([ADMIN]),
