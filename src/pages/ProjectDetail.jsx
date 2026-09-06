@@ -4,6 +4,7 @@ import { useApi } from '../hooks/useApi';
 import { stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
 import StatusBadge from '../components/case/StatusBadge';
+import ProvenanceBadge from '../components/case/ProvenanceBadge';
 import KpiTile from '../components/dashboard/KpiTile';
 import Button from '../components/ui/Button';
 import Loading from '../components/states/Loading';
@@ -31,7 +32,11 @@ export default function ProjectDetail() {
       <PageHeader
         back={{ to: '/projects', label: 'All projects' }}
         title={p.name}
-        subtitle={`${p.requiring_body} · ${p.district_name}`}
+        subtitle={
+          <>
+            {p.requiring_body} · {p.district_name} <ProvenanceBadge provenance={p.provenance} />
+          </>
+        }
         actions={
           <Button variant="primary" onClick={() => navigate(`/cases?project_id=${p.id}`)}>
             View {p.case_count} {p.case_count === 1 ? 'case' : 'cases'}

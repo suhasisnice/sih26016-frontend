@@ -8,6 +8,7 @@ import * as fmt from '../lib/format';
 import { stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
 import StatusBadge from '../components/case/StatusBadge';
+import ProvenanceBadge from '../components/case/ProvenanceBadge';
 import Button from '../components/ui/Button';
 import Loading from '../components/states/Loading';
 import ErrorState from '../components/states/ErrorState';
@@ -77,7 +78,10 @@ export default function ParcelDetail() {
           <section className="panel">
             <div className="panel__head">
               <h2 className="panel__title">The parcel</h2>
-              <StatusBadge kind="parcel" value={p.status} />
+              <span style={{ display: 'flex', gap: 'var(--s2)' }}>
+                <StatusBadge kind="parcel" value={p.status} />
+                <ProvenanceBadge provenance={p.provenance} />
+              </span>
             </div>
 
             <div className="facts">
