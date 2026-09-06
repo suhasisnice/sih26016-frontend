@@ -12,6 +12,7 @@ import PageHeader from '../components/layout/PageHeader';
 import KpiTile from '../components/dashboard/KpiTile';
 import TrendChart from '../components/dashboard/TrendChart';
 import ForecastPanel from '../components/dashboard/ForecastPanel';
+import AttentionPanel from '../components/dashboard/AttentionPanel';
 import StatusBadge from '../components/case/StatusBadge';
 import DataTable from '../components/ui/DataTable';
 import Button from '../components/ui/Button';
@@ -111,6 +112,10 @@ export default function Dashboard() {
     (opts) => dashboardApi.forecast({ ...scope, limit: 12 }, opts),
     [stateId, districtId, projectId],
   );
+  const attention = useApi(
+    (opts) => dashboardApi.attention({ limit: 20 }, opts),
+    [],
+  );
 
   /* The manual trigger. The server also sweeps on a clock where the
      deployment sets RULES_INTERVAL_MINUTES, so this is "check now" rather
@@ -123,6 +128,7 @@ export default function Dashboard() {
       setSweep(result);
       alerts.reload();
       forecast.reload();
+      attention.reload();
     } catch {
       /* useMutation holds the error; the button row renders it. */
     }
@@ -250,6 +256,14 @@ export default function Dashboard() {
       {kpis.loading && <Loading label="Loading the figures" rows={5} />}
       {kpis.error && <ErrorState error={kpis.error} onRetry={kpis.reload} />}
       {kpis.data && <Kpis data={kpis.data} />}
+
+      <section className="section">
+        <div className="section__head">
+          <h2 className="section__title">Cases requiring attention</h2>
+          <span className="section__count">{attention.data ? `${attention.data.total} cases` : ''}</span>
+        </div>
+        <AttentionPanel state={attention} />
+      </section>
 
       <section className="section">
         <div className="section__head">

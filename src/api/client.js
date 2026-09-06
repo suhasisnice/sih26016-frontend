@@ -91,8 +91,8 @@ export function qs(params) {
   return s ? `?${s}` : '';
 }
 
-async function request(path, { method = 'GET', body, form, signal, raw } = {}) {
-  const headers = {};
+async function request(path, { method = 'GET', body, form, signal, raw, headers: extraHeaders } = {}) {
+  const headers = { ...extraHeaders };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 

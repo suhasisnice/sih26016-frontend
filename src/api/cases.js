@@ -19,9 +19,33 @@ export function update(caseId, payload, opts) {
 }
 
 /* Stage history is NOT a separate route — it comes back inline on the case
-   detail as `stage_history`, with `allowed_next_stages` alongside it. */
-export function advance(caseId, toStage, note, opts) {
-  return api.post(`/cases/${caseId}/advance`, { to_stage: toStage, note: note || null }, opts);
+   detail as `stage_history`, with `allowed_next_stages` alongside it.
+   `stepupToken` is only ever required for a handful of consequential
+   stages (Declaration, Award, Possession, the last stage) — the backend
+   decides which, since it alone knows STEPUP_REQUIRED_STAGES; this just
+   forwards whatever the caller already obtained via
+   api/biometrics.js's step-up flow, as X-Stepup-Token. */
+export function advance(caseId, toStage, note, stepupToken, opts) {
+  return api.post(
+    `/cases/${caseId}/advance`,
+    { to_stage: toStage, note: note || null },
+    { ...opts, headers: stepupToken ? { 'X-Stepup-Token': stepupToken } : undefined },
+  );
+}
+
+/* The closest thing a case has to "reject" — see CaseHoldRequest's
+   docstring on the backend for why this sets status rather than a stage.
+   Always requires a fresh step-up token. */
+export function hold(caseId, note, stepupToken, opts) {
+  return api.post(
+    `/cases/${caseId}/hold`,
+    { note },
+    { ...opts, headers: { 'X-Stepup-Token': stepupToken } },
+  );
+}
+
+export function resume(caseId, note, opts) {
+  return api.post(`/cases/${caseId}/resume`, { note }, opts);
 }
 
 export function audit(caseId, limit, opts) {

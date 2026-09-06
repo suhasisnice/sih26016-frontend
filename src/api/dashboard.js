@@ -8,6 +8,12 @@ export function alerts(params, opts) {
   return api.get(`/dashboard/alerts${qs(params)}`, opts);
 }
 
+/* One row per case with an open finding, worst first — not one row per
+   finding the way alerts() is. See AttentionPanel.jsx. */
+export function attention(params, opts) {
+  return api.get(`/dashboard/attention${qs(params)}`, opts);
+}
+
 /* Named cases-by-stage on the API; CLAUDE.md 6 calls it stage-distribution. */
 export function casesByStage(opts) {
   return api.get('/dashboard/cases-by-stage', opts);

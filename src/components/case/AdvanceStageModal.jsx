@@ -6,6 +6,18 @@ import { stageLabel, stageSection } from '../../lib/labels';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { Select, Textarea } from '../ui/Field';
+import StepUpConfirmModal from './StepUpConfirmModal';
+
+/* Mirrors app.routers.cases.STEPUP_REQUIRED_STAGES on the backend, which
+   is the actual authority — this only decides whether to show the
+   confirm-identity step before submitting; the backend refuses the
+   request regardless of what this thinks if the token is missing or
+   stale. Declaration, Award and Possession are fixed values; the fourth
+   (the case's final stage) is read from the live enum list rather than
+   hardcoded, since "final" moves if the statutory sequence ever does. */
+function stepupRequiredStages(stages) {
+  return new Set(['declaration', 'award', 'possession', stages[stages.length - 1]]);
+}
 
 /* Moving a case along, with a confirm step. Small, and it makes the timeline
    come alive.
@@ -40,8 +52,11 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
   const [toStage, setToStage] = useState(forward);
   const [note, setNote] = useState('');
   const [confirming, setConfirming] = useState(false);
+  const [stepupOpen, setStepupOpen] = useState(false);
 
-  const advance = useMutation((stage, text) => casesApi.advance(caseRecord.id, stage, text));
+  const advance = useMutation((stage, text, stepupToken) =>
+    casesApi.advance(caseRecord.id, stage, text, stepupToken),
+  );
 
   /* Sending a case back is a different kind of act from moving it on, and
      the confirm step says so rather than using one neutral wording. */
@@ -49,14 +64,40 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
     stages.indexOf(toStage) !== -1 &&
     stages.indexOf(toStage) < stages.indexOf(caseRecord.stage);
 
-  async function onConfirm() {
+  // The backend refuses a send-back with no note regardless — checked here
+  // too so the person finds out before the confirm step, not after.
+  const noteRequired = isBackward;
+  const needsStepup = stepupRequiredStages(stages).has(toStage);
+
+  async function submit(stepupToken) {
     try {
-      await advance.run(toStage, note.trim() || null);
+      await advance.run(toStage, note.trim() || null, stepupToken);
       onDone();
     } catch {
       // useMutation holds the error; the modal renders it.
       setConfirming(false);
     }
+  }
+
+  function onConfirm() {
+    if (needsStepup) {
+      setStepupOpen(true);
+      return;
+    }
+    submit(undefined);
+  }
+
+  if (stepupOpen) {
+    return (
+      <StepUpConfirmModal
+        open
+        onClose={() => setStepupOpen(false)}
+        onVerified={(token) => {
+          setStepupOpen(false);
+          submit(token);
+        }}
+      />
+    );
   }
 
   return (
@@ -80,9 +121,13 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
             <Button
               variant={isBackward ? 'danger' : 'primary'}
               onClick={onConfirm}
-              disabled={advance.pending}
+              disabled={advance.pending || (noteRequired && !note.trim())}
             >
-              {advance.pending ? 'Recording…' : 'Record the change'}
+              {advance.pending
+                ? 'Recording…'
+                : needsStepup
+                  ? 'Confirm identity to record'
+                  : 'Record the change'}
             </Button>
           </>
         ) : (
@@ -141,12 +186,18 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
             hint="Only transitions the Act permits from the current stage are listed."
           />
           <Textarea
-            label="Note (optional)"
+            label={noteRequired ? 'Note (required for a send-back)' : 'Note (optional)'}
             value={note}
             maxLength={300}
             placeholder="Why the case is moving — the gazette date, the hearing outcome, the award number."
             onChange={(event) => setNote(event.target.value)}
           />
+          {needsStepup && (
+            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              Moving to {stageLabel(toStage)} needs a fresh identity check — you&rsquo;ll be asked
+              to confirm by face or fingerprint before this is recorded.
+            </p>
+          )}
         </>
       )}
     </Modal>

@@ -38,3 +38,10 @@ export async function download(documentId, filename) {
 export function versions(caseId, docType, opts) {
   return api.get(`/documents/versions${qs({ case_id: caseId, doc_type: docType })}`, opts);
 }
+
+/* VERIFY / REJECT / SEND FOR CORRECTION. A note is required for anything
+   but "verified" — the backend refuses the request without one, this just
+   forwards whatever the modal collected. */
+export function verify(documentId, status, note, opts) {
+  return api.post(`/documents/${documentId}/verify`, { status, note: note || null }, opts);
+}
