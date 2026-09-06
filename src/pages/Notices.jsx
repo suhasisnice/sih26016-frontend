@@ -209,7 +209,9 @@ function SubscribeSection({ identifier }) {
           {done.whatsapp_status && (
             <p className="notice-subscribe__channel-result">
               WhatsApp {done.whatsapp_status === 'sent' ? '✓' : '—'}{' '}
-              <span className="notice-subscribe__mode">(Prototype mode — logged, not actually delivered)</span>
+              {done.is_mock && (
+                <span className="notice-subscribe__mode">(Prototype mode — logged, not actually delivered)</span>
+              )}
               {done.whatsapp_status === 'failed' && (
                 <span className="notice-subscribe__failed"> Unable to send notification. Please try again.</span>
               )}
@@ -218,7 +220,9 @@ function SubscribeSection({ identifier }) {
           {done.email_status && (
             <p className="notice-subscribe__channel-result">
               Email {done.email_status === 'sent' ? '✓' : '—'}{' '}
-              <span className="notice-subscribe__mode">(Prototype mode — logged, not actually delivered)</span>
+              {done.is_mock && (
+                <span className="notice-subscribe__mode">(Prototype mode — logged, not actually delivered)</span>
+              )}
               {done.email_status === 'failed' && (
                 <span className="notice-subscribe__failed"> Unable to send notification. Please try again.</span>
               )}
