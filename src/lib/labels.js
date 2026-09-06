@@ -86,6 +86,23 @@ const DOCUMENT_VERIFICATION_STATUS = {
   correction_requested: 'Correction requested',
 };
 
+const BENEFIT_CATEGORY = {
+  housing: 'Housing',
+  land: 'Land',
+  employment: 'Employment',
+  annuity: 'Annuity',
+  other: 'Other',
+};
+
+const BENEFIT_DELIVERY_STATUS = {
+  pending: 'Pending',
+  approved: 'Approved',
+  in_process: 'In process',
+  delivered: 'Delivered',
+  failed: 'Failed',
+  review_required: 'Needs review',
+};
+
 const SEVERITY = {
   low: 'Low',
   medium: 'Medium',
@@ -190,6 +207,8 @@ export const compensationStatusLabel = lookup(COMPENSATION_STATUS);
 export const rnrStatusLabel = lookup(RNR_STATUS);
 export const objectionStatusLabel = lookup(OBJECTION_STATUS);
 export const documentVerificationStatusLabel = lookup(DOCUMENT_VERIFICATION_STATUS);
+export const benefitCategoryLabel = lookup(BENEFIT_CATEGORY);
+export const benefitDeliveryStatusLabel = lookup(BENEFIT_DELIVERY_STATUS);
 export const severityLabel = lookup(SEVERITY);
 export const roleLabel = lookup(ROLE);
 export const docTypeLabel = lookup(DOC_TYPE);
@@ -252,6 +271,11 @@ const TONE = {
   // compensation/objection above and already correct for this too.
   verified: 'ok',
   correction_requested: 'warn',
+  // benefit delivery. `approved` is shared with proposal status above.
+  in_process: 'warn',
+  delivered: 'ok',
+  failed: 'danger',
+  review_required: 'danger',
 };
 
 export function tone(value) {

@@ -80,6 +80,9 @@ export const can = {
   advanceStage: has(CASE_WRITERS),
   editCompensation: has(COMPENSATION_WRITERS),
   editRnr: has(RNR_WRITERS),
+  /* Mirrors persons.RNR_WRITERS too — the itemised benefits underneath an
+     R&R record are written by whoever writes the record itself. */
+  manageRnrBenefits: has(RNR_WRITERS),
   addPerson: has(PERSON_WRITERS),
   uploadDocument: has(DOCUMENT_UPLOADERS),
   verifyDocument: has(DOCUMENT_VERIFIERS),

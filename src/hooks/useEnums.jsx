@@ -19,6 +19,9 @@ const EMPTY = {
   alert_severities: [],
   roles: [],
   doc_types: [],
+  document_verification_statuses: [],
+  benefit_categories: [],
+  benefit_delivery_statuses: [],
 };
 
 export function EnumsProvider({ children }) {

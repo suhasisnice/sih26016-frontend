@@ -19,6 +19,7 @@ import ResumeCaseModal from '../components/case/ResumeCaseModal';
 import VerifyDocumentModal from '../components/case/VerifyDocumentModal';
 import CompensationModal from '../components/case/CompensationModal';
 import RnrModal from '../components/case/RnrModal';
+import RnrBenefitsModal from '../components/case/RnrBenefitsModal';
 import RespondObjectionModal from '../components/case/RespondObjectionModal';
 import UploadDocumentModal from '../components/case/UploadDocumentModal';
 import AddPersonModal from '../components/case/AddPersonModal';
@@ -148,6 +149,7 @@ export default function CaseDetail() {
             user={user}
             onEditCompensation={(person) => setModal({ kind: 'compensation', person })}
             onEditRnr={(person) => setModal({ kind: 'rnr', person })}
+            onManageBenefits={(person) => setModal({ kind: 'rnrBenefits', person })}
             onAdd={() => setModal({ kind: 'person' })}
           />
 
@@ -248,6 +250,14 @@ export default function CaseDetail() {
             setModal(null);
             people.reload();
           }}
+        />
+      )}
+      {modal && modal.kind === 'rnrBenefits' && (
+        <RnrBenefitsModal
+          person={modal.person}
+          canManage={can.manageRnrBenefits(user)}
+          onClose={() => setModal(null)}
+          onChanged={() => people.reload()}
         />
       )}
       {modal && modal.kind === 'objection' && (
@@ -413,7 +423,7 @@ function FundDepositsPanel({ state, user, onRecord }) {
 /* Compensation and R&R are two columns, never one. A person with no land
    title shows an em dash under compensation and a live entitlement under
    R&R — that row is the whole point of the screen. */
-function PeoplePanel({ state, user, onEditCompensation, onEditRnr, onAdd }) {
+function PeoplePanel({ state, user, onEditCompensation, onEditRnr, onManageBenefits, onAdd }) {
   const editComp = can.editCompensation(user);
   const editRnr = can.editRnr(user);
 
@@ -482,7 +492,7 @@ function PeoplePanel({ state, user, onEditCompensation, onEditRnr, onAdd }) {
     columns.push({
       key: 'actions',
       header: '',
-      width: '132px',
+      width: '180px',
       render: (row) => (
         <span style={{ display: 'flex', gap: 'var(--s3)' }}>
           {editComp && row.compensation && (
@@ -505,6 +515,17 @@ function PeoplePanel({ state, user, onEditCompensation, onEditRnr, onAdd }) {
               }}
             >
               R&amp;R
+            </Button>
+          )}
+          {row.rnr && (
+            <Button
+              variant="link"
+              onClick={(event) => {
+                event.stopPropagation();
+                onManageBenefits(row);
+              }}
+            >
+              Benefits
             </Button>
           )}
         </span>
