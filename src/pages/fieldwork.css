@@ -1,0 +1,69 @@
+/* Field Work — a phone-first card queue, not a table. CLAUDE.md 3.6: "The
+   field officer view must work on a phone" is the one place in the product
+   this is a stated requirement rather than a nice-to-have, so this page
+   gets its own layout instead of DataTable's wide fixed columns. */
+
+.field-queue {
+  display: grid;
+  gap: var(--s4);
+  max-width: 640px;
+}
+
+.field-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s4) var(--s5);
+  display: grid;
+  gap: var(--s3);
+}
+.field-card.is-overdue { border-left-color: var(--danger); }
+
+.field-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.field-card__village { font-family: var(--font-display); font-size: 18px; margin: 2px 0 0; }
+.field-card__project { font-size: 12px; color: var(--text-muted); margin: 2px 0 0; }
+
+.field-card__stage { font-size: 12.5px; color: var(--text-muted); margin: 0; }
+.field-card__due { color: var(--text-faint); }
+
+.field-card__tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s1);
+  font-size: 12.5px;
+  color: var(--text);
+}
+.field-card__tasks li {
+  padding-left: var(--s3);
+  position: relative;
+}
+.field-card__tasks li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.field-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-top: var(--s1);
+}
+
+@media (max-width: 520px) {
+  .field-card__actions .btn { flex: 1 1 auto; }
+}

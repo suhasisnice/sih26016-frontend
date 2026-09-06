@@ -22,6 +22,7 @@ import Signup from './pages/Signup';
 import Notices from './pages/Notices';
 import CaseStudies from './pages/CaseStudies';
 import Dashboard from './pages/Dashboard';
+import FieldWork from './pages/FieldWork';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import CaseList from './pages/CaseList';
@@ -108,6 +109,18 @@ export default function Root() {
                 <RequireRole roles={SUPERVISORY}>
                   <App>
                     <ProjectDetail />
+                  </App>
+                </RequireRole>
+              }
+            />
+            {/* District-and-below staff only — a state or ministry officer
+                reads across districts and never stands on a parcel. */}
+            <Route
+              path="/field-work"
+              element={
+                <RequireRole roles={OFFICERS}>
+                  <App>
+                    <FieldWork />
                   </App>
                 </RequireRole>
               }
