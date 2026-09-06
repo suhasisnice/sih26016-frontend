@@ -47,6 +47,13 @@ const PARCEL_WRITERS = [ADMIN, DISTRICT_OFFICER, SLAO, FIELD_OFFICER];
 /* Mirrors notices.NOTICE_ISSUERS — narrower than the general case writers,
    because publishing a statutory instrument is not a field action */
 const NOTICE_ISSUERS = [ADMIN, DISTRICT_OFFICER, SLAO];
+/* Mirrors survey.SURVEY_PERFORMERS — who can be assigned to, and work, a
+   field survey task. */
+const SURVEY_PERFORMERS = [ADMIN, FIELD_OFFICER];
+/* Mirrors survey.SURVEY_ASSIGNERS, which is also survey.SURVEY_REVIEWERS on
+   the backend — whoever can hand a survey to a named field officer is also
+   who decides whether it came back right. */
+const SURVEY_ASSIGNERS = [ADMIN, DISTRICT_OFFICER, SLAO];
 /* Mirrors proposals.PROPOSAL_AUTHORS */
 const PROPOSAL_AUTHORS = [REQUIRING_BODY, ADMIN];
 /* Anyone with a place in the approval chain, plus the district office that
@@ -92,6 +99,9 @@ export const can = {
   createParcel: has(PARCEL_WRITERS),
   editParcel: has(PARCEL_WRITERS),
   issueNotice: has(NOTICE_ISSUERS),
+  performSurvey: has(SURVEY_PERFORMERS),
+  assignSurvey: has(SURVEY_ASSIGNERS),
+  reviewSurvey: has(SURVEY_ASSIGNERS),
   createProposal: has(PROPOSAL_AUTHORS),
   editProposal: has(PROPOSAL_AUTHORS),
   viewProposals: has(PROPOSAL_VIEWERS),

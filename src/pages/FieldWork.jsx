@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as dashboardApi from '../api/dashboard';
 import * as personsApi from '../api/persons';
-import { useApi } from '../hooks/useApi';
+import * as surveyApi from '../api/survey';
+import { useApi, useMutation } from '../hooks/useApi';
 import { useAuth } from '../auth/AuthContext';
 import { can } from '../auth/permissions';
 import { docTypeLabel, stageLabel } from '../lib/labels';
@@ -27,11 +29,16 @@ import './fieldwork.css';
    CLAUDE.md 3.6's explicit requirement that this view work on a phone. */
 export default function FieldWork() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queue = useApi((opts) => dashboardApi.fieldWork({}, opts), []);
 
   const [modal, setModal] = useState(null); // { kind: 'capture'|'upload', item, people? }
   const [preparingFor, setPreparingFor] = useState(null);
   const [prepareError, setPrepareError] = useState(null);
+
+  const startSurvey = useMutation((caseId) => surveyApi.create({ caseId }));
+  const [startingFor, setStartingFor] = useState(null);
+  const [startError, setStartError] = useState(null);
 
   async function openCapture(item) {
     setPrepareError(null);
@@ -43,6 +50,19 @@ export default function FieldWork() {
       setPrepareError(err);
     } finally {
       setPreparingFor(null);
+    }
+  }
+
+  async function onStartSurvey(item) {
+    setStartError(null);
+    setStartingFor(item.case_id);
+    try {
+      const task = await startSurvey.run(item.case_id);
+      navigate(`/survey-tasks/${task.id}`);
+    } catch (err) {
+      setStartError(err);
+    } finally {
+      setStartingFor(null);
     }
   }
 
@@ -60,6 +80,13 @@ export default function FieldWork() {
           title="Could not load this case's households"
           error={prepareError}
           onRetry={() => setPrepareError(null)}
+        />
+      )}
+      {startError && (
+        <ErrorState
+          title="Could not start the survey"
+          error={startError}
+          onRetry={() => setStartError(null)}
         />
       )}
 
@@ -115,6 +142,15 @@ export default function FieldWork() {
               </ul>
 
               <footer className="field-card__actions">
+                {can.performSurvey(user) && (
+                  <Button
+                    variant="primary"
+                    onClick={() => onStartSurvey(item)}
+                    disabled={startingFor === item.case_id}
+                  >
+                    {startingFor === item.case_id ? 'Starting…' : 'Start survey'}
+                  </Button>
+                )}
                 {can.createParcel(user) && (
                   <Button
                     variant="secondary"
