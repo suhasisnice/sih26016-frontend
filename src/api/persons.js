@@ -11,6 +11,10 @@ export function create(payload, opts) {
   return api.post('/persons', payload, opts);
 }
 
+export function createCompensation(payload, opts) {
+  return api.post('/compensation', payload, opts);
+}
+
 export function updateCompensation(compensationId, payload, opts) {
   return api.patch(`/compensation/${compensationId}`, payload, opts);
 }

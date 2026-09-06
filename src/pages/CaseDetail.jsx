@@ -18,6 +18,7 @@ import HoldCaseModal from '../components/case/HoldCaseModal';
 import ResumeCaseModal from '../components/case/ResumeCaseModal';
 import VerifyDocumentModal from '../components/case/VerifyDocumentModal';
 import CompensationModal from '../components/case/CompensationModal';
+import DeclareAwardModal from '../components/case/DeclareAwardModal';
 import RnrModal from '../components/case/RnrModal';
 import RnrBenefitsModal from '../components/case/RnrBenefitsModal';
 import RespondObjectionModal from '../components/case/RespondObjectionModal';
@@ -147,6 +148,7 @@ export default function CaseDetail() {
           <PeoplePanel
             state={people}
             user={user}
+            onDeclareAward={(person) => setModal({ kind: 'declare-award', person })}
             onEditCompensation={(person) => setModal({ kind: 'compensation', person })}
             onEditRnr={(person) => setModal({ kind: 'rnr', person })}
             onManageBenefits={(person) => setModal({ kind: 'rnrBenefits', person })}
@@ -229,6 +231,17 @@ export default function CaseDetail() {
           onDone={() => {
             setModal(null);
             refreshAll();
+          }}
+        />
+      )}
+      {modal && modal.kind === 'declare-award' && (
+        <DeclareAwardModal
+          person={modal.person}
+          caseId={c.id}
+          onClose={() => setModal(null)}
+          onDone={() => {
+            setModal(null);
+            people.reload();
           }}
         />
       )}
@@ -423,7 +436,7 @@ function FundDepositsPanel({ state, user, onRecord }) {
 /* Compensation and R&R are two columns, never one. A person with no land
    title shows an em dash under compensation and a live entitlement under
    R&R — that row is the whole point of the screen. */
-function PeoplePanel({ state, user, onEditCompensation, onEditRnr, onManageBenefits, onAdd }) {
+function PeoplePanel({ state, user, onDeclareAward, onEditCompensation, onEditRnr, onManageBenefits, onAdd }) {
   const editComp = can.editCompensation(user);
   const editRnr = can.editRnr(user);
 
@@ -495,6 +508,17 @@ function PeoplePanel({ state, user, onEditCompensation, onEditRnr, onManageBenef
       width: '180px',
       render: (row) => (
         <span style={{ display: 'flex', gap: 'var(--s3)' }}>
+          {editComp && !row.compensation && row.parcel_count > 0 && (
+            <Button
+              variant="link"
+              onClick={(event) => {
+                event.stopPropagation();
+                onDeclareAward(row);
+              }}
+            >
+              Declare award
+            </Button>
+          )}
           {editComp && row.compensation && (
             <Button
               variant="link"
