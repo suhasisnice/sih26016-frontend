@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, qs } from './client';
 
 /* Re-run every alert rule and rebuild the alerts table, then deliver what is
    new to the officers responsible.
@@ -28,4 +28,24 @@ export function listInviteCodes(opts) {
 
 export function revokeInviteCode(inviteId, opts) {
   return api.post(`/admin/invite-codes/${inviteId}/revoke`, undefined, opts);
+}
+
+/* The directory of accounts that already exist — distinct from the invite
+   codes above, which are how a NEW one gets created. */
+export function listUsers(params, opts) {
+  return api.get(`/admin/users${qs(params)}`, opts);
+}
+
+export function deactivateUser(userId, opts) {
+  return api.post(`/admin/users/${userId}/deactivate`, undefined, opts);
+}
+
+export function reactivateUser(userId, opts) {
+  return api.post(`/admin/users/${userId}/reactivate`, undefined, opts);
+}
+
+/* The one moment the new password is readable — same one-time-reveal rule
+   as createInviteCode above. */
+export function resetUserPassword(userId, opts) {
+  return api.post(`/admin/users/${userId}/reset-password`, undefined, opts);
 }

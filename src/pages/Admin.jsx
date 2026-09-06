@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Copy } from 'lucide-react';
 import * as adminApi from '../api/admin';
 import * as referenceApi from '../api/reference';
 import { useApi, useMutation } from '../hooks/useApi';
+import { useAuth } from '../auth/AuthContext';
 import { useEnums } from '../hooks/useEnums';
 import { roleLabel } from '../lib/labels';
 import * as fmt from '../lib/format';
@@ -11,10 +12,12 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { Input, Select } from '../components/ui/Field';
+import FilterBar from '../components/ui/FilterBar';
 import DataTable from '../components/ui/DataTable';
 import Loading from '../components/states/Loading';
 import ErrorState from '../components/states/ErrorState';
 import Empty from '../components/states/Empty';
+import '../components/dashboard/dashboard.css';
 import './admin.css';
 
 /* Mirrors app.dependencies.DISTRICT_SCOPED_ROLES / STATE_SCOPED_ROLES —
@@ -218,26 +221,34 @@ export default function Admin() {
     <>
       <PageHeader
         title="Admin"
-        subtitle={`Issue registration invitations. There is no open signup — every account starts from a code issued here, and every code expires ${EXPIRY_HOURS} hours after it's issued.`}
-        actions={<Button variant="primary" onClick={openModal}>New invite code</Button>}
+        subtitle="Every account on the platform, and how new ones get created. There is no open signup — an account either starts from an invitation issued here, or an officer provisions a landowner's login from a verified land record."
       />
 
-      {invites.loading && <Loading label="Loading invitations" rows={4} />}
-      {invites.error && <ErrorState error={invites.error} onRetry={invites.reload} />}
-      {revoke.error && <ErrorState error={revoke.error} title="That invitation could not be revoked" />}
+      <section className="section">
+        <div className="section__head">
+          <h2 className="section__title">Invitations</h2>
+          <Button variant="primary" onClick={openModal}>New invite code</Button>
+        </div>
 
-      {invites.data && invites.data.items.length === 0 && (
-        <Empty title="No invitations yet" body="Issue one to let someone register an account." />
-      )}
+        {invites.loading && <Loading label="Loading invitations" rows={4} />}
+        {invites.error && <ErrorState error={invites.error} onRetry={invites.reload} />}
+        {revoke.error && <ErrorState error={revoke.error} title="That invitation could not be revoked" />}
 
-      {invites.data && invites.data.items.length > 0 && (
-        <DataTable
-          columns={columns}
-          rows={invites.data.items}
-          getRowKey={(row) => row.id}
-          caption={`${invites.data.total} invitations issued — click a code to view or copy it`}
-        />
-      )}
+        {invites.data && invites.data.items.length === 0 && (
+          <Empty title="No invitations yet" body="Issue one to let someone register an account." />
+        )}
+
+        {invites.data && invites.data.items.length > 0 && (
+          <DataTable
+            columns={columns}
+            rows={invites.data.items}
+            getRowKey={(row) => row.id}
+            caption={`${invites.data.total} invitations issued — click a code to view or copy it`}
+          />
+        )}
+      </section>
+
+      <UsersSection />
 
       <Modal
         open={open}
@@ -386,5 +397,234 @@ export default function Admin() {
         )}
       </Modal>
     </>
+  );
+}
+
+const EMPTY_FILTERS = { role: '', district_id: '', is_active: '', q: '' };
+
+/* The directory of every account that already exists — deactivate one,
+   reactivate one, or reset its password. Distinct from the invitations
+   above, which are how a new account gets created; nothing here creates
+   one. */
+function UsersSection() {
+  const { user: currentUser } = useAuth();
+  const { roles } = useEnums();
+
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [searchInput, setSearchInput] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters((current) => (current.q === searchInput ? current : { ...current, q: searchInput }));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const districts = useApi((opts) => referenceApi.districts(undefined, opts), []);
+  const users = useApi(
+    (opts) =>
+      adminApi.listUsers(
+        {
+          role: filters.role || undefined,
+          district_id: filters.district_id || undefined,
+          is_active: filters.is_active === '' ? undefined : filters.is_active === 'true',
+          q: filters.q || undefined,
+        },
+        opts,
+      ),
+    [filters.role, filters.district_id, filters.is_active, filters.q],
+  );
+
+  const deactivate = useMutation((id) => adminApi.deactivateUser(id));
+  const reactivate = useMutation((id) => adminApi.reactivateUser(id));
+  const resetPassword = useMutation((id) => adminApi.resetUserPassword(id));
+
+  const [actionError, setActionError] = useState(null);
+  const [revealed, setRevealed] = useState(null); // ResetPasswordResponse, or null
+  const [revealCopied, setRevealCopied] = useState(false);
+
+  function updateFilter(field, value) {
+    setFilters((current) => ({ ...current, [field]: value }));
+  }
+
+  const hasFilters = Boolean(filters.role || filters.district_id || filters.is_active || filters.q);
+
+  async function onToggleActive(row) {
+    setActionError(null);
+    try {
+      if (row.is_active) await deactivate.run(row.id);
+      else await reactivate.run(row.id);
+      users.reload();
+    } catch (err) {
+      setActionError(err);
+    }
+  }
+
+  async function onResetPassword(row) {
+    setActionError(null);
+    try {
+      const result = await resetPassword.run(row.id);
+      setRevealCopied(false);
+      setRevealed(result);
+    } catch (err) {
+      setActionError(err);
+    }
+  }
+
+  async function copy(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setRevealCopied(true);
+    } catch {
+      /* Clipboard access can be blocked; the password is still shown on
+         screen to select and copy by hand. */
+    }
+  }
+
+  const columns = [
+    {
+      key: 'full_name',
+      header: 'Account',
+      render: (row) => (
+        <span>
+          <span className="person-name__title">{row.full_name}</span>
+          <br />
+          <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{row.username}</span>
+        </span>
+      ),
+    },
+    { key: 'role', header: 'Role', width: '200px', render: (row) => roleLabel(row.role) },
+    {
+      key: 'scope',
+      header: 'Scope',
+      width: '160px',
+      render: (row) => row.district_name || row.state_name || row.organisation || 'National',
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      width: '150px',
+      render: (row) => (
+        <span className={`badge badge--${row.is_active ? 'ok' : 'idle'}`}>
+          <span className="badge__dot" aria-hidden="true" />
+          {row.is_active ? 'Active' : 'Deactivated'}
+          {row.must_change_password && row.is_active ? ' · must set password' : ''}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: '220px',
+      render: (row) => (
+        <span style={{ display: 'flex', gap: 'var(--s3)' }}>
+          <Button
+            variant="link"
+            onClick={() => onToggleActive(row)}
+            disabled={
+              (row.is_active ? deactivate.pending : reactivate.pending) || row.id === currentUser?.id
+            }
+          >
+            {row.is_active ? 'Deactivate' : 'Reactivate'}
+          </Button>
+          <Button variant="link" onClick={() => onResetPassword(row)} disabled={resetPassword.pending}>
+            Reset password
+          </Button>
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <section className="section">
+      <div className="section__head">
+        <h2 className="section__title">Accounts</h2>
+        <span className="section__count">{users.data ? `${users.data.total} accounts` : ''}</span>
+      </div>
+
+      <FilterBar>
+        <FilterBar.Search
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+          placeholder="Search by name or username"
+        />
+        <FilterBar.Select
+          label="Role"
+          value={filters.role}
+          placeholder="Every role"
+          options={(roles || []).map((r) => ({ value: r, label: roleLabel(r) }))}
+          onChange={(event) => updateFilter('role', event.target.value)}
+        />
+        <FilterBar.Select
+          label="District"
+          value={filters.district_id}
+          placeholder="Every district"
+          options={(districts.data || []).map((d) => ({ value: String(d.id), label: d.name }))}
+          onChange={(event) => updateFilter('district_id', event.target.value)}
+        />
+        <FilterBar.Select
+          label="Status"
+          value={filters.is_active}
+          placeholder="Active and deactivated"
+          options={[
+            { value: 'true', label: 'Active only' },
+            { value: 'false', label: 'Deactivated only' },
+          ]}
+          onChange={(event) => updateFilter('is_active', event.target.value)}
+        />
+        <FilterBar.Actions
+          hasFilters={hasFilters}
+          onClear={() => {
+            setFilters(EMPTY_FILTERS);
+            setSearchInput('');
+          }}
+        />
+      </FilterBar>
+
+      {users.loading && <Loading label="Loading accounts" rows={5} />}
+      {users.error && <ErrorState error={users.error} onRetry={users.reload} />}
+      {actionError && (
+        <ErrorState error={actionError} title="That could not be done" onRetry={() => setActionError(null)} />
+      )}
+
+      {users.data && users.data.items.length === 0 && (
+        <Empty title="No accounts match" body="Try clearing a filter." />
+      )}
+
+      {users.data && users.data.items.length > 0 && (
+        <DataTable
+          columns={columns}
+          rows={users.data.items}
+          getRowKey={(row) => row.id}
+          isRowFlagged={(row) => !row.is_active}
+          caption="Deactivating an account blocks sign-in without touching anything it already did. Resetting a password shows the new one exactly once."
+        />
+      )}
+
+      <Modal
+        open={Boolean(revealed)}
+        onClose={() => setRevealed(null)}
+        title="Password reset"
+        subtitle={revealed ? `For ${revealed.username}. Share it with them now — it cannot be shown again.` : undefined}
+        footer={
+          <Button variant="primary" onClick={() => setRevealed(null)}>
+            Done
+          </Button>
+        }
+      >
+        {revealed && (
+          <div className="admin__reveal">
+            <p className="admin__reveal-code">{revealed.temporary_password}</p>
+            <Button variant="secondary" onClick={() => copy(revealed.temporary_password)}>
+              <Copy size={14} strokeWidth={1.75} aria-hidden="true" />
+              {revealCopied ? 'Copied' : 'Copy password'}
+            </Button>
+            <p className="admin__reveal-hint">
+              They must sign in with this and will be asked to set a new password immediately.
+            </p>
+          </div>
+        )}
+      </Modal>
+    </section>
   );
 }
