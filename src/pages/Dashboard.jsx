@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import * as dashboardApi from '../api/dashboard';
 import * as adminApi from '../api/admin';
 import * as referenceApi from '../api/reference';
+import * as surveyApi from '../api/survey';
+import * as objectionsApi from '../api/objections';
 import { useApi, useMutation } from '../hooks/useApi';
 import { useAuth } from '../auth/AuthContext';
 import { can, isOversight } from '../auth/permissions';
@@ -115,6 +117,21 @@ export default function Dashboard() {
   const attention = useApi(
     (opts) => dashboardApi.attention({ limit: 20 }, opts),
     [],
+  );
+
+  /* SLAO's own two work queues — the demo asks for these explicitly, and
+     both are existing filtered list endpoints, just not surfaced as named
+     panels anywhere yet. Skipped entirely for a role that cannot act on
+     either, rather than fetched and hidden. */
+  const surveysToReview = useApi(
+    (opts) => surveyApi.list({ status: 'submitted' }, opts),
+    [],
+    { skip: !can.reviewSurvey(user) },
+  );
+  const objectionsToAnswer = useApi(
+    (opts) => objectionsApi.list({ objection_status: 'filed' }, opts),
+    [],
+    { skip: !can.respondToObjection(user) },
   );
 
   /* The manual trigger. The server also sweeps on a clock where the
@@ -264,6 +281,30 @@ export default function Dashboard() {
         </div>
         <AttentionPanel state={attention} />
       </section>
+
+      {can.reviewSurvey(user) && (
+        <section className="section">
+          <div className="section__head">
+            <h2 className="section__title">Surveys awaiting review</h2>
+            <span className="section__count">
+              {surveysToReview.data ? `${surveysToReview.data.total} submitted` : ''}
+            </span>
+          </div>
+          <SurveyQueuePanel state={surveysToReview} navigate={navigate} />
+        </section>
+      )}
+
+      {can.respondToObjection(user) && (
+        <section className="section">
+          <div className="section__head">
+            <h2 className="section__title">Objections awaiting response</h2>
+            <span className="section__count">
+              {objectionsToAnswer.data ? `${objectionsToAnswer.data.total} open` : ''}
+            </span>
+          </div>
+          <ObjectionQueuePanel state={objectionsToAnswer} navigate={navigate} />
+        </section>
+      )}
 
       <section className="section">
         <div className="section__head">
@@ -439,6 +480,88 @@ function Kpis({ data }) {
         meter={possessionPercent}
       />
     </div>
+  );
+}
+
+/* SLAO's queue of field survey reports waiting on an approve/return
+   decision — the same `GET /survey-tasks?status=submitted` an SLAO would
+   otherwise have to know to filter for on the Survey Tasks page. */
+function SurveyQueuePanel({ state, navigate }) {
+  if (state.loading) return <Loading label="Loading submitted surveys" rows={3} />;
+  if (state.error) return <ErrorState error={state.error} onRetry={state.reload} />;
+  if (!state.data) return null;
+
+  const columns = [
+    {
+      key: 'case_number',
+      header: 'Case',
+      width: '150px',
+      render: (row) => <span className="case-number">{row.case_number}</span>,
+    },
+    { key: 'village_name', header: 'Village', width: '160px' },
+    { key: 'assigned_to_name', header: 'Field officer', width: '170px' },
+    {
+      key: 'submitted_at',
+      header: 'Submitted',
+      width: '120px',
+      render: (row) => fmt.date(row.submitted_at),
+    },
+  ];
+
+  return (
+    <DataTable
+      columns={columns}
+      rows={state.data.items}
+      getRowKey={(row) => row.id}
+      onRowClick={(row) => navigate(`/survey-tasks/${row.id}`)}
+      caption={
+        state.data.items.length
+          ? 'Select a row to approve or return it for correction.'
+          : undefined
+      }
+      empty={<Empty center title="Nothing waiting" body="No submitted survey needs review right now." />}
+    />
+  );
+}
+
+/* SLAO's queue of filed-but-unanswered objections — the same
+   `GET /objections?objection_status=filed` the Objections page already
+   supports, surfaced here so it doesn't have to be found by filtering. */
+function ObjectionQueuePanel({ state, navigate }) {
+  if (state.loading) return <Loading label="Loading open objections" rows={3} />;
+  if (state.error) return <ErrorState error={state.error} onRetry={state.reload} />;
+  if (!state.data) return null;
+
+  const columns = [
+    {
+      key: 'case_number',
+      header: 'Case',
+      width: '150px',
+      render: (row) => <span className="case-number">{row.case_number}</span>,
+    },
+    { key: 'person_name', header: 'Filed by', width: '170px' },
+    { key: 'grounds', header: 'Grounds' },
+    {
+      key: 'days_open',
+      header: 'Open',
+      width: '110px',
+      align: 'num',
+      render: (row) => (
+        <span className={row.is_overdue ? 'is-overdue' : undefined}>{fmt.days(row.days_open)}</span>
+      ),
+    },
+  ];
+
+  return (
+    <DataTable
+      columns={columns}
+      rows={state.data.items}
+      getRowKey={(row) => row.id}
+      onRowClick={(row) => navigate(`/cases/${row.case_id}`)}
+      isRowFlagged={(row) => row.is_overdue}
+      caption={state.data.items.length ? 'Select a row to open the case and respond.' : undefined}
+      empty={<Empty center title="Nothing open" body="No filed objection is waiting on a response." />}
+    />
   );
 }
 

@@ -5,11 +5,12 @@ import * as parcelsApi from '../api/parcels';
 import * as personsApi from '../api/persons';
 import * as documentsApi from '../api/documents';
 import * as objectionsApi from '../api/objections';
+import * as surveyApi from '../api/survey';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth/AuthContext';
-import { can, isLandowner } from '../auth/permissions';
+import { can, isLandowner, ROLES } from '../auth/permissions';
 import * as fmt from '../lib/format';
-import { docTypeLabel, stageLabel } from '../lib/labels';
+import { docTypeLabel, roleLabel, stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
 import StageTimeline from '../components/case/StageTimeline';
 import StatusBadge from '../components/case/StatusBadge';
@@ -23,6 +24,7 @@ import DeclareAwardModal from '../components/case/DeclareAwardModal';
 import RnrModal from '../components/case/RnrModal';
 import RnrBenefitsModal from '../components/case/RnrBenefitsModal';
 import RespondObjectionModal from '../components/case/RespondObjectionModal';
+import FileObjectionModal from '../components/case/FileObjectionModal';
 import UploadDocumentModal from '../components/case/UploadDocumentModal';
 import AddPersonModal from '../components/case/AddPersonModal';
 import CaptureParcelModal from '../components/case/CaptureParcelModal';
@@ -56,6 +58,9 @@ export default function CaseDetail() {
   const missing = useApi((opts) => documentsApi.missing(caseId, opts), [caseId]);
   const objections = useApi((opts) => objectionsApi.forCase(caseId, opts), [caseId]);
   const fundDeposits = useApi((opts) => casesApi.fundDeposits(caseId, opts), [caseId]);
+  /* Feeds the "Next action" banner below, not a panel of its own — a field
+     officer with no tasks on this case simply gets an empty list back. */
+  const surveyTasks = useApi((opts) => surveyApi.list({ case_id: caseId }, opts), [caseId]);
   /* A five-row preview — the full trail now lives at its own /audit route
      (the Figma "Audit Trail" frame is a standalone page with its own
      filters and case-context sidebar, not a panel), so this only needs to
@@ -71,6 +76,7 @@ export default function CaseDetail() {
     missing.reload();
     objections.reload();
     fundDeposits.reload();
+    surveyTasks.reload();
     audit.reload();
   }
 
@@ -134,6 +140,14 @@ export default function CaseDetail() {
         </span>
       </div>
 
+      <NextActionBanner
+        c={c}
+        surveyTasks={surveyTasks.data ? surveyTasks.data.items : null}
+        objectionsData={objections.data}
+        missingDocs={missing.data}
+        peopleData={people.data}
+      />
+
       <div className="case-detail">
         <div className="case-detail__main">
           <section className="panel">
@@ -176,6 +190,7 @@ export default function CaseDetail() {
             state={objections}
             user={user}
             onRespond={(objection) => setModal({ kind: 'objection', objection })}
+            onFile={() => setModal({ kind: 'file-objection' })}
           />
         </div>
 
@@ -297,6 +312,17 @@ export default function CaseDetail() {
           }}
         />
       )}
+      {modal && modal.kind === 'file-objection' && (
+        <FileObjectionModal
+          caseRecord={c}
+          onClose={() => setModal(null)}
+          onDone={() => {
+            setModal(null);
+            objections.reload();
+            audit.reload();
+          }}
+        />
+      )}
       {modal && modal.kind === 'upload' && (
         <UploadDocumentModal
           caseId={c.id}
@@ -329,6 +355,119 @@ export default function CaseDetail() {
         />
       )}
     </>
+  );
+}
+
+/* Which of the five core roles a stage normally sits with, before any of
+   the more specific rules below override it. Field Officer for the two
+   on-ground stages, R&R Officer for rehabilitation, SLAO for everything
+   else that writes a case, District Officer once there's nothing left to
+   do but monitor. */
+const STAGE_RESPONSIBLE_ROLE = {
+  preliminary_notification: ROLES.SLAO,
+  social_impact_assessment: ROLES.SLAO,
+  land_verification: ROLES.FIELD_OFFICER,
+  objection_period: ROLES.SLAO,
+  declaration: ROLES.SLAO,
+  award: ROLES.SLAO,
+  rehabilitation_resettlement: ROLES.RNR_OFFICER,
+  possession: ROLES.FIELD_OFFICER,
+  monitoring: ROLES.DISTRICT_OFFICER,
+};
+
+const OPEN_SURVEY_STATUSES = ['assigned', 'in_progress', 'returned'];
+const OPEN_RNR_STATUSES = ['pending', 'in_progress'];
+
+/* "Whose desk is this on, and what do they need to do" — the one question
+   this page otherwise leaves the reader to answer themselves by reading
+   the timeline, the objections count and the missing-documents panel
+   separately. First matching rule wins; every input is data the page
+   already fetches. */
+function deriveNextAction(c, { surveyTasks, objectionsData, missingDocs, peopleData }) {
+  if (!c) return null;
+  const stage = c.stage;
+  const fallbackRole = STAGE_RESPONSIBLE_ROLE[stage] || ROLES.SLAO;
+
+  if (stage === 'land_verification' && surveyTasks) {
+    const submitted = surveyTasks.filter((t) => t.status === 'submitted');
+    if (submitted.length > 0) {
+      return {
+        role: ROLES.SLAO,
+        action: `Review ${submitted.length} submitted survey${submitted.length === 1 ? '' : 's'}`,
+      };
+    }
+    const open = surveyTasks.filter((t) => OPEN_SURVEY_STATUSES.includes(t.status));
+    if (open.length > 0) {
+      return {
+        role: ROLES.FIELD_OFFICER,
+        action: `Complete and submit ${open.length} field survey${open.length === 1 ? '' : 's'}`,
+      };
+    }
+  }
+
+  if (stage === 'objection_period' && objectionsData && objectionsData.open_count > 0) {
+    return {
+      role: ROLES.SLAO,
+      action: `Respond to ${objectionsData.open_count} open objection${objectionsData.open_count === 1 ? '' : 's'}`,
+    };
+  }
+
+  if (missingDocs && missingDocs.required) {
+    const stillMissing = missingDocs.required.filter((d) => !missingDocs.present.includes(d));
+    if (stillMissing.length > 0) {
+      return {
+        role: fallbackRole,
+        action: `Upload ${stillMissing.length} required document${stillMissing.length === 1 ? '' : 's'}`,
+      };
+    }
+  }
+
+  if (stage === 'rehabilitation_resettlement' && peopleData) {
+    const pending = peopleData.items.filter(
+      (p) => p.rnr && OPEN_RNR_STATUSES.includes(p.rnr.status),
+    );
+    if (pending.length > 0) {
+      return {
+        role: ROLES.RNR_OFFICER,
+        action: `Progress R&R for ${pending.length} household${pending.length === 1 ? '' : 's'}`,
+      };
+    }
+  }
+
+  if (c.allowed_next_stages && c.allowed_next_stages.length > 0 && c.status !== 'stalled') {
+    return { role: fallbackRole, action: 'Ready to advance to the next stage' };
+  }
+
+  if (c.status === 'closed') {
+    return { role: null, action: 'Case closed — no action required' };
+  }
+  if (c.status === 'stalled') {
+    return { role: fallbackRole, action: 'On hold — resume the case to continue' };
+  }
+  return { role: fallbackRole, action: 'No action required right now' };
+}
+
+/* "Current stage / Responsible / Next action" in one glance — the single
+   thing every role landing on this page needs first, computed entirely
+   from data the rest of the page already fetches. */
+function NextActionBanner({ c, surveyTasks, objectionsData, missingDocs, peopleData }) {
+  const next = deriveNextAction(c, { surveyTasks, objectionsData, missingDocs, peopleData });
+  if (!next) return null;
+  return (
+    <div className="next-action">
+      <div>
+        <p className="next-action__label">Current stage</p>
+        <p className="next-action__value next-action__value--stage">{stageLabel(c.stage)}</p>
+      </div>
+      <div>
+        <p className="next-action__label">Responsible</p>
+        <p className="next-action__value">{next.role ? roleLabel(next.role) : '—'}</p>
+      </div>
+      <div>
+        <p className="next-action__label">Next action</p>
+        <p className="next-action__value next-action__value--action">{next.action}</p>
+      </div>
+    </div>
   );
 }
 
@@ -877,19 +1016,26 @@ function DocumentsPanel({ state, user, caseId, onUpload }) {
   );
 }
 
-function ObjectionsPanel({ state, user, onRespond }) {
+function ObjectionsPanel({ state, user, onRespond, onFile }) {
   return (
     <section className="panel">
       <div className="panel__head">
         <h2 className="panel__title">Objections</h2>
-        {state.data && (
-          <span className="panel__count">
-            {state.data.open_count} open
-            {state.data.overdue_count > 0 && (
-              <span className="is-overdue"> · {state.data.overdue_count} overdue</span>
-            )}
-          </span>
-        )}
+        <div className="panel__actions">
+          {isLandowner(user) && can.fileObjection(user) && (
+            <Button variant="link" onClick={onFile}>
+              File objection
+            </Button>
+          )}
+          {state.data && (
+            <span className="panel__count">
+              {state.data.open_count} open
+              {state.data.overdue_count > 0 && (
+                <span className="is-overdue"> · {state.data.overdue_count} overdue</span>
+              )}
+            </span>
+          )}
+        </div>
       </div>
 
       {state.loading && <Loading inline rows={3} />}

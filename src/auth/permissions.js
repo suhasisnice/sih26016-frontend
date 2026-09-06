@@ -106,7 +106,10 @@ export const can = {
   editProposal: has(PROPOSAL_AUTHORS),
   viewProposals: has(PROPOSAL_VIEWERS),
   scrutiniseProposal: has([STATE_OFFICER, DISTRICT_OFFICER, ADMIN]),
-  sanctionProposal: has([MINISTRY_OFFICER, ADMIN]),
+  /* District Officer sits here too, alongside Ministry — see
+     proposals.TRANSITIONS: it lets DC alone carry a proposal from
+     scrutiny through to a live case for the 5-officer demo workflow. */
+  sanctionProposal: has([MINISTRY_OFFICER, DISTRICT_OFFICER, ADMIN]),
   viewReports: has(REPORT_READERS),
   exportCompensation: has([ADMIN, DISTRICT_OFFICER, SLAO, STATE_OFFICER, MINISTRY_OFFICER]),
   viewDashboard: has(SUPERVISORY),
