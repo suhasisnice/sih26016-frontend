@@ -22,6 +22,8 @@ import Signup from './pages/Signup';
 import Notices from './pages/Notices';
 import CaseStudies from './pages/CaseStudies';
 import Dashboard from './pages/Dashboard';
+import Projects from './pages/Projects';
+import ProjectDetail from './pages/ProjectDetail';
 import CaseList from './pages/CaseList';
 import CaseDetail from './pages/CaseDetail';
 import AuditTrail from './pages/AuditTrail';
@@ -86,6 +88,26 @@ export default function Root() {
                     <Suspense fallback={<Loading label="Loading the map" rows={8} />}>
                       <MapView />
                     </Suspense>
+                  </App>
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <RequireRole roles={SUPERVISORY}>
+                  <App>
+                    <Projects />
+                  </App>
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/projects/:projectId"
+              element={
+                <RequireRole roles={SUPERVISORY}>
+                  <App>
+                    <ProjectDetail />
                   </App>
                 </RequireRole>
               }

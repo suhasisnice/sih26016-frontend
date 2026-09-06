@@ -61,6 +61,15 @@ export function agentCapture() {
   return request('/capture', {});
 }
 
+/* Runs the fingerprint half of a step-up re-confirmation: capture, match
+   locally against the nonce+template the browser already fetched from
+   POST /biometrics/fingerprint/stepup/start, report the score to the
+   backend. Returns {stepup_token, expires_in_seconds}, or throws — never a
+   login, and never usable as one. See mantra-agent/main.py's /stepup. */
+export function agentStepUp(nonce, galleryTemplateBase64) {
+  return request('/stepup', { nonce, gallery_template_base64: galleryTemplateBase64 });
+}
+
 /* A live probe of the agent and the scanner it's talking to — not just
    "is the agent process running", but "is the physical scanner attached
    right now" (mantra-agent/device/mfs100.py's health() re-checks this on

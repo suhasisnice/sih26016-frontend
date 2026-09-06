@@ -14,6 +14,9 @@ import PageHeader from '../components/layout/PageHeader';
 import StageTimeline from '../components/case/StageTimeline';
 import StatusBadge from '../components/case/StatusBadge';
 import AdvanceStageModal from '../components/case/AdvanceStageModal';
+import HoldCaseModal from '../components/case/HoldCaseModal';
+import ResumeCaseModal from '../components/case/ResumeCaseModal';
+import VerifyDocumentModal from '../components/case/VerifyDocumentModal';
 import CompensationModal from '../components/case/CompensationModal';
 import RnrModal from '../components/case/RnrModal';
 import RespondObjectionModal from '../components/case/RespondObjectionModal';
@@ -99,7 +102,17 @@ export default function CaseDetail() {
             <Button variant="quiet" onClick={() => window.print()}>
               Print
             </Button>
-            {can.advanceStage(user) && c.allowed_next_stages.length > 0 && (
+            {can.advanceStage(user) && c.status === 'stalled' && (
+              <Button variant="quiet" onClick={() => setModal({ kind: 'resume' })}>
+                Resume case
+              </Button>
+            )}
+            {can.advanceStage(user) && c.status === 'active' && (
+              <Button variant="quiet" onClick={() => setModal({ kind: 'hold' })}>
+                Put on hold
+              </Button>
+            )}
+            {can.advanceStage(user) && c.allowed_next_stages.length > 0 && c.status !== 'stalled' && (
               <Button variant="primary" onClick={() => setModal({ kind: 'advance' })}>
                 Advance stage
               </Button>
@@ -189,6 +202,26 @@ export default function CaseDetail() {
       )}
       {modal && modal.kind === 'advance' && (
         <AdvanceStageModal
+          caseRecord={c}
+          onClose={() => setModal(null)}
+          onDone={() => {
+            setModal(null);
+            refreshAll();
+          }}
+        />
+      )}
+      {modal && modal.kind === 'hold' && (
+        <HoldCaseModal
+          caseRecord={c}
+          onClose={() => setModal(null)}
+          onDone={() => {
+            setModal(null);
+            refreshAll();
+          }}
+        />
+      )}
+      {modal && modal.kind === 'resume' && (
+        <ResumeCaseModal
           caseRecord={c}
           onClose={() => setModal(null)}
           onDone={() => {
@@ -675,6 +708,7 @@ function DocumentsPanel({ state, user, caseId, onUpload }) {
      in a narrow sidebar column, and two expanded chains push everything
      below them off the screen. */
   const [openType, setOpenType] = useState(null);
+  const [reviewing, setReviewing] = useState(null);
 
   return (
     <section className="panel">
@@ -715,11 +749,20 @@ function DocumentsPanel({ state, user, caseId, onUpload }) {
                       "v1" is information — it says nothing has replaced this
                       — and a badge that appears only sometimes reads as an
                       exception rather than as a fact about the file. */}
-                  <span className="doc-version">v{doc.version}</span>
+                  <span className="doc-version">v{doc.version}</span>{' '}
+                  <StatusBadge kind="documentVerification" value={doc.verification_status} />
                   <br />
                   <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
                     {doc.filename} · {fmt.date(doc.uploaded_on)}
                   </span>
+                  {doc.verification_note && (
+                    <>
+                      <br />
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        <em>{doc.verification_note}</em>
+                      </span>
+                    </>
+                  )}
                   {doc.version > 1 && (
                     <>
                       <br />
@@ -736,18 +779,36 @@ function DocumentsPanel({ state, user, caseId, onUpload }) {
                     </>
                   )}
                 </span>
-                <Button
-                  variant="link"
-                  onClick={() => documentsApi.download(doc.id, doc.filename)}
-                >
-                  Open
-                </Button>
+                <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                  <Button
+                    variant="link"
+                    onClick={() => documentsApi.download(doc.id, doc.filename)}
+                  >
+                    Open
+                  </Button>
+                  {can.verifyDocument(user) && (
+                    <Button variant="link" onClick={() => setReviewing(doc)}>
+                      Review
+                    </Button>
+                  )}
+                </span>
               </div>
             ))}
           </div>
 
           {openType && <DocumentHistory caseId={caseId} docType={openType} />}
         </>
+      )}
+
+      {reviewing && (
+        <VerifyDocumentModal
+          document={reviewing}
+          onClose={() => setReviewing(null)}
+          onDone={() => {
+            setReviewing(null);
+            state.reload();
+          }}
+        />
       )}
     </section>
   );
