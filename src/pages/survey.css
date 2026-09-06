@@ -1,0 +1,77 @@
+/* Survey Task detail — the mobile entry portal. Reuses .panel/.fix/
+   .field-card from case.css and fieldwork.css; this is only what's unique
+   to a survey: the returned/approved callouts, the walked-corner list, and
+   the photo grid. */
+
+.survey-callout {
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-md);
+  background: var(--info-bg);
+  margin-bottom: var(--s5);
+  font-size: 13px;
+}
+.survey-callout strong { display: block; margin-bottom: 2px; }
+.survey-callout p { margin: 0; font-size: 12.5px; line-height: 1.55; }
+.survey-callout--returned { background: var(--danger-bg); color: var(--danger); }
+.survey-callout--approved { background: var(--ok-bg); color: var(--ok); }
+
+.survey-corners {
+  list-style: decimal;
+  margin: 0 0 var(--s3);
+  padding-left: var(--s5);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  display: grid;
+  gap: 2px;
+}
+
+.survey-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+}
+
+.survey-photo {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+.survey-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.survey-photo__placeholder { width: 100%; height: 100%; background: var(--surface-alt); }
+.survey-photo__caption {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 2px 4px;
+  font-size: 9.5px;
+  color: var(--text-on-brand);
+  background: rgba(43, 37, 35, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.survey-photo__remove {
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(43, 37, 35, 0.6);
+  color: var(--text-on-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.survey-actions {
+  display: grid;
+  gap: var(--s3);
+  max-width: 480px;
+  margin: var(--s5) 0 var(--s7);
+}
