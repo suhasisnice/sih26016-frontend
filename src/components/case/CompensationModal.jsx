@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as personsApi from '../../api/persons';
 import { useMutation } from '../../hooks/useApi';
 import { useEnums } from '../../hooks/useEnums';
+import * as fmt from '../../lib/format';
 import { compensationStatusLabel } from '../../lib/labels';
 import { isNumber, notNegative, validate } from '../../lib/validate';
 import Modal from '../ui/Modal';
@@ -10,13 +11,21 @@ import { Input, Select } from '../ui/Field';
 
 /* Record a payment or correct an award. Compensation is edited on its own,
    never alongside R&R (see RnrModal) — a merged form would misrepresent
-   exactly the households the two figures exist to tell apart. */
+   exactly the households the two figures exist to tell apart.
+
+   The award itself is never a typed-in total: Sec. 26-30 build it from
+   market value plus a statutory solatium (fixed at 100% of market value by
+   Sec. 30(1)) plus Sec. 34 delay interest, so this form edits those three
+   inputs and shows the resulting award as a computed read-out rather than
+   a field — matching what the backend actually accepts. */
 export default function CompensationModal({ person, onClose, onDone }) {
   const { compensation_statuses: statuses } = useEnums();
   const c = person.compensation;
 
   const [values, setValues] = useState({
-    amount_awarded: String(c.amount_awarded),
+    market_value_amount: String(c.market_value_amount),
+    solatium_rate_pct: String(c.solatium_rate_pct),
+    interest_amount: String(c.interest_amount),
     amount_paid: String(c.amount_paid),
     status: c.status,
     awarded_on: c.awarded_on || '',
@@ -30,13 +39,25 @@ export default function CompensationModal({ person, onClose, onDone }) {
     if (errors[field]) setErrors((current) => ({ ...current, [field]: null }));
   }
 
+  const marketValue = Number(values.market_value_amount) || 0;
+  const solatiumRate = Number(values.solatium_rate_pct) || 0;
+  const interest = Number(values.interest_amount) || 0;
+  const solatiumAmount = Math.round((marketValue * solatiumRate) / 100);
+  const projectedAward = marketValue + solatiumAmount + interest;
+
   async function onSave() {
     const result = validate(values, {
-      amount_awarded: [isNumber('Amount awarded'), notNegative('Amount awarded')],
+      market_value_amount: [isNumber('Market value'), notNegative('Market value')],
+      solatium_rate_pct: [isNumber('Solatium rate'), notNegative('Solatium rate')],
+      interest_amount: [isNumber('Interest'), notNegative('Interest')],
       amount_paid: [isNumber('Amount paid'), notNegative('Amount paid')],
     });
-    if (!result.errors.amount_paid && Number(values.amount_paid) > Number(values.amount_awarded)) {
-      result.errors.amount_paid = 'Cannot exceed the amount awarded';
+    if (!result.errors.solatium_rate_pct && solatiumRate > 100) {
+      result.errors.solatium_rate_pct = 'Cannot exceed 100% (Sec. 30(1))';
+      result.isValid = false;
+    }
+    if (!result.errors.amount_paid && Number(values.amount_paid) > projectedAward) {
+      result.errors.amount_paid = 'Cannot exceed the awarded amount';
       result.isValid = false;
     }
     setErrors(result.errors);
@@ -44,7 +65,9 @@ export default function CompensationModal({ person, onClose, onDone }) {
 
     try {
       await save.run({
-        amount_awarded: Number(values.amount_awarded),
+        market_value_amount: marketValue,
+        solatium_rate_pct: solatiumRate,
+        interest_amount: interest,
         amount_paid: Number(values.amount_paid),
         status: values.status,
         awarded_on: values.awarded_on || null,
@@ -75,19 +98,45 @@ export default function CompensationModal({ person, onClose, onDone }) {
       }
     >
       <Input
-        label="Amount awarded (₹)"
-        value={values.amount_awarded}
-        error={errors.amount_awarded}
+        label="Market value (₹) — Sec. 26"
+        value={values.market_value_amount}
+        error={errors.market_value_amount}
         inputMode="numeric"
-        onChange={(event) => set('amount_awarded', event.target.value)}
+        onChange={(event) => set('market_value_amount', event.target.value)}
       />
+      <Input
+        label="Solatium rate (%) — Sec. 30(1)"
+        value={values.solatium_rate_pct}
+        error={errors.solatium_rate_pct}
+        inputMode="numeric"
+        onChange={(event) => set('solatium_rate_pct', event.target.value)}
+        hint="Fixed at 100% of market value under the current Act."
+      />
+      <Input
+        label="Delay interest (₹) — Sec. 34"
+        value={values.interest_amount}
+        error={errors.interest_amount}
+        inputMode="numeric"
+        onChange={(event) => set('interest_amount', event.target.value)}
+        hint="Only applies once payment has fallen behind."
+      />
+
+      <div className="fix">
+        <span className="fix__head">Award (computed)</span>
+        <span className="fix__coords">{fmt.rupeesPlain(projectedAward)}</span>
+        <span className="fix__note">
+          {fmt.rupeesPlain(marketValue)} market value + {fmt.rupeesPlain(solatiumAmount)} solatium
+          {interest > 0 ? ` + ${fmt.rupeesPlain(interest)} interest` : ''}
+        </span>
+      </div>
+
       <Input
         label="Amount paid (₹)"
         value={values.amount_paid}
         error={errors.amount_paid}
         inputMode="numeric"
         onChange={(event) => set('amount_paid', event.target.value)}
-        hint="Cannot exceed the amount awarded."
+        hint="Cannot exceed the computed award."
       />
       <Select
         label="Status"
