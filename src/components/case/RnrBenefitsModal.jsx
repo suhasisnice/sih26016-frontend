@@ -8,6 +8,7 @@ import * as fmt from '../../lib/format';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import StatusBadge from './StatusBadge';
+import ProvenanceBadge from './ProvenanceBadge';
 import { Input, Select, Textarea } from '../ui/Field';
 import Loading from '../states/Loading';
 import ErrorState from '../states/ErrorState';
@@ -118,7 +119,11 @@ export default function RnrBenefitsModal({ person, canManage, onClose, onChanged
       busy={create.pending || update.pending}
       error={mode === 'add' ? create.error : mode === 'edit' ? update.error : null}
       title="R&R benefits"
-      subtitle={person.name}
+      subtitle={
+        <>
+          {person.name} <ProvenanceBadge provenance={person.provenance} />
+        </>
+      }
       footer={
         mode === 'list' ? (
           <>

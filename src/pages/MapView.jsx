@@ -8,6 +8,7 @@ import { useEnums } from '../hooks/useEnums';
 import { parcelStatusLabel } from '../lib/labels';
 import * as fmt from '../lib/format';
 import PageHeader from '../components/layout/PageHeader';
+import ProvenanceBadge from '../components/case/ProvenanceBadge';
 import FilterBar from '../components/ui/FilterBar';
 import Button from '../components/ui/Button';
 import ErrorState from '../components/states/ErrorState';
@@ -459,6 +460,12 @@ export default function MapView() {
                     {selected.properties.has_boundary
                       ? 'Survey outline on file'
                       : 'GPS fix only — no survey attached'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Data</dt>
+                  <dd>
+                    <ProvenanceBadge provenance={selected.properties.provenance} />
                   </dd>
                 </div>
               </dl>

@@ -100,6 +100,11 @@ export default function AppShell({ children }) {
           </button>
         </header>
 
+        <p className="shell__disclaimer">
+          Some operational records shown in this prototype are synthetic and are provided
+          solely for demonstration. Official/public reference data is identified separately.
+        </p>
+
         <main className="page" id="main">
           {children}
         </main>
