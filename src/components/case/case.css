@@ -171,6 +171,37 @@
   margin-bottom: var(--s2);
 }
 
+/* ---------- Next action ----------
+   "What do I do next, and whose desk is it on" — the one thing the rest of
+   the page makes you assemble yourself out of the timeline, the objections
+   count and the missing-documents panel. Styled after .fix's readout look:
+   a bordered surface-alt box, not a floating card, because it is a summary
+   of facts already on the page rather than a new piece of chrome. */
+.next-action {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-alt);
+  padding: var(--s4) var(--s5);
+  margin-bottom: var(--s5);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s4);
+}
+.next-action__label {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 2px;
+}
+.next-action__value { font-size: 13.5px; line-height: 1.4; }
+.next-action__value--stage { font-family: var(--font-display); font-weight: 700; }
+.next-action__value--action { font-weight: 500; }
+
+@media (max-width: 700px) {
+  .next-action { grid-template-columns: 1fr; }
+}
+
 /* ---------- Missing documents ---------- */
 .missing-docs { display: grid; gap: var(--s2); }
 
