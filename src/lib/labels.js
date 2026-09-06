@@ -103,6 +103,22 @@ const BENEFIT_DELIVERY_STATUS = {
   review_required: 'Needs review',
 };
 
+/* Where a record's data actually came from. `official` is reserved for
+   data traceable to a cited government dataset — nothing in this prototype
+   sets it, because none exists here to cite. See DataSource in the
+   backend's app.core.enums for the full policy. */
+const DATA_SOURCE = {
+  official: 'Official data',
+  public_reference: 'Public reference',
+  synthetic: 'Synthetic prototype data',
+};
+
+const PROVENANCE_STATUS = {
+  verified: 'Verified',
+  unverified: 'Unverified',
+  synthetic: 'Synthetic',
+};
+
 const SEVERITY = {
   low: 'Low',
   medium: 'Medium',
@@ -209,6 +225,8 @@ export const objectionStatusLabel = lookup(OBJECTION_STATUS);
 export const documentVerificationStatusLabel = lookup(DOCUMENT_VERIFICATION_STATUS);
 export const benefitCategoryLabel = lookup(BENEFIT_CATEGORY);
 export const benefitDeliveryStatusLabel = lookup(BENEFIT_DELIVERY_STATUS);
+export const dataSourceLabel = lookup(DATA_SOURCE);
+export const provenanceStatusLabel = lookup(PROVENANCE_STATUS);
 export const severityLabel = lookup(SEVERITY);
 export const roleLabel = lookup(ROLE);
 export const docTypeLabel = lookup(DOC_TYPE);
@@ -276,6 +294,13 @@ const TONE = {
   delivered: 'ok',
   failed: 'danger',
   review_required: 'danger',
+  // data provenance. `official` is unused today (nothing in this prototype
+  // has a cited source) but supported for when one exists. `unverified` is
+  // shared with nothing above — it means "a real fact, not formally
+  // checked", which is neither good nor bad, just informational.
+  official: 'ok',
+  public_reference: 'info',
+  unverified: 'info',
 };
 
 export function tone(value) {

@@ -13,6 +13,7 @@ import { docTypeLabel, stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
 import StageTimeline from '../components/case/StageTimeline';
 import StatusBadge from '../components/case/StatusBadge';
+import ProvenanceBadge from '../components/case/ProvenanceBadge';
 import AdvanceStageModal from '../components/case/AdvanceStageModal';
 import HoldCaseModal from '../components/case/HoldCaseModal';
 import ResumeCaseModal from '../components/case/ResumeCaseModal';
@@ -125,6 +126,7 @@ export default function CaseDetail() {
       <div className="case-title-row">
         <span className="case-number">{c.case_number}</span>
         <StatusBadge kind="case" value={c.status} />
+        <ProvenanceBadge provenance={c.provenance} />
         <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
           Opened {fmt.date(c.created_at)}
         </span>

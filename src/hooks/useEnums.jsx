@@ -22,6 +22,8 @@ const EMPTY = {
   document_verification_statuses: [],
   benefit_categories: [],
   benefit_delivery_statuses: [],
+  data_sources: [],
+  provenance_statuses: [],
 };
 
 export function EnumsProvider({ children }) {
