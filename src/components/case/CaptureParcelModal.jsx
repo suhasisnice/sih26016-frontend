@@ -215,7 +215,7 @@ export default function CaptureParcelModal({ caseRecord, people, onClose, onDone
         error={errors.owner_id}
         placeholder="Choose the recorded holder"
         options={(people || []).map((person) => ({
-          value: String(person.id),
+          value: String(person.person_id),
           label: person.name,
         }))}
         onChange={(event) => set('owner_id', event.target.value)}

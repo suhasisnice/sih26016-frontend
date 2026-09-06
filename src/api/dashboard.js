@@ -31,3 +31,10 @@ export function trends(params, opts) {
 export function forecast(params, opts) {
   return api.get(`/dashboard/forecast${qs(params)}`, opts);
 }
+
+/* Cases in an on-ground stage with something a site visit would actually
+   resolve — no parcels yet, a parcel missing its surveyed boundary, or a
+   document this stage requires but doesn't have. See FieldWork.jsx. */
+export function fieldWork(params, opts) {
+  return api.get(`/dashboard/field-work${qs(params)}`, opts);
+}

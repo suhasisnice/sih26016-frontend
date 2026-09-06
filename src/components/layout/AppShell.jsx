@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bell,
   Building2,
+  ClipboardCheck,
   FileBarChart2,
   FolderKanban,
   KeyRound,
@@ -12,7 +13,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-import { PROPOSAL_VIEWERS, REPORT_READERS, ROLES, SUPERVISORY } from '../../auth/permissions';
+import { OFFICERS, PROPOSAL_VIEWERS, REPORT_READERS, ROLES, SUPERVISORY } from '../../auth/permissions';
 import { roleLabel } from '../../lib/labels';
 
 /* Sidebar, top bar, current user and role, logout. Every authenticated page
@@ -21,6 +22,7 @@ import { roleLabel } from '../../lib/labels';
    page a role will then be bounced from. */
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: SUPERVISORY },
+  { to: '/field-work', label: 'Field Work', icon: ClipboardCheck, roles: OFFICERS },
   { to: '/projects', label: 'Projects', icon: Building2, roles: SUPERVISORY },
   { to: '/cases', label: 'Cases', icon: FolderKanban, roles: null },
   { to: '/proposals', label: 'Proposals', icon: FileBarChart2, roles: PROPOSAL_VIEWERS },
