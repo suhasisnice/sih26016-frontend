@@ -119,6 +119,14 @@ const PROVENANCE_STATUS = {
   synthetic: 'Synthetic',
 };
 
+const SURVEY_TASK_STATUS = {
+  assigned: 'Assigned',
+  in_progress: 'In progress',
+  submitted: 'Submitted',
+  approved: 'Approved',
+  returned: 'Returned',
+};
+
 const SEVERITY = {
   low: 'Low',
   medium: 'Medium',
@@ -227,6 +235,7 @@ export const benefitCategoryLabel = lookup(BENEFIT_CATEGORY);
 export const benefitDeliveryStatusLabel = lookup(BENEFIT_DELIVERY_STATUS);
 export const dataSourceLabel = lookup(DATA_SOURCE);
 export const provenanceStatusLabel = lookup(PROVENANCE_STATUS);
+export const surveyTaskStatusLabel = lookup(SURVEY_TASK_STATUS);
 export const severityLabel = lookup(SEVERITY);
 export const roleLabel = lookup(ROLE);
 export const docTypeLabel = lookup(DOC_TYPE);
@@ -301,6 +310,10 @@ const TONE = {
   official: 'ok',
   public_reference: 'info',
   unverified: 'info',
+  // survey task. `in_progress` (warn), `submitted` (info) and `approved`
+  // (ok) already match the tones rnr_status/proposal_status use above for
+  // the same words — only `returned` and the `assigned` default are new.
+  returned: 'danger',
 };
 
 export function tone(value) {

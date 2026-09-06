@@ -3,6 +3,7 @@ import {
   Bell,
   Building2,
   ClipboardCheck,
+  Compass,
   FileBarChart2,
   FolderKanban,
   KeyRound,
@@ -23,6 +24,7 @@ import { roleLabel } from '../../lib/labels';
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: SUPERVISORY },
   { to: '/field-work', label: 'Field Work', icon: ClipboardCheck, roles: OFFICERS },
+  { to: '/survey-tasks', label: 'My Surveys', icon: Compass, roles: OFFICERS },
   { to: '/projects', label: 'Projects', icon: Building2, roles: SUPERVISORY },
   { to: '/cases', label: 'Cases', icon: FolderKanban, roles: null },
   { to: '/proposals', label: 'Proposals', icon: FileBarChart2, roles: PROPOSAL_VIEWERS },

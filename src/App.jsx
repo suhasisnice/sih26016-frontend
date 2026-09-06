@@ -23,6 +23,8 @@ import Notices from './pages/Notices';
 import CaseStudies from './pages/CaseStudies';
 import Dashboard from './pages/Dashboard';
 import FieldWork from './pages/FieldWork';
+import SurveyTasks from './pages/SurveyTasks';
+import SurveyTaskDetail from './pages/SurveyTaskDetail';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import CaseList from './pages/CaseList';
@@ -121,6 +123,28 @@ export default function Root() {
                 <RequireRole roles={OFFICERS}>
                   <App>
                     <FieldWork />
+                  </App>
+                </RequireRole>
+              }
+            />
+            {/* Field survey tasks: a field officer's own work, and every
+                supervisor role that can assign or review one. */}
+            <Route
+              path="/survey-tasks"
+              element={
+                <RequireRole roles={OFFICERS}>
+                  <App>
+                    <SurveyTasks />
+                  </App>
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/survey-tasks/:taskId"
+              element={
+                <RequireRole roles={OFFICERS}>
+                  <App>
+                    <SurveyTaskDetail />
                   </App>
                 </RequireRole>
               }

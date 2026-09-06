@@ -25,6 +25,7 @@ import RespondObjectionModal from '../components/case/RespondObjectionModal';
 import UploadDocumentModal from '../components/case/UploadDocumentModal';
 import AddPersonModal from '../components/case/AddPersonModal';
 import CaptureParcelModal from '../components/case/CaptureParcelModal';
+import AssignSurveyModal from '../components/case/AssignSurveyModal';
 import LandRecordsPanel from '../components/case/LandRecordsPanel';
 import RecordFundDepositModal from '../components/case/RecordFundDepositModal';
 import DataTable from '../components/ui/DataTable';
@@ -161,6 +162,7 @@ export default function CaseDetail() {
             caseId={caseId}
             onOpen={(id) => navigate(`/parcels/${id}`)}
             onCapture={() => setModal({ kind: 'parcel' })}
+            onAssignSurvey={() => setModal({ kind: 'assignSurvey' })}
           />
 
           {/* Read-only comparison against the state land-record portal.
@@ -202,6 +204,15 @@ export default function CaseDetail() {
             setModal(null);
             parcels.reload();
           }}
+        />
+      )}
+
+      {modal && modal.kind === 'assignSurvey' && (
+        <AssignSurveyModal
+          caseRecord={c}
+          parcels={parcels.data || []}
+          onClose={() => setModal(null)}
+          onDone={() => setModal(null)}
         />
       )}
       {modal && modal.kind === 'advance' && (
@@ -576,7 +587,7 @@ function PeoplePanel({ state, user, onEditCompensation, onEditRnr, onManageBenef
   );
 }
 
-function ParcelsPanel({ state, user, caseId, onOpen, onCapture }) {
+function ParcelsPanel({ state, user, caseId, onOpen, onCapture, onAssignSurvey }) {
   const columns = [
     {
       key: 'survey_number',
@@ -618,6 +629,11 @@ function ParcelsPanel({ state, user, caseId, onOpen, onCapture }) {
           {can.createParcel(user) && (
             <Button variant="link" onClick={onCapture}>
               Record one here
+            </Button>
+          )}
+          {can.assignSurvey(user) && (
+            <Button variant="link" onClick={onAssignSurvey}>
+              Assign survey
             </Button>
           )}
           <span className="panel__count">{state.data ? `${state.data.length}` : ''}</span>

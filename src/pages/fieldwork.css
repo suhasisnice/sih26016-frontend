@@ -20,6 +20,13 @@
 }
 .field-card.is-overdue { border-left-color: var(--danger); }
 
+/* When the whole card is a <Link> — the survey task queue — reset the
+   anchor defaults and give it the same one-step hover every other
+   clickable row in the app uses (DataTable rows, sidebar links). */
+.field-card--link { text-decoration: none; color: inherit; transition: border-color 0.1s; }
+.field-card--link:hover { border-color: var(--border-strong); }
+.field-card--link.is-overdue:hover { border-left-color: var(--danger); }
+
 .field-card__head {
   display: flex;
   align-items: flex-start;

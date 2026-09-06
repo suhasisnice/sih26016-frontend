@@ -10,6 +10,7 @@ import {
   rnrStatusLabel,
   severityLabel,
   stageLabel,
+  surveyTaskStatusLabel,
   timelineStatusLabel,
   tone,
 } from '../../lib/labels';
@@ -34,6 +35,7 @@ const LABEL_BY_KIND = {
   risk: riskBandLabel,
   documentVerification: documentVerificationStatusLabel,
   benefitDelivery: benefitDeliveryStatusLabel,
+  surveyTask: surveyTaskStatusLabel,
 };
 
 export default function StatusBadge({ kind, value, title }) {

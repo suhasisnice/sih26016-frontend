@@ -24,6 +24,7 @@ const EMPTY = {
   benefit_delivery_statuses: [],
   data_sources: [],
   provenance_statuses: [],
+  survey_task_statuses: [],
 };
 
 export function EnumsProvider({ children }) {
