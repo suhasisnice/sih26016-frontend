@@ -1,4 +1,5 @@
 import {
+  benefitDeliveryStatusLabel,
   caseStatusLabel,
   compensationStatusLabel,
   documentVerificationStatusLabel,
@@ -32,6 +33,7 @@ const LABEL_BY_KIND = {
   proposal: proposalStatusLabel,
   risk: riskBandLabel,
   documentVerification: documentVerificationStatusLabel,
+  benefitDelivery: benefitDeliveryStatusLabel,
 };
 
 export default function StatusBadge({ kind, value, title }) {
