@@ -312,10 +312,26 @@ const TONE = {
   unverified: 'info',
   // survey task. `in_progress` (warn), `submitted` (info) and `approved`
   // (ok) already match the tones rnr_status/proposal_status use above for
-  // the same words — only `returned` and the `assigned` default are new.
-  returned: 'danger',
+  // the same words. `returned` is the one word two enums disagree about —
+  // see TONE_BY_KIND below.
 };
 
-export function tone(value) {
+/* The values where sharing a word is not sharing a meaning, and the flat map
+   above therefore cannot hold both.
+
+   `returned` is the only one today. On a proposal it is a correctable defect
+   handed back to the requiring body, which is why the comment above chose
+   warn over danger; on a survey task it is work an officer refused and which
+   has to be redone. Declared twice in one object literal, the second simply
+   won — so every proposal badge was rendering danger, saying "refused" about
+   the outcome the Act treats as ordinary. */
+const TONE_BY_KIND = {
+  proposal: { returned: 'warn' },
+  surveyTask: { returned: 'danger' },
+};
+
+export function tone(value, kind) {
+  const overrides = kind ? TONE_BY_KIND[kind] : undefined;
+  if (overrides && overrides[value]) return overrides[value];
   return TONE[value] || 'idle';
 }

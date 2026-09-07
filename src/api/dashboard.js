@@ -14,9 +14,12 @@ export function attention(params, opts) {
   return api.get(`/dashboard/attention${qs(params)}`, opts);
 }
 
-/* Named cases-by-stage on the API; CLAUDE.md 6 calls it stage-distribution. */
-export function casesByStage(opts) {
-  return api.get('/dashboard/cases-by-stage', opts);
+/* Named cases-by-stage on the API; CLAUDE.md 6 calls it stage-distribution.
+   Takes the same scope params as kpis() — without them the bar chart answered
+   for the caller's whole entitlement while every other panel on the page
+   honoured the state/district/project selector. */
+export function casesByStage(params, opts) {
+  return api.get(`/dashboard/cases-by-stage${qs(params)}`, opts);
 }
 
 /* Month-by-month progress. Every other dashboard figure is a snapshot of

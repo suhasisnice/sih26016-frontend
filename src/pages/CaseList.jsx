@@ -6,7 +6,7 @@ import * as referenceApi from '../api/reference';
 import { useApi } from '../hooks/useApi';
 import { useEnums } from '../hooks/useEnums';
 import { useAuth } from '../auth/AuthContext';
-import { can, isLandowner } from '../auth/permissions';
+import { can, isLandowner, isOversight } from '../auth/permissions';
 import * as fmt from '../lib/format';
 import { stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
@@ -73,8 +73,15 @@ export default function CaseList() {
     setParams(next, { replace: true });
   }
 
+  /* Whoever reads across more than one district gets the district filter: an
+     admin, and the two oversight roles. A district-scoped officer sees one
+     district and cannot change it, so the control would be a dropdown with a
+     single option — but skipping it for everyone but an admin left a state
+     officer looking at every district in their state with no way to narrow
+     to one. */
+  const canFilterByDistrict = Boolean(user) && (user.role === 'admin' || isOversight(user));
   const districts = useApi((opts) => referenceApi.districts(undefined, opts), [], {
-    skip: user && user.role !== 'admin',
+    skip: !canFilterByDistrict,
   });
 
   const projects = useApi(
@@ -280,10 +287,15 @@ export default function CaseList() {
               accent="neutral"
               icon={FolderKanban}
             />
+            {/* These three count case STATUS, which is not the same thing as
+                the ten-day drift the table's red rule marks — a case can sit
+                untouched for a month and still be 'active'. The captions used
+                to say "stalled ten days or more", which described the row
+                marking rather than the figure above it. */}
             <KpiTile
-              label="Attention needed"
+              label="On hold"
               value={fmt.count(scopeCounts.stalled)}
-              of="Stalled ten days or more"
+              of="Halted by an officer, with a reason recorded"
               accent="danger"
               icon={AlertTriangle}
             />
@@ -297,7 +309,7 @@ export default function CaseList() {
             <KpiTile
               label="Closed"
               value={fmt.count(scopeCounts.closed)}
-              of="Reached final possession"
+              of="Through possession and into monitoring"
               accent="ok"
               icon={CheckCircle2}
             />
@@ -319,7 +331,10 @@ export default function CaseList() {
                 </span>
               </button>
             ))}
-            {cases.data && (
+            {/* Guarded on total: the arithmetic reads "Showing 1–0 of 0
+                cases" on an empty result, and the empty state below already
+                says it properly. */}
+            {cases.data && total > 0 && (
               <span className="case-tabs__showing">
                 Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of{' '}
                 {fmt.count(total)} cases
