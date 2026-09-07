@@ -1,7 +1,9 @@
 import {
   benefitDeliveryStatusLabel,
+  boundaryConditionLabel,
   caseStatusLabel,
   compensationStatusLabel,
+  discrepancyStatusLabel,
   documentVerificationStatusLabel,
   noticeTypeLabel,
   objectionStatusLabel,
@@ -43,6 +45,8 @@ const LABEL_BY_KIND = {
      stages do, because the public board is classifying rows rather than
      flagging anything as wrong. */
   noticeType: noticeTypeLabel,
+  discrepancy: discrepancyStatusLabel,
+  boundaryCondition: boundaryConditionLabel,
 };
 
 export default function StatusBadge({ kind, value, title }) {

@@ -11,13 +11,22 @@ import { Select } from '../ui/Field';
    case rather than adding a second, equally authoritative row — the backend
    keeps every version, and DocumentHistory on CaseDetail is where the old
    ones stay reachable. */
-export default function UploadDocumentModal({ caseId, onClose, onDone }) {
+const SURVEY_DOC_TYPES = ['survey_report', 'field_note', 'sketch', 'measurement_evidence'];
+
+export default function UploadDocumentModal({ caseId, surveyTaskId, onClose, onDone }) {
   const { doc_types: docTypes } = useEnums();
   const [docType, setDocType] = useState('');
   const [file, setFile] = useState(null);
   const [error, setError] = useState(null);
 
-  const save = useMutation(() => documentsApi.upload({ caseId, docType, file }));
+  // Filing evidence for one piece of fieldwork offers that fieldwork's own
+  // categories first — the case's full lifecycle list still follows, since
+  // an officer may occasionally need to file one of those from here too.
+  const orderedTypes = surveyTaskId
+    ? [...SURVEY_DOC_TYPES, ...docTypes.filter((d) => !SURVEY_DOC_TYPES.includes(d))]
+    : docTypes;
+
+  const save = useMutation(() => documentsApi.upload({ caseId, docType, file, surveyTaskId }));
 
   async function onSave() {
     if (!docType) {
@@ -60,7 +69,7 @@ export default function UploadDocumentModal({ caseId, onClose, onDone }) {
         value={docType}
         error={error && !docType ? error : undefined}
         placeholder="Choose a document type"
-        options={docTypes.map((value) => ({ value, label: docTypeLabel(value) }))}
+        options={orderedTypes.map((value) => ({ value, label: docTypeLabel(value) }))}
         onChange={(event) => {
           setDocType(event.target.value);
           setError(null);

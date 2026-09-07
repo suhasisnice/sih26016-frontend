@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../auth/AuthContext';
 import { OFFICERS, PROPOSAL_VIEWERS, REPORT_READERS, ROLES, SUPERVISORY } from '../../auth/permissions';
 import { roleLabel } from '../../lib/labels';
+import MobileTabBar from './MobileTabBar';
 
 /* Sidebar, top bar, current user and role, logout. Every authenticated page
    renders inside this. Which links appear is decided by the same role lists
@@ -111,6 +112,8 @@ export default function AppShell({ children }) {
           {children}
         </main>
       </div>
+
+      <MobileTabBar user={user} />
     </div>
   );
 }
