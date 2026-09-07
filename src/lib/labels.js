@@ -378,9 +378,10 @@ const TONE = {
   // survey task. `in_progress` (warn), `submitted` (info) and `approved`
   // (ok) already match the tones rnr_status/proposal_status use above for
   // the same words. `returned` is the one word two enums disagree about —
-  // see TONE_BY_KIND below.
-  // the same words — only `returned` and the `assigned` default are new.
-  returned: 'danger',
+  // it is NOT redeclared here, because a second `returned:` in this literal
+  // would silently win over the one above rather than sit beside it. Both
+  // readings live in TONE_BY_KIND below; the entry above stays as the
+  // kindless fallback.
   // discrepancy status. `resolved` is shared with objection status above.
   open: 'warn',
   // boundary condition. `verified` is shared with document-verification
