@@ -1,7 +1,9 @@
 import {
   benefitDeliveryStatusLabel,
+  boundaryConditionLabel,
   caseStatusLabel,
   compensationStatusLabel,
+  discrepancyStatusLabel,
   documentVerificationStatusLabel,
   objectionStatusLabel,
   parcelStatusLabel,
@@ -36,6 +38,8 @@ const LABEL_BY_KIND = {
   documentVerification: documentVerificationStatusLabel,
   benefitDelivery: benefitDeliveryStatusLabel,
   surveyTask: surveyTaskStatusLabel,
+  discrepancy: discrepancyStatusLabel,
+  boundaryCondition: boundaryConditionLabel,
 };
 
 export default function StatusBadge({ kind, value, title }) {

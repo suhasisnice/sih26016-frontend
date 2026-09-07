@@ -565,11 +565,48 @@ table { border-collapse: collapse; width: 100%; }
 
 .page { flex: 1; padding: var(--s6); max-width: 1320px; width: 100%; margin: 0 auto; }
 
+/* ---------- Mobile bottom tab bar ---------- */
+/* Hidden at >=768px, where the sidebar takes over — see MobileTabBar.jsx.
+   Fixed to the viewport bottom, same idea as the wizard's own sticky
+   action bar (components/survey/wizard.css), and respects the safe-area
+   inset so it doesn't sit under a phone's home indicator. */
+.mobile-tabbar {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 6px var(--s2) calc(6px + env(safe-area-inset-bottom, 0px));
+}
+.mobile-tabbar__tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  min-height: 48px;
+  color: var(--text-faint);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.mobile-tabbar__tab:hover { text-decoration: none; color: var(--text-muted); }
+.mobile-tabbar__tab.is-active { color: var(--brand); }
+
 @media (max-width: 960px) {
-  .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 50; }
-  .shell__main { margin-left: 0; }
   .page { padding: var(--s4); }
   .shell__disclaimer { padding: var(--s2) var(--s4); }
+}
+
+@media (max-width: 767px) {
+  .sidebar { display: none; }
+  .mobile-tabbar { display: flex; }
+  /* Room for the fixed tab bar so the last row of content is never hidden
+     behind it. */
+  .page { padding-bottom: calc(var(--s4) + 64px); }
 }
 
 /* ---------- KpiTile ---------- */

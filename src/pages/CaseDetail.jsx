@@ -6,11 +6,12 @@ import * as personsApi from '../api/persons';
 import * as documentsApi from '../api/documents';
 import * as objectionsApi from '../api/objections';
 import * as surveyApi from '../api/survey';
+import * as discrepanciesApi from '../api/discrepancies';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth/AuthContext';
 import { can, isLandowner, ROLES } from '../auth/permissions';
 import * as fmt from '../lib/format';
-import { docTypeLabel, roleLabel, stageLabel } from '../lib/labels';
+import { discrepancyTypeLabel, docTypeLabel, roleLabel, stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
 import StageTimeline from '../components/case/StageTimeline';
 import StatusBadge from '../components/case/StatusBadge';
@@ -25,6 +26,7 @@ import RnrModal from '../components/case/RnrModal';
 import RnrBenefitsModal from '../components/case/RnrBenefitsModal';
 import RespondObjectionModal from '../components/case/RespondObjectionModal';
 import FileObjectionModal from '../components/case/FileObjectionModal';
+import RespondDiscrepancyModal from '../components/case/RespondDiscrepancyModal';
 import UploadDocumentModal from '../components/case/UploadDocumentModal';
 import AddPersonModal from '../components/case/AddPersonModal';
 import CaptureParcelModal from '../components/case/CaptureParcelModal';
@@ -61,6 +63,7 @@ export default function CaseDetail() {
   /* Feeds the "Next action" banner below, not a panel of its own — a field
      officer with no tasks on this case simply gets an empty list back. */
   const surveyTasks = useApi((opts) => surveyApi.list({ case_id: caseId }, opts), [caseId]);
+  const discrepancies = useApi((opts) => discrepanciesApi.list({ case_id: caseId }, opts), [caseId]);
   /* A five-row preview — the full trail now lives at its own /audit route
      (the Figma "Audit Trail" frame is a standalone page with its own
      filters and case-context sidebar, not a panel), so this only needs to
@@ -77,6 +80,7 @@ export default function CaseDetail() {
     objections.reload();
     fundDeposits.reload();
     surveyTasks.reload();
+    discrepancies.reload();
     audit.reload();
   }
 
@@ -202,6 +206,13 @@ export default function CaseDetail() {
             onRecord={() => setModal({ kind: 'fund-deposit' })}
           />
           <MissingDocumentsPanel state={missing} />
+          {discrepancies.data && discrepancies.data.items.length > 0 && (
+            <DiscrepanciesPanel
+              state={discrepancies}
+              user={user}
+              onRespond={(row) => setModal({ kind: 'discrepancy', discrepancy: row })}
+            />
+          )}
           <DocumentsPanel
             state={documents}
             user={user}
@@ -319,6 +330,17 @@ export default function CaseDetail() {
           onDone={() => {
             setModal(null);
             objections.reload();
+            audit.reload();
+          }}
+        />
+      )}
+      {modal && modal.kind === 'discrepancy' && (
+        <RespondDiscrepancyModal
+          discrepancy={modal.discrepancy}
+          onClose={() => setModal(null)}
+          onDone={() => {
+            setModal(null);
+            discrepancies.reload();
             audit.reload();
           }}
         />
@@ -1012,6 +1034,57 @@ function DocumentsPanel({ state, user, caseId, onUpload }) {
           }}
         />
       )}
+    </section>
+  );
+}
+
+/* Mismatches a field officer flagged against this case's records —
+   distinct from Objections, which come from the affected person. Only
+   rendered by the caller when there's at least one row, so a case with no
+   field discrepancies doesn't carry an empty panel. */
+function DiscrepanciesPanel({ state, user, onRespond }) {
+  return (
+    <section className="panel">
+      <div className="panel__head">
+        <h2 className="panel__title">Field discrepancies</h2>
+        {state.data && (
+          <span className="panel__count">{state.data.open_count} open</span>
+        )}
+      </div>
+
+      {state.loading && <Loading inline rows={2} />}
+      {state.error && <ErrorState error={state.error} onRetry={state.reload} />}
+
+      {state.data &&
+        state.data.items.map((row) => (
+          <article key={row.id} className="objection">
+            <div className="objection__head">
+              <span className="objection__who">{discrepancyTypeLabel(row.discrepancy_type)}</span>
+              <span style={{ display: 'flex', gap: 'var(--s3)', alignItems: 'baseline' }}>
+                <StatusBadge kind="discrepancy" value={row.status} />
+                <span className="objection__when">
+                  Filed {fmt.date(row.filed_on)} by {row.filed_by_name}
+                </span>
+              </span>
+            </div>
+            <p className="objection__grounds">{row.description}</p>
+            {row.response && (
+              <div className="objection__response">
+                <span className="objection__response-label">
+                  RESPONSE · {fmt.date(row.responded_on)}
+                </span>
+                {row.response}
+              </div>
+            )}
+            {can.respondToObjection(user) && row.status === 'open' && (
+              <div className="objection__actions">
+                <Button variant="secondary" size="sm" onClick={() => onRespond(row)}>
+                  Resolve
+                </Button>
+              </div>
+            )}
+          </article>
+        ))}
     </section>
   );
 }

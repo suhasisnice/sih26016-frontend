@@ -38,12 +38,13 @@ export function save(taskId, payload, opts) {
   return api.patch(`/survey-tasks/${taskId}`, payload, opts);
 }
 
-export function uploadPhoto({ taskId, file, latitude, longitude, caption }, opts) {
+export function uploadPhoto({ taskId, file, latitude, longitude, caption, category }, opts) {
   const fd = new FormData();
   fd.append('file', file);
   if (latitude != null) fd.append('latitude', String(latitude));
   if (longitude != null) fd.append('longitude', String(longitude));
   if (caption) fd.append('caption', caption);
+  if (category) fd.append('category', category);
   return api.post(`/survey-tasks/${taskId}/photos`, fd, opts);
 }
 
@@ -51,8 +52,15 @@ export function deletePhoto(taskId, photoId, opts) {
   return api.delete(`/survey-tasks/${taskId}/photos/${photoId}`, opts);
 }
 
-export function submit(taskId, opts) {
-  return api.post(`/survey-tasks/${taskId}/submit`, undefined, opts);
+/* Always requires a fresh stepup token, unlike casesApi.advance where it's
+   only needed for a handful of stages — every survey submission is the
+   officer's own sign-off on their fieldwork. Same header pattern as
+   api/cases.js's advance/hold. */
+export function submit(taskId, stepupToken, opts) {
+  return api.post(`/survey-tasks/${taskId}/submit`, undefined, {
+    ...opts,
+    headers: { 'X-Stepup-Token': stepupToken },
+  });
 }
 
 export function approve(taskId, reviewNote, opts) {

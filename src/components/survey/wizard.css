@@ -1,0 +1,231 @@
+/* The mobile field-survey wizard. Touch targets here run larger than the
+   app's default --s3/--s4 button padding (CLAUDE.md's shared Button stays
+   untouched — this is scoped to the wizard only, per the plan's own scope
+   decision 6) because a field officer is tapping this one-handed, often in
+   sunlight, sometimes wearing gloves. */
+
+.wizard-steps {
+  margin-bottom: var(--s5);
+}
+.wizard-steps__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--s2);
+}
+.wizard-steps__count {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.wizard-steps__label {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+}
+.wizard-steps__track {
+  display: flex;
+  gap: 5px;
+}
+.wizard-steps__dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.wizard-steps__dot.is-done { background: var(--ok); }
+.wizard-steps__dot.is-current { background: var(--brand); }
+
+.wizard-step {
+  display: grid;
+  gap: var(--s5);
+  /* Room for the sticky action bar so the last field is never hidden
+     behind it. */
+  padding-bottom: 96px;
+}
+
+/* Larger tap targets, scoped to this screen only. */
+.wizard-btn {
+  min-height: 48px;
+  font-size: 14.5px;
+}
+
+.wizard-actions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: var(--s4) var(--s5) calc(var(--s4) + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  gap: var(--s3);
+}
+.wizard-actions__primary { flex: 1; }
+
+/* Desktop/tablet: the sticky bar looks stranded full-bleed on a wide
+   screen, so it sits inline with the content instead past this width. */
+@media (min-width: 860px) {
+  .wizard-actions {
+    position: static;
+    border-top: none;
+    padding: 0;
+    margin-top: var(--s5);
+  }
+  .wizard-step { padding-bottom: 0; }
+}
+
+/* Below 768px the app's own mobile-tabbar (base.css) is also fixed to the
+   viewport bottom — stack this bar just above it rather than letting the
+   two overlap and hide the wizard's own Next/Submit button. */
+@media (max-width: 767px) {
+  .wizard-actions { bottom: 60px; }
+  .wizard-step { padding-bottom: 160px; }
+}
+
+.wizard-offline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s4);
+  border-radius: var(--r-md);
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 12.5px;
+}
+
+.wizard-draft-note {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-align: center;
+  margin-top: var(--s2);
+}
+
+/* --- Checklist --- */
+.checklist { display: grid; gap: var(--s2); }
+.checklist__group { margin-bottom: var(--s3); }
+.checklist__group-title {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: var(--s2);
+}
+.checklist__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) 0;
+  font-size: 13px;
+}
+.checklist__mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.checklist__item.is-done .checklist__mark {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--text-on-brand);
+}
+.checklist__item.is-done .checklist__label { color: var(--text-muted); }
+
+/* A checklist item the officer sets themselves, not derived from data —
+   the button itself doubles as the tap target, min 44px tall. */
+.checklist__item--manual {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+/* --- Tag picker (physical features, photo category) --- */
+.tag-picker { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.tag-picker__tag {
+  padding: 8px 14px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  font-size: 12.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.tag-picker__tag.is-selected {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--text-on-brand);
+}
+
+/* --- Person step --- */
+.person-card {
+  padding: var(--s4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+.person-card__name { font-size: 15px; font-weight: 600; }
+.person-card__meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.person-card__actions {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s4);
+  flex-wrap: wrap;
+}
+
+/* --- Review step --- */
+.review-list { display: grid; gap: 0; }
+.review-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: var(--s4);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.review-row:last-child { border-bottom: none; }
+.review-row__label { color: var(--text-faint); font-size: 11.5px; letter-spacing: 0.02em; text-transform: uppercase; }
+.review-row__value { color: var(--text); }
+
+@media (max-width: 480px) {
+  .review-row { grid-template-columns: 1fr; gap: var(--s1); }
+}
+
+/* --- Home screen status buckets (FieldWork.jsx) --- */
+.status-buckets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--s3);
+  margin-bottom: var(--s6);
+}
+.status-bucket {
+  padding: var(--s4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: center;
+}
+.status-bucket__count {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.status-bucket__label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
