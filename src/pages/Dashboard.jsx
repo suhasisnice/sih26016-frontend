@@ -101,7 +101,10 @@ export default function Dashboard() {
     (opts) => dashboardApi.alerts({ ...scope, severity: severity || undefined, limit: 50 }, opts),
     [stateId, districtId, projectId, severity],
   );
-  const stages = useApi((opts) => dashboardApi.casesByStage(opts), []);
+  const stages = useApi(
+    (opts) => dashboardApi.casesByStage(scope, opts),
+    [stateId, districtId, projectId],
+  );
   const trends = useApi(
     (opts) =>
       dashboardApi.trends(
@@ -115,8 +118,8 @@ export default function Dashboard() {
     [stateId, districtId, projectId],
   );
   const attention = useApi(
-    (opts) => dashboardApi.attention({ limit: 20 }, opts),
-    [],
+    (opts) => dashboardApi.attention({ ...scope, limit: 20 }, opts),
+    [stateId, districtId, projectId],
   );
 
   /* SLAO's own two work queues — the demo asks for these explicitly, and
@@ -209,10 +212,11 @@ export default function Dashboard() {
     <>
       <PageHeader
         title="Acquisition overview"
+        /* A state or ministry officer reads across districts, so "your
+           district" was wrong for both of them — and they are the two roles
+           most likely to be looking at this page in front of a reviewer. */
         subtitle={
-          user && user.role === 'admin'
-            ? 'Every district, as it stands today.'
-            : 'Your district, as it stands today.'
+          canPickScope ? 'Every district in scope, as it stands today.' : 'Your district, as it stands today.'
         }
         actions={
           can.runRules(user) ? (

@@ -8,7 +8,6 @@ import { useGeolocation, MAX_ACCEPTABLE_ACCURACY_M } from '../hooks/useGeolocati
 import { useAuth } from '../auth/AuthContext';
 import { can } from '../auth/permissions';
 import * as fmt from '../lib/format';
-import { stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
 import StatusBadge from '../components/case/StatusBadge';
 import UploadDocumentModal from '../components/case/UploadDocumentModal';
