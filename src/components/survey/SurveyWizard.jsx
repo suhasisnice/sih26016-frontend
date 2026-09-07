@@ -632,6 +632,15 @@ function StepLocation({ t, location, demoFix, onUseLocation, onUseDemoLocation }
     <section className="panel">
       <div className="panel__head">
         <h2 className="panel__title">Location</h2>
+        {t.parcel_id && (
+          <Button
+            variant="quiet"
+            size="sm"
+            to={`/map?case=${t.case_id}&parcel=${t.parcel_id}`}
+          >
+            Open on map
+          </Button>
+        )}
       </div>
       <div
         className={`fix${fix && !location.tooLoose ? ' is-good' : ''}${location.tooLoose ? ' is-bad' : ''}`}

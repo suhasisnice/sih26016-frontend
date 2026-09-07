@@ -18,7 +18,7 @@ export function get(parcelId, opts) {
 
    `caseId` narrows to one acquisition — the "show me this project's plots"
    path off the case page. */
-export function bbox({ minLon, minLat, maxLon, maxLat, status, caseId }, opts) {
+export function bbox({ minLon, minLat, maxLon, maxLat, status, caseId, districtId, projectId }, opts) {
   return api.get(
     `/parcels/bbox${qs({
       min_lon: minLon,
@@ -27,13 +27,20 @@ export function bbox({ minLon, minLat, maxLon, maxLat, status, caseId }, opts) {
       max_lat: maxLat,
       parcel_status: status,
       case_id: caseId,
+      district_id: districtId,
+      project_id: projectId,
     })}`,
     opts,
   );
 }
 
-export function search(surveyNumber, limit, opts) {
-  return api.get(`/parcels/search${qs({ survey_number: surveyNumber, limit })}`, opts);
+/* Survey number, ULPIN or case number — one search box, ORed together on
+   the backend, rather than three separate fields to choose between.
+   Returns the same enriched shape bbox() does (project/district/village,
+   case stage), so a search result and a clicked map feature look the same
+   to the detail panel. */
+export function search(q, limit, opts) {
+  return api.get(`/parcels/search${qs({ q, limit })}`, opts);
 }
 
 /* Register a parcel where it stands. Coordinates come from the device;

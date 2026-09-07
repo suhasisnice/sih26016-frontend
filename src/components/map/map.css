@@ -82,4 +82,210 @@
 .parcel--under-acquisition { stroke: var(--warn); fill: var(--warn); }
 .parcel--acquired { stroke: var(--ok); fill: var(--ok); }
 .parcel--possession-taken { stroke: var(--info); fill: var(--info); }
+/* The "Acquisition status" layer switched off — every parcel reads as one
+   neutral tone so the map answers "where is land" without also answering
+   "how far along", when the two questions are being asked separately. */
+.parcel--neutral { stroke: var(--text-muted); fill: var(--text-muted); }
 .parcel.is-selected { fill-opacity: 0.8; stroke-opacity: 1; }
+
+/* A case's parcels have no stored project boundary anywhere in the data
+   model — Project carries no geometry column — so this is honestly a
+   bounding box of the case's own parcels, dashed to read as "extent", never
+   as a surveyed line. */
+.project-boundary {
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  stroke-opacity: 0.8;
+}
+
+/* A field officer's submitted GPS fix — distinct from the parcel palette so
+   it never reads as an acquisition status. */
+.survey-location { stroke: var(--brand); fill: var(--brand); fill-opacity: 0.85; }
+
+/* The boundary a field officer actually walked, drawn overlaid on the
+   parcel's own recorded outline where both exist — the gap between a solid
+   parcel outline and this dashed one IS the discrepancy, read by eye rather
+   than computed. */
+.survey-boundary {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+}
+
+.officer-location { stroke: var(--info); fill: var(--info); fill-opacity: 0.9; }
+
+/* ---------- Marker clustering ---------- */
+/* A cluster's own colour would compete with the status legend for meaning,
+   so it stays a neutral badge — the count is the message, not another
+   status to read. */
+.parcel-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 2px solid var(--text-faint);
+  border-radius: 50%;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Search suggestions ---------- */
+.map-search { position: relative; }
+.map-search__suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 900;
+  margin: 0;
+  padding: var(--s2);
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.map-search__suggestions li + li { margin-top: 2px; }
+.map-search__suggestions button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  text-align: left;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.map-search__suggestions button:hover,
+.map-search__suggestions button:focus-visible { background: var(--brand-tint); }
+.map-search__meta { color: var(--text-faint); font-size: 11.5px; }
+
+/* ---------- Map controls & layers panel ---------- */
+.map-controls {
+  position: absolute;
+  top: var(--s4);
+  right: var(--s4);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  align-items: flex-end;
+}
+.map-controls__btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.map-controls__btn:hover { background: var(--brand-tint); color: var(--text); }
+.map-controls__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.map-controls__basetoggle {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.map-controls__base {
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.map-controls__base.is-active { background: var(--brand); color: var(--text-on-brand); }
+
+.map-layers {
+  position: absolute;
+  top: var(--s4);
+  right: calc(34px + var(--s4) + var(--s3));
+  z-index: 500;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  padding: var(--s3) var(--s4);
+  min-width: 190px;
+  display: grid;
+  gap: var(--s2);
+}
+.map-layers__title { font-size: 11px; font-weight: 600; color: var(--text-muted); margin: 0 0 2px; }
+.map-layers label {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.map-selected__more { margin-top: var(--s3); font-size: 12.5px; }
+.map-selected__more summary { cursor: pointer; color: var(--text-muted); }
+.map-selected__more dl { margin-top: var(--s3); }
+.map-selected__actions { display: grid; gap: var(--s2); margin-top: var(--s4); }
+
+.map-hint--faint { color: var(--text-faint); font-size: 11px; }
+
+/* ---------- Mobile bottom sheet ---------- */
+/* Below 767px the always-visible sidebar becomes a sheet that only takes
+   space once a parcel is selected — :has() lets the frame grow to fill the
+   viewport when nothing is selected, rather than always reserving room
+   underneath it for a panel that, most of the time, has nothing to show. */
+@media (max-width: 767px) {
+  .map-shell { position: relative; }
+  .map-frame { height: calc(100vh - 220px); }
+
+  .map-side {
+    position: fixed;
+    left: 0;
+    right: 0;
+    /* The mobile tab bar (base.css) is its own fixed bottom-0 element,
+       measured at 64px tall (48px min-height tab content + 6px top padding
+       + 6px bottom padding, before any safe-area inset) — the same overlap
+       the wizard's sticky action bar hit before (see wizard.css), fixed
+       here the same way: offset the sheet up by the tab bar's height
+       instead of stacking a z-index on top of it, so the tab bar stays
+       reachable under the peeking strip. */
+    bottom: 64px;
+    z-index: 40;
+    max-height: 45vh;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    box-shadow: 0 -4px 16px rgba(43, 37, 35, 0.12);
+    padding: var(--s4);
+    transform: translateY(calc(100% - 44px));
+    transition: transform 0.2s ease;
+  }
+  .map-shell:has(.map-selected) .map-side { transform: translateY(0); }
+  .map-side::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong);
+    margin: 0 auto var(--s3);
+  }
+}
