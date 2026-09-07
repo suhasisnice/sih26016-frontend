@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthContext';
 import RequireRole from './auth/RequireRole';
 import { EnumsProvider } from './hooks/useEnums';
 import {
+  CASE_WRITERS,
   OFFICERS,
   PROPOSAL_AUTHORS,
   PROPOSAL_VIEWERS,
@@ -160,11 +161,15 @@ export default function Root() {
               }
             />
 
-            {/* Operational: opening a case is a district action */}
+            {/* Operational: opening a case is a district action, and a
+                narrower one than OFFICERS. cases.CASE_WRITERS is the backend's
+                list, and it excludes the field and R&R officers — guarding
+                this route on OFFICERS walked them through the whole form and
+                then refused the submit with a 403. */}
             <Route
               path="/cases/new"
               element={
-                <RequireRole roles={OFFICERS}>
+                <RequireRole roles={CASE_WRITERS}>
                   <App>
                     <CaseCreate />
                   </App>
