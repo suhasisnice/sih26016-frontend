@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import * as noticesApi from '../api/notices';
 import { useApi, useMutation } from '../hooks/useApi';
 import * as fmt from '../lib/format';
-import { stageLabel, stageSection } from '../lib/labels';
+import { noticeSection, noticeTypeLabel, stageLabel, stageSection } from '../lib/labels';
 import PublicHeader from '../components/public/PublicHeader';
 import PublicFooter from '../components/public/PublicFooter';
 import StatusBadge from '../components/case/StatusBadge';
@@ -359,15 +359,22 @@ function ProvisionSection({ identifier }) {
 /* The public notice board.
 
    Publishing notifications publicly is a statutory requirement under the
-   Act, not decoration. A notice is a case that has reached one of the two
-   stages the Act requires be published — Section 11 preliminary notification
-   and Section 19 declaration — so this reads the real caseload rather than a
-   parallel table of invented announcements. Nothing here is authenticated:
-   a public notice is public. */
+   Act, not decoration. Nothing here is authenticated: a public notice is
+   public.
 
-const PUBLISHED_STAGES = ['preliminary_notification', 'declaration'];
+   Each row is one published INSTRUMENT, read from the statutory notices
+   register — not one case sitting at a stage. That distinction is the whole
+   correctness of this page. A Section 11 notification is a completed public
+   act with a date and a gazette number; it does not stop having happened
+   because the file has since moved on to the award, and it has not happened
+   merely because a case reached the declaration stage internally. One
+   acquisition therefore appears twice once it has been both notified and
+   declared, which is right — two instruments, two dates, and the sixty-day
+   objection window runs from the first of them. */
 
-const STAGE_NOTE = {
+const PUBLISHED_NOTICE_TYPES = ['preliminary_notification', 'declaration'];
+
+const NOTICE_NOTE = {
   preliminary_notification:
     'Notified under Section 11. Objections may be filed within sixty days of publication.',
   declaration:
@@ -375,16 +382,16 @@ const STAGE_NOTE = {
 };
 
 export default function Notices() {
-  const [stage, setStage] = useState('');
+  const [noticeType, setNoticeType] = useState('');
   const [districtId, setDistrictId] = useState('');
 
   const notices = useApi(
     (opts) =>
       noticesApi.list(
-        { stage: stage || undefined, limit: 100 },
+        { notice_type: noticeType || undefined, limit: 100 },
         opts,
       ),
-    [stage],
+    [noticeType],
   );
 
   /* The district list comes off the notices themselves rather than
@@ -415,21 +422,26 @@ export default function Notices() {
         <div className="public-page__rule" aria-hidden="true" />
 
         <p className="public-page__lede">
-          Every acquisition that has been notified under Section 11 or declared
-          under Section 19, published as the Act requires. If land recorded in
-          your name appears here, the district office holds the full record and
-          the period for filing an objection runs from the date of publication.
+          Every notification issued under Section 11 and every declaration under
+          Section 19, published as the Act requires and listed by the date it was
+          issued. Entries stay on this record after the acquisition moves on. If
+          land recorded in your name appears here, the district office holds the
+          full record, and the period for filing an objection runs from the date
+          of publication shown against the notification.
         </p>
 
         <LookupCard />
 
         <div className="public-page__filters" style={{ marginTop: 'var(--s6)' }}>
           <Select
-            label="Stage"
-            value={stage}
-            placeholder="Notified and declared"
-            options={PUBLISHED_STAGES.map((value) => ({ value, label: stageLabel(value) }))}
-            onChange={(event) => setStage(event.target.value)}
+            label="Instrument"
+            value={noticeType}
+            placeholder="Notifications and declarations"
+            options={PUBLISHED_NOTICE_TYPES.map((value) => ({
+              value,
+              label: noticeTypeLabel(value),
+            }))}
+            onChange={(event) => setNoticeType(event.target.value)}
           />
           <Select
             label="District"
@@ -447,16 +459,19 @@ export default function Notices() {
           <Empty
             title="No notices published"
             body={
-              districtId || stage
+              districtId || noticeType
                 ? 'Nothing has been published under these filters. Widen them to see the rest.'
-                : 'No acquisition has reached a stage the Act requires be published.'
+                : 'No notification or declaration has been issued yet.'
             }
           />
         )}
 
         {visible &&
           visible.map((notice) => (
-            <article key={notice.case_number} className="notice">
+            /* A case appears once per instrument, so the case number alone is
+               not unique here — the register allows one of each type per
+               case and no more. */
+            <article key={`${notice.case_number}-${notice.notice_type}`} className="notice">
               <div>
                 <p className="notice__date">{fmt.dateLong(notice.published_on)}</p>
                 <p className="notice__date" style={{ marginTop: 4 }}>
@@ -474,13 +489,31 @@ export default function Notices() {
                   {fmt.count(notice.parcel_count)} parcels ·{' '}
                   {fmt.hectares(notice.total_area_ha)}
                 </p>
+                {/* What makes this a citable record rather than an
+                    announcement: the provision it issued under, the office
+                    that issued it, and the gazette it appeared in. */}
+                <p className="notice__cite">
+                  {notice.section_reference} · {notice.issuing_authority}
+                  {notice.gazette_number ? ` · Gazette ${notice.gazette_number}` : ''}
+                </p>
                 <p className="notice__meta" style={{ marginTop: 'var(--s2)' }}>
-                  {STAGE_NOTE[notice.stage]}
+                  {NOTICE_NOTE[notice.notice_type]}
                 </p>
               </div>
 
               <div className="notice__stage">
-                <StatusBadge kind="stage" value={notice.stage} title={stageSection(notice.stage)} />
+                <StatusBadge
+                  kind="noticeType"
+                  value={notice.notice_type}
+                  title={noticeSection(notice.notice_type)}
+                />
+                {/* The one thing on this row that describes today rather than
+                    the date of publication, so it is set apart from the
+                    instrument above it rather than badged alongside — two
+                    pills would read as two states of one thing. */}
+                <p className="notice__since">
+                  Case now at {stageLabel(notice.current_stage)}
+                </p>
               </div>
             </article>
           ))}

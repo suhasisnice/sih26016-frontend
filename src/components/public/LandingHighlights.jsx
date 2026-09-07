@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import * as noticesApi from '../../api/notices';
 import { useApi } from '../../hooks/useApi';
 import * as fmt from '../../lib/format';
-import { stageSection } from '../../lib/labels';
+import { noticeSection } from '../../lib/labels';
 import StatusBadge from '../case/StatusBadge';
 
 /* Real figures, not marketing copy: both bands read the same public notice
@@ -22,7 +22,16 @@ export default function LandingHighlights() {
 
   const stats = useMemo(() => {
     if (!items.length) return null;
-    const totalHectares = items.reduce((sum, n) => sum + (Number(n.total_area_ha) || 0), 0);
+    /* Area is deduplicated by case before it is summed. Each row here is one
+       published instrument, so an acquisition that has been both notified
+       and declared appears twice — and its hectares would otherwise be
+       counted twice with it. The notice count is deliberately NOT deduped:
+       two instruments is two publications, which is what that figure means. */
+    const areaByCase = new Map();
+    for (const notice of items) {
+      areaByCase.set(notice.case_number, Number(notice.total_area_ha) || 0);
+    }
+    const totalHectares = [...areaByCase.values()].reduce((sum, area) => sum + area, 0);
     const districts = new Set(items.map((n) => n.district_name));
     return {
       notices: notices.data.total ?? items.length,
@@ -70,7 +79,11 @@ export default function LandingHighlights() {
             {notices.loading && !recent.length
               ? [0, 1, 2].map((i) => <div key={i} className="update-card update-card--loading" />)
               : recent.map((notice) => (
-                  <Link key={notice.case_number} to="/notices" className="update-card">
+                  <Link
+                    key={`${notice.case_number}-${notice.notice_type}`}
+                    to="/notices"
+                    className="update-card"
+                  >
                     <p className="update-card__date">{fmt.dateLong(notice.published_on)}</p>
                     <h3 className="update-card__title">{notice.title}</h3>
                     <p className="update-card__meta">
@@ -78,9 +91,9 @@ export default function LandingHighlights() {
                     </p>
                     <div className="update-card__status">
                       <StatusBadge
-                        kind="stage"
-                        value={notice.stage}
-                        title={stageSection(notice.stage)}
+                        kind="noticeType"
+                        value={notice.notice_type}
+                        title={noticeSection(notice.notice_type)}
                       />
                     </div>
                   </Link>

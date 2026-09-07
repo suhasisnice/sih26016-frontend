@@ -48,7 +48,16 @@ export default function StageTimeline({ stage, history, stalledDays }) {
                   {typeof stalledDays === 'number' && ` · ${fmt.days(stalledDays)} here`}
                 </p>
               )}
-              {state === 'ahead' && <p className="timeline__meta timeline__meta--ahead">Not yet reached</p>}
+              {/* A stage ahead of the case that nonetheless carries a date is
+                  one the case reached and was sent back from. Saying "not yet
+                  reached" of it contradicts the history immediately below and
+                  the send-back confirmation's own promise that nothing is
+                  erased. */}
+              {state === 'ahead' && (
+                <p className="timeline__meta timeline__meta--ahead">
+                  {date ? `Reached ${fmt.date(date)} · sent back since` : 'Not yet reached'}
+                </p>
+              )}
             </div>
           </li>
         );

@@ -458,6 +458,9 @@ const STAGE_RESPONSIBLE_ROLE = {
 
 const OPEN_SURVEY_STATUSES = ['assigned', 'in_progress', 'returned'];
 const OPEN_RNR_STATUSES = ['pending', 'in_progress'];
+/* Mirrors objections.OPEN_STATUSES — an objection still awaiting a decision.
+   under_review is on this list precisely because it is not one. */
+const OPEN_OBJECTION_STATUSES = ['filed', 'under_review'];
 
 /* "Whose desk is this on, and what do they need to do" — the one question
    this page otherwise leaves the reader to answer themselves by reading
@@ -468,6 +471,18 @@ function deriveNextAction(c, { surveyTasks, objectionsData, missingDocs, peopleD
   if (!c) return null;
   const stage = c.stage;
   const fallbackRole = STAGE_RESPONSIBLE_ROLE[stage] || ROLES.SLAO;
+
+  /* Both terminal states are answered first, before any rule that could
+     find work on the case. A closed case still reports allowed_next_stages
+     — the only legal move from the final stage is back to the previous one
+     — so the "ready to advance" rule below used to claim a finished
+     acquisition had a next step waiting on somebody. */
+  if (c.status === 'closed') {
+    return { role: null, action: 'Case closed — no action required' };
+  }
+  if (c.status === 'stalled') {
+    return { role: fallbackRole, action: 'On hold — resume the case to continue' };
+  }
 
   if (stage === 'land_verification' && surveyTasks) {
     const submitted = surveyTasks.filter((t) => t.status === 'submitted');
@@ -515,15 +530,8 @@ function deriveNextAction(c, { surveyTasks, objectionsData, missingDocs, peopleD
     }
   }
 
-  if (c.allowed_next_stages && c.allowed_next_stages.length > 0 && c.status !== 'stalled') {
+  if (c.allowed_next_stages && c.allowed_next_stages.length > 0) {
     return { role: fallbackRole, action: 'Ready to advance to the next stage' };
-  }
-
-  if (c.status === 'closed') {
-    return { role: null, action: 'Case closed — no action required' };
-  }
-  if (c.status === 'stalled') {
-    return { role: fallbackRole, action: 'On hold — resume the case to continue' };
   }
   return { role: fallbackRole, action: 'No action required right now' };
 }
@@ -573,8 +581,15 @@ function FactsPanel({ c }) {
         </div>
         <div>
           <p className="fact__label">IN STAGE</p>
+          {/* Marked late against this stage's own allowance, not a flat ten
+              days. Every stage has a different one — the SIA runs six months
+              under s.4(2), the objection period sixty days under s.15 — so a
+              fixed threshold called a three-week-old case overdue on one and
+              said nothing about a case eleven months into another. The API
+              already computes it; timeline_status is the same judgement the
+              case list and the dashboard show. */}
           <p className="fact__value">
-            <span className={c.days_in_stage >= 10 ? 'is-overdue' : undefined}>
+            <span className={c.timeline_status === 'breached' ? 'is-overdue' : undefined}>
               {fmt.days(c.days_in_stage)}
             </span>
           </p>
@@ -582,6 +597,22 @@ function FactsPanel({ c }) {
         <div>
           <p className="fact__label">SINCE</p>
           <p className="fact__value">{fmt.date(c.stage_changed_at)}</p>
+        </div>
+        <div>
+          <p className="fact__label">DUE</p>
+          <p className="fact__value">{c.stage_due_on ? fmt.date(c.stage_due_on) : '—'}</p>
+        </div>
+        <div>
+          <p className="fact__label">AGAINST DEADLINE</p>
+          <p className="fact__value">
+            <span className={c.timeline_status === 'breached' ? 'is-overdue' : undefined}>
+              {c.days_remaining === null || c.days_remaining === undefined
+                ? '—'
+                : c.days_remaining < 0
+                  ? `${fmt.days(Math.abs(c.days_remaining))} over`
+                  : `${fmt.days(c.days_remaining)} left`}
+            </span>
+          </p>
         </div>
         <div style={{ gridColumn: '1 / -1' }}>
           <p className="fact__label">VILLAGE</p>
@@ -1256,17 +1287,27 @@ function ObjectionsPanel({ state, user, onRespond, onFile }) {
 
             {objection.response && (
               <div className="objection__response">
+                {/* under_review carries a note but no decision, so it has no
+                    responded_on — labelling it "RESPONSE · —" read as a
+                    missing date rather than as an objection still open. */}
                 <span className="objection__response-label">
-                  RESPONSE · {fmt.date(objection.responded_on)}
+                  {objection.responded_on
+                    ? `RESPONSE · ${fmt.date(objection.responded_on)}`
+                    : 'INTERIM NOTE · UNDER REVIEW'}
                 </span>
                 {objection.response}
               </div>
             )}
 
-            {can.respondToObjection(user) && !objection.response && (
+            {/* Offered while the objection is still open, not while it has no
+                text against it. Keyed on the response, an objection moved to
+                under_review lost this button the moment the officer saved a
+                note — leaving the one status that is explicitly not a
+                decision with no way to reach one. */}
+            {can.respondToObjection(user) && OPEN_OBJECTION_STATUSES.includes(objection.status) && (
               <div className="objection__actions">
                 <Button variant="secondary" size="sm" onClick={() => onRespond(objection)}>
-                  Record response
+                  {objection.response ? 'Record the decision' : 'Record response'}
                 </Button>
               </div>
             )}

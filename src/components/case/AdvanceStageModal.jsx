@@ -49,7 +49,16 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
     return ahead[0] || options[0] || '';
   }, [stages, options, caseRecord.stage]);
 
-  const [toStage, setToStage] = useState(forward);
+  /* Empty until the officer picks something, so `forward` supplies the
+     default. Seeding useState with `forward` looked equivalent and was not:
+     the enums arrive from /meta/enums a moment after the first render, so
+     `stages` is still [] when the initial value is read, `forward` falls
+     back to options[0] — and the API returns allowed_next_stages in
+     statutory order, which puts the PREVIOUS stage first. The dropdown was
+     therefore defaulting to "send back" on every case past the first stage,
+     which is exactly what the note above says must not happen. */
+  const [toStage, setToStage] = useState('');
+  const selected = toStage || forward;
   const [note, setNote] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [stepupOpen, setStepupOpen] = useState(false);
@@ -61,17 +70,17 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
   /* Sending a case back is a different kind of act from moving it on, and
      the confirm step says so rather than using one neutral wording. */
   const isBackward =
-    stages.indexOf(toStage) !== -1 &&
-    stages.indexOf(toStage) < stages.indexOf(caseRecord.stage);
+    stages.indexOf(selected) !== -1 &&
+    stages.indexOf(selected) < stages.indexOf(caseRecord.stage);
 
   // The backend refuses a send-back with no note regardless — checked here
   // too so the person finds out before the confirm step, not after.
   const noteRequired = isBackward;
-  const needsStepup = stepupRequiredStages(stages).has(toStage);
+  const needsStepup = stepupRequiredStages(stages).has(selected);
 
   async function submit(stepupToken) {
     try {
-      await advance.run(toStage, note.trim() || null, stepupToken);
+      await advance.run(selected, note.trim() || null, stepupToken);
       onDone();
     } catch {
       // useMutation holds the error; the modal renders it.
@@ -135,7 +144,7 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
             <Button variant="quiet" onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={() => setConfirming(true)} disabled={!toStage}>
+            <Button variant="primary" onClick={() => setConfirming(true)} disabled={!selected}>
               Continue
             </Button>
           </>
@@ -147,8 +156,8 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
           <p style={{ fontSize: 13, lineHeight: 1.6 }}>
             {caseRecord.case_number} will move {isBackward ? 'back ' : ''}from{' '}
             <strong>{stageLabel(caseRecord.stage)}</strong> to{' '}
-            <strong>{stageLabel(toStage)}</strong>
-            {stageSection(toStage) ? ` (${stageSection(toStage)})` : ''}.
+            <strong>{stageLabel(selected)}</strong>
+            {stageSection(selected) ? ` (${stageSection(selected)})` : ''}.
           </p>
 
           {isBackward && (
@@ -174,7 +183,7 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
         <>
           <Select
             label="Move to"
-            value={toStage}
+            value={selected}
             options={options.map((value) => ({
               value,
               label:
@@ -194,7 +203,7 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
           />
           {needsStepup && (
             <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              Moving to {stageLabel(toStage)} needs a fresh identity check — you&rsquo;ll be asked
+              Moving to {stageLabel(selected)} needs a fresh identity check — you&rsquo;ll be asked
               to confirm by face or fingerprint before this is recorded.
             </p>
           )}

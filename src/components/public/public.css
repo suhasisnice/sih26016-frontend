@@ -597,8 +597,40 @@
 .notice__date { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted); }
 .notice__title { font-size: 16px; margin-bottom: var(--s2); }
 .notice__meta { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
-.notice__stage { padding-top: 2px; }
+
+/* The citation line — provision, issuing office, gazette number. Set in the
+   mono stack because every part of it is a reference someone might copy out,
+   and held a step darker than the meta above it: it is the evidence the
+   entry rests on, not more description of the land. */
+.notice__cite {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 1.55;
+  margin-top: var(--s2);
+}
+
+.notice__stage {
+  padding-top: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s2);
+}
+/* Where the case stands today, under the instrument that was published on a
+   date in the past. Deliberately quiet text rather than a second badge —
+   two pills side by side read as two states of one thing. */
+.notice__since {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  text-align: right;
+  max-width: 132px;
+}
 
 @media (max-width: 700px) {
   .notice { grid-template-columns: 1fr; gap: var(--s2); }
+  /* Left-aligned with everything else once the three columns stack; the
+     right edge it was aligning to no longer exists. */
+  .notice__stage { align-items: flex-start; }
+  .notice__since { text-align: left; max-width: none; }
 }
