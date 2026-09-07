@@ -298,7 +298,14 @@ export default function MapView() {
     // request for that view would always be rejected (min === max), so
     // there is nothing to fetch yet. The FlyTo/fitBounds that follows a
     // moment later reports its own real viewport and triggers the load.
-    if (bounds.getWest() >= bounds.getEast() || bounds.getSouth() >= bounds.getNorth()) return;
+    if (bounds.getWest() >= bounds.getEast() || bounds.getSouth() >= bounds.getNorth()) {
+      // Not `return` alone: `loading` starts true, so a container that never
+      // reports a real size — a viewport too short for `calc(100vh - 220px)`
+      // to leave anything, a pane rendered at zero height — would sit on
+      // "Loading…" with nothing on its way to replace it.
+      setLoading(false);
+      return;
+    }
     const id = ++requestRef.current;
     setLoading(true);
     try {
