@@ -4,16 +4,23 @@ export function forCase(caseId, opts) {
   return api.get(`/documents${qs({ case_id: caseId })}`, opts);
 }
 
+/* Documents filed specifically against one piece of fieldwork — a survey
+   report, a field note, a sketch — rather than the case's formal record. */
+export function forSurveyTask(caseId, surveyTaskId, opts) {
+  return api.get(`/documents${qs({ case_id: caseId, survey_task_id: surveyTaskId })}`, opts);
+}
+
 /* What the current stage legally requires versus what has been filed.
    Returns {case_id, stage, required, present, missing}. */
 export function missing(caseId, opts) {
   return api.get(`/documents/missing${qs({ case_id: caseId })}`, opts);
 }
 
-export function upload({ caseId, docType, file }, opts) {
+export function upload({ caseId, docType, file, surveyTaskId }, opts) {
   const fd = new FormData();
   fd.append('case_id', String(caseId));
   fd.append('doc_type', docType);
+  if (surveyTaskId) fd.append('survey_task_id', String(surveyTaskId));
   fd.append('file', file);
   return api.post('/documents', fd, opts);
 }
