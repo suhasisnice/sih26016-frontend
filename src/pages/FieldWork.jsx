@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as dashboardApi from '../api/dashboard';
 import * as personsApi from '../api/persons';
 import * as surveyApi from '../api/survey';
@@ -16,6 +16,7 @@ import Loading from '../components/states/Loading';
 import ErrorState from '../components/states/ErrorState';
 import Empty from '../components/states/Empty';
 import '../components/case/case.css';
+import '../components/survey/wizard.css';
 import './fieldwork.css';
 
 /* The field officer's queue: cases in an on-ground stage (social impact
@@ -31,6 +32,10 @@ export default function FieldWork() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queue = useApi((opts) => dashboardApi.fieldWork({}, opts), []);
+  // Own-task status buckets for the mobile home screen — GET /survey-tasks
+  // already scopes to "my tasks" for a field officer, so this needs no new
+  // backend aggregate, just a client-side count over the existing list.
+  const mySurveys = useApi((opts) => surveyApi.list({}, opts), [], { skip: !can.performSurvey(user) });
 
   const [modal, setModal] = useState(null); // { kind: 'capture'|'upload', item, people? }
   const [preparingFor, setPreparingFor] = useState(null);
@@ -72,6 +77,8 @@ export default function FieldWork() {
         title="Field work"
         subtitle="Cases in your district with something a site visit would resolve — not everything open, only what still needs you."
       />
+
+      {mySurveys.data && <SurveyStatusBuckets tasks={mySurveys.data.items} />}
 
       {queue.loading && <Loading label="Loading field work" rows={3} />}
       {queue.error && <ErrorState error={queue.error} onRetry={queue.reload} />}
@@ -196,5 +203,40 @@ export default function FieldWork() {
         />
       )}
     </>
+  );
+}
+
+const BUCKETS = [
+  { key: 'assigned', label: 'Assigned' },
+  { key: 'in_progress', label: 'In progress' },
+  { key: 'submitted', label: 'Submitted' },
+  { key: 'returned', label: 'Returned' },
+  { key: 'approved', label: 'Completed' },
+];
+
+/* "5 Assignments — 2 Pending, 1 In Progress, 2 Completed" as a row of
+   tappable buckets, each linking into the same filtered list a manual
+   status click on Survey Tasks would produce. */
+function SurveyStatusBuckets({ tasks }) {
+  const counts = BUCKETS.reduce((acc, b) => ({ ...acc, [b.key]: 0 }), {});
+  for (const t of tasks) {
+    if (counts[t.status] !== undefined) counts[t.status] += 1;
+  }
+
+  return (
+    <section style={{ marginBottom: 'var(--s5)' }}>
+      <div className="panel__head">
+        <h2 className="panel__title">Today's field tasks</h2>
+        <span className="panel__count">{tasks.length} total</span>
+      </div>
+      <div className="status-buckets">
+        {BUCKETS.map((b) => (
+          <Link key={b.key} to="/survey-tasks" className="status-bucket" style={{ textDecoration: 'none' }}>
+            <div className="status-bucket__count">{counts[b.key]}</div>
+            <div className="status-bucket__label">{b.label}</div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
