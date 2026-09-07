@@ -6,11 +6,13 @@ import * as personsApi from '../api/persons';
 import * as documentsApi from '../api/documents';
 import * as objectionsApi from '../api/objections';
 import * as surveyApi from '../api/survey';
+import * as noticesApi from '../api/notices';
 import { useApi } from '../hooks/useApi';
+import { useEnums } from '../hooks/useEnums';
 import { useAuth } from '../auth/AuthContext';
 import { can, isLandowner, ROLES } from '../auth/permissions';
 import * as fmt from '../lib/format';
-import { docTypeLabel, roleLabel, stageLabel } from '../lib/labels';
+import { docTypeLabel, noticeTypeLabel, roleLabel, stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
 import StageTimeline from '../components/case/StageTimeline';
 import StatusBadge from '../components/case/StatusBadge';
@@ -31,12 +33,38 @@ import CaptureParcelModal from '../components/case/CaptureParcelModal';
 import AssignSurveyModal from '../components/case/AssignSurveyModal';
 import LandRecordsPanel from '../components/case/LandRecordsPanel';
 import RecordFundDepositModal from '../components/case/RecordFundDepositModal';
+import IssueNoticeModal from '../components/case/IssueNoticeModal';
 import DataTable from '../components/ui/DataTable';
 import Button from '../components/ui/Button';
 import Loading from '../components/states/Loading';
 import ErrorState from '../components/states/ErrorState';
 import Empty from '../components/states/Empty';
 import '../components/case/case.css';
+
+/* Mirrors notices.MINIMUM_STAGE_FOR — the stage each instrument may not be
+   issued before. The stage a notice type unlocks at is a legal fact of the
+   Act, same as the section reference in lib/labels' NOTICE_SECTION; the
+   ORDER of stages is never hardcoded here, only read from useEnums(). */
+const NOTICE_MINIMUM_STAGE = {
+  preliminary_notification: 'preliminary_notification',
+  declaration: 'declaration',
+  award: 'award',
+  possession_notice: 'possession',
+};
+
+/* Which instruments this case could still be issued, right now — never
+   already-issued, never ahead of the stage the case has actually reached.
+   The same "don't offer a button the server will refuse" rule
+   ProposalDetail follows for its own transitions. */
+function availableNoticeTypes(allTypes, stageOrder, currentStage, issued) {
+  const currentIndex = stageOrder.indexOf(currentStage);
+  if (currentIndex === -1) return [];
+  return allTypes.filter((type) => {
+    if (issued.includes(type)) return false;
+    const minIndex = stageOrder.indexOf(NOTICE_MINIMUM_STAGE[type]);
+    return minIndex !== -1 && currentIndex >= minIndex;
+  });
+}
 
 /* Header, stage timeline, parcels, people, documents, objections, audit.
 
@@ -48,6 +76,7 @@ export default function CaseDetail() {
   const { caseId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { stages, notice_types: allNoticeTypes } = useEnums();
 
   const [modal, setModal] = useState(null);
 
@@ -61,6 +90,7 @@ export default function CaseDetail() {
   /* Feeds the "Next action" banner below, not a panel of its own — a field
      officer with no tasks on this case simply gets an empty list back. */
   const surveyTasks = useApi((opts) => surveyApi.list({ case_id: caseId }, opts), [caseId]);
+  const notices = useApi((opts) => noticesApi.register(caseId, opts), [caseId]);
   /* A five-row preview — the full trail now lives at its own /audit route
      (the Figma "Audit Trail" frame is a standalone page with its own
      filters and case-context sidebar, not a panel), so this only needs to
@@ -77,6 +107,7 @@ export default function CaseDetail() {
     objections.reload();
     fundDeposits.reload();
     surveyTasks.reload();
+    notices.reload();
     audit.reload();
   }
 
@@ -161,6 +192,18 @@ export default function CaseDetail() {
               stalledDays={c.days_in_stage}
             />
           </section>
+
+          <NoticesPanel
+            state={notices}
+            user={user}
+            availableTypes={availableNoticeTypes(
+              allNoticeTypes,
+              stages,
+              c.stage,
+              notices.data ? notices.data.items.map((n) => n.notice_type) : [],
+            )}
+            onIssue={() => setModal({ kind: 'issue-notice' })}
+          />
 
           <PeoplePanel
             state={people}
@@ -341,6 +384,22 @@ export default function CaseDetail() {
           onDone={() => {
             setModal(null);
             people.reload();
+          }}
+        />
+      )}
+      {modal && modal.kind === 'issue-notice' && (
+        <IssueNoticeModal
+          caseRecord={c}
+          availableTypes={availableNoticeTypes(
+            allNoticeTypes,
+            stages,
+            c.stage,
+            notices.data ? notices.data.items.map((n) => n.notice_type) : [],
+          )}
+          onClose={() => setModal(null)}
+          onDone={() => {
+            setModal(null);
+            notices.reload();
           }}
         />
       )}
@@ -575,6 +634,62 @@ function FundDepositsPanel({ state, user, onRecord }) {
                 <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
                   {fmt.date(deposit.deposited_on)}
                   {deposit.reference ? ` · ${deposit.reference}` : ''}
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* The published instruments under the Act — what actually puts this case on
+   the public notice board (GET /notices) and reaches a subscribed
+   landowner's WhatsApp or email. Distinct from the stage timeline above:
+   reaching the declaration stage internally is not the same fact as the
+   declaration having been published, and this panel is where that gap
+   would otherwise go unnoticed. */
+function NoticesPanel({ state, user, availableTypes, onIssue }) {
+  return (
+    <section className="panel">
+      <div className="panel__head">
+        <h2 className="panel__title">Statutory notices</h2>
+        <span className="panel__count panel__count--split">
+          {state.data ? `${state.data.total} issued` : ''}
+          {can.issueNotice(user) && availableTypes.length > 0 && (
+            <Button variant="link" onClick={onIssue}>
+              Issue notice
+            </Button>
+          )}
+        </span>
+      </div>
+
+      {state.loading && <Loading inline rows={2} />}
+      {state.error && <ErrorState error={state.error} onRetry={state.reload} />}
+
+      {state.data && state.data.items.length === 0 && (
+        <Empty
+          title="Nothing published yet"
+          body="No preliminary notification, declaration, award or possession notice has been issued on this case."
+        />
+      )}
+
+      {state.data && state.data.items.length > 0 && (
+        <div className="missing-docs">
+          {state.data.items.map((notice) => (
+            <div key={notice.id} className="missing-doc is-present">
+              <span className="missing-doc__mark" aria-hidden="true" />
+              <span className="missing-doc__name">
+                {noticeTypeLabel(notice.notice_type)}
+                <span className="doc-version">{notice.section_reference}</span>
+                <br />
+                <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
+                  {fmt.date(notice.issued_on)} · {notice.issuing_authority}
+                  {notice.gazette_number ? ` · Gazette ${notice.gazette_number}` : ''}
+                  {notice.notice_type === 'award' && notice.total_amount != null
+                    ? ` · ${fmt.rupees(notice.total_amount)}`
+                    : ''}
                 </span>
               </span>
             </div>
