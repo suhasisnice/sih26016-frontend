@@ -207,6 +207,65 @@ const DOC_TYPE = {
   rnr_scheme_document: 'R&R scheme document',
   possession_certificate: 'Possession certificate',
   monitoring_report: 'Monitoring report',
+  // Field-survey-scoped evidence, distinct from the case-lifecycle types
+  // above — these attach to one survey task as well as the case.
+  survey_report: 'Survey report',
+  field_note: 'Field note',
+  sketch: 'Sketch',
+  measurement_evidence: 'Measurement evidence',
+};
+
+const LAND_USE_TYPE = {
+  agricultural: 'Agricultural',
+  residential: 'Residential',
+  commercial: 'Commercial',
+  industrial: 'Industrial',
+  vacant: 'Vacant',
+  other: 'Other',
+};
+
+const BOUNDARY_CONDITION = {
+  verified: 'Verified',
+  partially_verified: 'Partially verified',
+  not_clearly_identifiable: 'Not clearly identifiable',
+};
+
+const SURVEY_PHOTO_CATEGORY = {
+  land_parcel: 'Land parcel',
+  boundary: 'Boundary',
+  existing_structure: 'Existing structure',
+  crop_land_use: 'Crop / land use',
+  road_access: 'Road / access',
+  nearby_structure: 'Nearby structure',
+  survey_marker: 'Survey marker',
+  other: 'Other',
+};
+
+const DISCREPANCY_TYPE = {
+  area_mismatch: 'Area mismatch',
+  boundary_mismatch: 'Boundary mismatch',
+  survey_number_mismatch: 'Survey number mismatch',
+  ownership_mismatch: 'Ownership / record mismatch',
+  land_use_mismatch: 'Land-use mismatch',
+  missing_document: 'Missing document',
+  other: 'Other',
+};
+
+const DISCREPANCY_STATUS = {
+  open: 'Open',
+  resolved: 'Resolved',
+};
+
+/* Physical features observed on site — a fixed small set of tags stored as
+   a JSON list on SurveyTask.physical_features rather than an enum, since
+   nothing on the backend validates or queries individual values. */
+const PHYSICAL_FEATURE = {
+  building: 'Building',
+  road: 'Road',
+  water_body: 'Water body',
+  trees_crops: 'Trees / crops',
+  utility: 'Utility',
+  other: 'Other',
 };
 
 /* The alert rules the AI layer runs. Keyed by the `rule` string on an alert. */
@@ -245,6 +304,12 @@ export const noticeTypeLabel = lookup(NOTICE_TYPE);
 export const noticeSection = (value) => NOTICE_SECTION[value] || null;
 export const timelineStatusLabel = lookup(TIMELINE_STATUS);
 export const riskBandLabel = lookup(RISK_BAND);
+export const landUseTypeLabel = lookup(LAND_USE_TYPE);
+export const boundaryConditionLabel = lookup(BOUNDARY_CONDITION);
+export const surveyPhotoCategoryLabel = lookup(SURVEY_PHOTO_CATEGORY);
+export const discrepancyTypeLabel = lookup(DISCREPANCY_TYPE);
+export const discrepancyStatusLabel = lookup(DISCREPANCY_STATUS);
+export const physicalFeatureLabel = lookup(PHYSICAL_FEATURE);
 
 /* Which status colour a value carries. `--brand` is never returned: the mauve
    means "navigation or a thing you can click", never a state. CLAUDE.md 3.3. */
@@ -314,6 +379,14 @@ const TONE = {
   // (ok) already match the tones rnr_status/proposal_status use above for
   // the same words. `returned` is the one word two enums disagree about —
   // see TONE_BY_KIND below.
+  // the same words — only `returned` and the `assigned` default are new.
+  returned: 'danger',
+  // discrepancy status. `resolved` is shared with objection status above.
+  open: 'warn',
+  // boundary condition. `verified` is shared with document-verification
+  // status above.
+  partially_verified: 'warn',
+  not_clearly_identifiable: 'danger',
 };
 
 /* The values where sharing a word is not sharing a meaning, and the flat map
