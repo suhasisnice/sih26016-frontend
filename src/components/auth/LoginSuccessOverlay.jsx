@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import './auth.css';
 
 /* The beat between "that credential checked out" and actually landing on
-   the dashboard — every sign-in path (face, fingerprint, password plus a
-   code) routes through this instead of navigating the instant it
+   the dashboard — every sign-in path (face, password plus a code) routes
+   through this instead of navigating the instant it
    succeeds, the same way a UPI app holds on its green check for a moment
    before it lets go of the payment screen. Skipping straight to the next
    page reads as "did that actually work?"; a deliberate, unmissable

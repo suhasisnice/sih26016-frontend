@@ -1,10 +1,6 @@
-/* Face and fingerprint login cards — shared by Login.jsx. Square,
-   centred, and deliberately the same footprint whichever of the two is
-   showing, so switching between "issues with face?" and back doesn't
-   reflow the card around it. */
+/* The face login card — shared by Login.jsx. Square and centred. */
 
-.face-card,
-.fingerprint-card {
+.face-card {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -50,8 +46,7 @@
   display: none;
 }
 
-.face-card__status,
-.fingerprint-card__status {
+.face-card__status {
   min-height: 1.4em;
   font-size: 13px;
   color: var(--text-muted);
@@ -109,51 +104,8 @@
   color: var(--ok);
 }
 
-/* Status is always colour plus a word — never colour alone (tokens.css's
-   rule for StatusBadge applies here too, this just isn't a pill since it
-   sits above the scan icon rather than inside a table). */
-.fingerprint-card__connection {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s2);
-  font-size: 12.5px;
-  color: var(--ok);
-}
-
-.fingerprint-card__connection.is-disconnected {
-  color: var(--danger);
-}
-
-.fingerprint-card__connection-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.fingerprint-card__icon {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--brand-soft);
-  color: var(--brand-hover);
-}
-
-.fingerprint-card__icon.is-scanning {
-  animation: fingerprint-pulse 1.1s ease-in-out infinite;
-}
-
-@keyframes fingerprint-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* Below the active card: "Issues with face? Unlock through fingerprint",
-   and beneath that the smaller "Use password instead" — two plain-text
-   fallbacks, never buttons, so the camera or scanner card stays the one
+/* Below the active card: "Issues with face? Use password instead" — a
+   plain-text fallback, never a button, so the camera card stays the one
    thing on the screen asking for attention. */
 .login-biometric-fallbacks {
   display: flex;

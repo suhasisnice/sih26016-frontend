@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
 
   /* The second step: redeem an mfa_token plus the code it asked for. This
      is where a password login actually becomes a session, the same way
-     verifying a face or fingerprint capture does.
+     verifying a face capture does.
 
      Returns the whole {user, must_change_password} shape, not just the
      user — a BhoomiMitra-provisioned landowner's session is real the
@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
     return { user: result.user, mustChangePassword: result.must_change_password };
   }, []);
 
-  /* Registration, and face/fingerprint login, already return a token and a
+  /* Registration, and face login, already return a token and a
      user in one response, so this adopts that session without a second
      round trip to /auth/me. The caller stores the token; this puts the
      user into context. */
