@@ -13,12 +13,13 @@ import './reports.css';
 
 /* MIS exports.
 
-   Four registers, each downloaded as CSV with the filters that register
-   actually supports — not a report builder. The statement asks for
-   "customisable MIS reports", and this is the honest reading of that: the
-   same figures the dashboard shows, grouped the way the reviewer needs them,
-   in a file that opens in the spreadsheet they were going to paste it into
-   anyway.
+   Five registers, each downloaded as CSV with the filters that register
+   actually supports, plus — on the case register — a choice of which
+   columns to include and in what order. Still not a free-form report
+   builder: every column name is checked server-side against the fixed set
+   export_cases already computes (app.routers.exports.CASE_EXPORT_COLUMNS),
+   so "customisable" means picking and ordering real columns, never naming
+   an arbitrary field or touching the query behind them.
 
    Every download is scoped by the server to what the caller may see, so a
    district officer's "all districts" is their district. The filters here
@@ -29,6 +30,34 @@ const GROUPINGS = [
   { value: 'state', label: 'One row per state' },
   { value: 'project', label: 'One row per project' },
   { value: 'stage', label: 'One row per stage' },
+];
+
+// Mirrors app.routers.exports.CASE_EXPORT_COLUMNS, in the same order — the
+// order a reviewer sees the checkboxes in and, if they narrow the
+// selection, the order the resulting CSV's columns come out in.
+const CASE_COLUMNS = [
+  { key: 'case_number', label: 'Case number' },
+  { key: 'title', label: 'Title' },
+  { key: 'state', label: 'State' },
+  { key: 'district', label: 'District' },
+  { key: 'village', label: 'Village' },
+  { key: 'project', label: 'Project' },
+  { key: 'stage', label: 'Stage' },
+  { key: 'status', label: 'Status' },
+  { key: 'opened_on', label: 'Opened on' },
+  { key: 'stage_changed_on', label: 'Stage changed on' },
+  { key: 'days_in_stage', label: 'Days in stage' },
+  { key: 'stage_due_on', label: 'Stage due on' },
+  { key: 'days_remaining', label: 'Days remaining' },
+  { key: 'timeline_status', label: 'Timeline status' },
+  { key: 'parcel_count', label: 'Parcel count' },
+  { key: 'total_area_ha', label: 'Total area (ha)' },
+];
+
+const TREND_WINDOWS = [
+  { value: '6', label: 'Last 6 months' },
+  { value: '12', label: 'Last 12 months' },
+  { value: '24', label: 'Last 24 months' },
 ];
 
 export default function Reports() {
@@ -44,7 +73,12 @@ export default function Reports() {
     case_status: '',
     displaced_only: '',
     group_by: 'district',
+    trend_months: '12',
   });
+  // Empty means "all columns, default order" — the same thing omitting
+  // `columns` from the request means server-side, so an untouched picker
+  // and an unfiltered download stay in sync.
+  const [caseColumns, setCaseColumns] = useState([]);
 
   const districts = useApi((opts) => referenceApi.districts(undefined, opts), []);
   const states = useApi((opts) => referenceApi.states(opts), [], {
@@ -53,6 +87,12 @@ export default function Reports() {
 
   function set(field, value) {
     setFilters((current) => ({ ...current, [field]: value }));
+  }
+
+  function toggleCaseColumn(key) {
+    setCaseColumns((current) =>
+      current.includes(key) ? current.filter((c) => c !== key) : [...current, key],
+    );
   }
 
   async function download(kind, params) {
@@ -78,6 +118,12 @@ export default function Reports() {
   }));
   const stateOptions = (states.data || []).map((s) => ({ value: String(s.id), label: s.name }));
 
+  // CASE_COLUMNS order, not click order — so narrowing the picker never
+  // scrambles the column order the full register already uses.
+  const orderedCaseColumns = CASE_COLUMNS.map((c) => c.key).filter((key) =>
+    caseColumns.includes(key),
+  );
+
   const reports = [
     {
       kind: 'cases',
@@ -87,6 +133,7 @@ export default function Reports() {
         ...scope,
         stage: filters.stage || undefined,
         case_status: filters.case_status || undefined,
+        columns: orderedCaseColumns.length ? orderedCaseColumns.join(',') : undefined,
       },
       filters: (
         <>
@@ -104,6 +151,25 @@ export default function Reports() {
             options={caseStatuses.map((value) => ({ value, label: caseStatusLabel(value) }))}
             onChange={(event) => set('case_status', event.target.value)}
           />
+          <details className="report__columns">
+            <summary>
+              {orderedCaseColumns.length
+                ? `${orderedCaseColumns.length} of ${CASE_COLUMNS.length} columns`
+                : 'All columns'}
+            </summary>
+            <div className="report__columns-list">
+              {CASE_COLUMNS.map((col) => (
+                <label key={col.key} className="report__column-toggle">
+                  <input
+                    type="checkbox"
+                    checked={caseColumns.includes(col.key)}
+                    onChange={() => toggleCaseColumn(col.key)}
+                  />
+                  {col.label}
+                </label>
+              ))}
+            </div>
+          </details>
         </>
       ),
     },
@@ -142,6 +208,20 @@ export default function Reports() {
           value={filters.group_by}
           options={GROUPINGS}
           onChange={(event) => set('group_by', event.target.value)}
+        />
+      ),
+    },
+    {
+      kind: 'trends',
+      title: 'Trends over time',
+      body: 'Cases opened and closed, notices issued, compensation paid and area acquired, one row per month. The dashboard’s trend chart, as rows.',
+      params: { ...scope, months: filters.trend_months },
+      filters: (
+        <Select
+          label="Window"
+          value={filters.trend_months}
+          options={TREND_WINDOWS}
+          onChange={(event) => set('trend_months', event.target.value)}
         />
       ),
     },

@@ -79,6 +79,29 @@
 
 .report__filters .field { min-width: 160px; }
 
+.report__columns { font-size: 12.5px; align-self: flex-end; margin-bottom: 2px; }
+.report__columns summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.report__columns-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: var(--s2) var(--s4);
+  margin-top: var(--s3);
+  padding: var(--s3);
+  background: var(--surface-alt);
+  border-radius: var(--r-md);
+}
+.report__column-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  color: var(--text);
+  cursor: pointer;
+}
+
 .report__action { white-space: nowrap; }
 
 .reports__foot {
