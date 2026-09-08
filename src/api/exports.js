@@ -17,6 +17,7 @@ const EXPORTS = {
   compensation: '/exports/compensation.csv',
   families: '/exports/families.csv',
   kpis: '/exports/kpis.csv',
+  trends: '/exports/trends.csv',
 };
 
 export async function download(kind, params, opts) {
