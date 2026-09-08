@@ -486,9 +486,11 @@ export default function MapView() {
 
   const drawPolygons = zoom >= POLYGON_MIN_ZOOM;
 
-  function classFor(parcelStatus, isSelected) {
+  function classFor(parcelStatus, isSelected, hasDiscrepancy) {
     const base = layers.statusColoring ? STATUS_CLASS[parcelStatus] || STATUS_CLASS.notified : NEUTRAL_CLASS;
-    return isSelected ? `${base} is-selected` : base;
+    return [base, isSelected && 'is-selected', hasDiscrepancy && 'has-discrepancy']
+      .filter(Boolean)
+      .join(' ');
   }
 
   function selectFeature(feature) {
@@ -506,7 +508,7 @@ export default function MapView() {
       const marker = L.circleMarker([p.latitude, p.longitude], {
         radius: isSelected ? 8 : 5,
         weight: isSelected ? 3 : 1.5,
-        className: classFor(p.status, isSelected),
+        className: classFor(p.status, isSelected, p.has_boundary_discrepancy),
       });
       marker.on('click', () => selectFeature(feature));
       return marker;
@@ -687,7 +689,10 @@ export default function MapView() {
                       <Polygon
                         key={p.id}
                         positions={toLatLngRing(feature.geometry.coordinates)}
-                        pathOptions={{ className: classFor(p.status, isSelected), weight: isSelected ? 3 : 1.5 }}
+                        pathOptions={{
+                          className: classFor(p.status, isSelected, p.has_boundary_discrepancy),
+                          weight: isSelected ? 3 : 1.5,
+                        }}
                         eventHandlers={handlers}
                       />
                     );
@@ -697,7 +702,10 @@ export default function MapView() {
                       key={p.id}
                       center={[p.latitude, p.longitude]}
                       radius={isSelected ? 8 : 5}
-                      pathOptions={{ className: classFor(p.status, isSelected), weight: isSelected ? 3 : 1.5 }}
+                      pathOptions={{
+                        className: classFor(p.status, isSelected, p.has_boundary_discrepancy),
+                        weight: isSelected ? 3 : 1.5,
+                      }}
                       eventHandlers={handlers}
                     />
                   );
@@ -945,6 +953,16 @@ function ParcelDetailPanel({ feature, onOpen }) {
           </dd>
         </div>
       </dl>
+
+      {p.has_boundary_discrepancy && (
+        <p className="map-selected__discrepancy" role="alert">
+          A re-survey measured
+          {p.area_diff_pct !== null && p.area_diff_pct !== undefined
+            ? ` ${(p.area_diff_pct * 100).toFixed(1)}%`
+            : ' an area'}{' '}
+          off the area on file — see the case's discrepancy list.
+        </p>
+      )}
 
       {/* Expandable rather than shown by default — project and case are one
           extra fact each, not the headline. */}
