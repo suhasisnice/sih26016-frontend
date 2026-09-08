@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import RequireRole from './auth/RequireRole';
 import { EnumsProvider } from './hooks/useEnums';
+import { I18nProvider } from './i18n/I18nContext';
 import {
   CASE_WRITERS,
   OFFICERS,
@@ -58,6 +59,7 @@ function App({ children }) {
 export default function Root() {
   return (
     <BrowserRouter>
+      <I18nProvider>
       <AuthProvider>
         <EnumsProvider>
           <Routes>
@@ -317,6 +319,7 @@ export default function Root() {
           </Routes>
         </EnumsProvider>
       </AuthProvider>
+      </I18nProvider>
     </BrowserRouter>
   );
 }

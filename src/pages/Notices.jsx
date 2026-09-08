@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as noticesApi from '../api/notices';
 import { useApi, useMutation } from '../hooks/useApi';
+import { useI18n } from '../i18n/I18nContext';
 import * as fmt from '../lib/format';
 import { noticeSection, noticeTypeLabel, stageLabel, stageSection } from '../lib/labels';
 import PublicHeader from '../components/public/PublicHeader';
@@ -19,14 +20,14 @@ import '../components/public/public.css';
    nobody filing this from memory knows in advance which one they have. */
 const ULPIN_RE = /^[A-Za-z0-9]{14}$/;
 
-const PAYMENT_LABEL = {
-  not_yet_declared: 'Award not yet declared',
-  not_yet_paid: 'Awarded, not yet paid',
-  partially_paid: 'Partially paid',
-  paid: 'Paid in full',
-};
-
 function LookupCard() {
+  const { t } = useI18n();
+  const PAYMENT_LABEL = {
+    not_yet_declared: t('notices.lookup.paymentNotDeclared'),
+    not_yet_paid: t('notices.lookup.paymentNotPaid'),
+    partially_paid: t('notices.lookup.paymentPartial'),
+    paid: t('notices.lookup.paymentPaid'),
+  };
   const [query, setQuery] = useState('');
   const [result, setResult] = useState(null);
   const search = useMutation((q) =>
@@ -54,33 +55,25 @@ function LookupCard() {
 
   return (
     <section className="notice-lookup">
-      <h2 className="notice-lookup__title">Find your land</h2>
-      <p className="notice-lookup__lede">
-        Enter the survey number or the fourteen-character ULPIN and see what stage the
-        acquisition has reached, whether the award has been paid, and how many objections
-        on the case have been resolved. No sign-in, and nothing here beyond what is
-        already on the public record.
-      </p>
+      <h2 className="notice-lookup__title">{t('notices.lookup.title')}</h2>
+      <p className="notice-lookup__lede">{t('notices.lookup.lede')}</p>
 
       <form className="notice-lookup__form" onSubmit={onSubmit}>
         <Input
-          label="Survey number or ULPIN"
+          label={t('notices.lookup.fieldLabel')}
           value={query}
-          placeholder="127/2A or IN000000000281"
+          placeholder={t('notices.lookup.fieldPlaceholder')}
           onChange={(event) => setQuery(event.target.value)}
         />
         <Button type="submit" variant="primary" disabled={search.pending}>
-          {search.pending ? 'Searching…' : 'Search'}
+          {search.pending ? t('notices.lookup.searching') : t('notices.lookup.search')}
         </Button>
       </form>
 
-      {search.error && <ErrorState error={search.error} title="The lookup failed" />}
+      {search.error && <ErrorState error={search.error} title={t('notices.lookup.failedTitle')} />}
 
       {result && !result.found && (
-        <Empty
-          title="No parcel found"
-          body="Check the survey number or ULPIN. Only land already on the public record — notified or declared under the Act — can be found here."
-        />
+        <Empty title={t('notices.lookup.notFoundTitle')} body={t('notices.lookup.notFoundBody')} />
       )}
 
       {result && result.found && (
@@ -91,67 +84,73 @@ function LookupCard() {
           </div>
           <dl className="notice-lookup__facts">
             <div>
-              <dt>Case</dt>
+              <dt>{t('notices.lookup.case')}</dt>
               <dd>{result.case_number}</dd>
             </div>
             {result.ulpin && (
               <div>
-                <dt>ULPIN</dt>
+                <dt>{t('notices.lookup.ulpin')}</dt>
                 <dd>{result.ulpin}</dd>
               </div>
             )}
             <div>
-              <dt>Location</dt>
+              <dt>{t('notices.lookup.location')}</dt>
               <dd>{result.village_name}, {result.district_name}</dd>
             </div>
             <div>
-              <dt>Project</dt>
+              <dt>{t('notices.lookup.project')}</dt>
               <dd>{result.project_name}</dd>
             </div>
             {result.requiring_authority && (
               <div>
-                <dt>Requiring authority</dt>
+                <dt>{t('notices.lookup.requiringAuthority')}</dt>
                 <dd>{result.requiring_authority}</dd>
               </div>
             )}
             {result.area_ha != null && (
               <div>
-                <dt>Area</dt>
+                <dt>{t('notices.lookup.area')}</dt>
                 <dd>{fmt.hectares(result.area_ha)}</dd>
               </div>
             )}
             {result.preliminary_notification_on && (
               <div>
-                <dt>Notified</dt>
+                <dt>{t('notices.lookup.notified')}</dt>
                 <dd>{fmt.date(result.preliminary_notification_on)}</dd>
               </div>
             )}
             {result.declaration_on && (
               <div>
-                <dt>Declared</dt>
+                <dt>{t('notices.lookup.declared')}</dt>
                 <dd>{fmt.date(result.declaration_on)}</dd>
               </div>
             )}
             <div>
-              <dt>Award</dt>
+              <dt>{t('notices.lookup.award')}</dt>
               <dd>
-                {result.award_declared ? fmt.rupees(result.award_amount) : 'Not yet declared'}
+                {result.award_declared
+                  ? fmt.rupees(result.award_amount)
+                  : t('notices.lookup.awardNotDeclared')}
               </dd>
             </div>
             <div>
-              <dt>Payment</dt>
+              <dt>{t('notices.lookup.payment')}</dt>
               <dd>{PAYMENT_LABEL[result.payment_status] || result.payment_status}</dd>
             </div>
             <div>
-              <dt>Possession</dt>
-              <dd>{result.possession_taken ? 'Taken' : 'Not yet taken'}</dd>
+              <dt>{t('notices.lookup.possession')}</dt>
+              <dd>
+                {result.possession_taken
+                  ? t('notices.lookup.possessionTaken')
+                  : t('notices.lookup.possessionNotTaken')}
+              </dd>
             </div>
             <div>
-              <dt>Objections</dt>
+              <dt>{t('notices.lookup.objections')}</dt>
               <dd>
                 {result.objection_count === 0
-                  ? 'None filed'
-                  : `${result.objections_resolved} of ${result.objection_count} decided`}
+                  ? t('notices.lookup.objectionsNone')
+                  : t('notices.lookup.objectionsDecided', result.objections_resolved, result.objection_count)}
               </dd>
             </div>
           </dl>
@@ -169,6 +168,7 @@ function LookupCard() {
    checkbox, not implied by clicking Subscribe: POST /notices/subscribe
    refuses the request without it. */
 function SubscribeSection({ identifier }) {
+  const { t } = useI18n();
   const [wantsWhatsapp, setWantsWhatsapp] = useState(false);
   const [wantsEmail, setWantsEmail] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState('');
@@ -198,33 +198,31 @@ function SubscribeSection({ identifier }) {
 
   return (
     <div className="notice-subscribe">
-      <h3 className="notice-subscribe__title">Get updates about this land</h3>
-      <p className="notice-subscribe__lede">
-        Be told by WhatsApp or email when this acquisition moves to its next stage.
-      </p>
+      <h3 className="notice-subscribe__title">{t('notices.subscribe.title')}</h3>
+      <p className="notice-subscribe__lede">{t('notices.subscribe.lede')}</p>
 
       {done ? (
         <div className="notice-subscribe__done">
-          <p className="notice-subscribe__done-title">Notifications enabled successfully.</p>
+          <p className="notice-subscribe__done-title">{t('notices.subscribe.doneTitle')}</p>
           {done.whatsapp_status && (
             <p className="notice-subscribe__channel-result">
-              WhatsApp {done.whatsapp_status === 'sent' ? '✓' : '—'}{' '}
+              {t('notices.subscribe.whatsapp')} {done.whatsapp_status === 'sent' ? '✓' : '—'}{' '}
               {done.is_mock && (
-                <span className="notice-subscribe__mode">(Prototype mode — logged, not actually delivered)</span>
+                <span className="notice-subscribe__mode">{t('notices.subscribe.prototypeMode')}</span>
               )}
               {done.whatsapp_status === 'failed' && (
-                <span className="notice-subscribe__failed"> Unable to send notification. Please try again.</span>
+                <span className="notice-subscribe__failed"> {t('notices.subscribe.sendFailed')}</span>
               )}
             </p>
           )}
           {done.email_status && (
             <p className="notice-subscribe__channel-result">
-              Email {done.email_status === 'sent' ? '✓' : '—'}{' '}
+              {t('notices.subscribe.email')} {done.email_status === 'sent' ? '✓' : '—'}{' '}
               {done.is_mock && (
-                <span className="notice-subscribe__mode">(Prototype mode — logged, not actually delivered)</span>
+                <span className="notice-subscribe__mode">{t('notices.subscribe.prototypeMode')}</span>
               )}
               {done.email_status === 'failed' && (
-                <span className="notice-subscribe__failed"> Unable to send notification. Please try again.</span>
+                <span className="notice-subscribe__failed"> {t('notices.subscribe.sendFailed')}</span>
               )}
             </p>
           )}
@@ -237,11 +235,11 @@ function SubscribeSection({ identifier }) {
               checked={wantsWhatsapp}
               onChange={(event) => setWantsWhatsapp(event.target.checked)}
             />
-            WhatsApp
+            {t('notices.subscribe.whatsapp')}
           </label>
           {wantsWhatsapp && (
             <Input
-              label="Mobile number"
+              label={t('notices.subscribe.mobileNumber')}
               type="tel"
               value={whatsappNumber}
               placeholder="98765 43210"
@@ -255,11 +253,11 @@ function SubscribeSection({ identifier }) {
               checked={wantsEmail}
               onChange={(event) => setWantsEmail(event.target.checked)}
             />
-            Email
+            {t('notices.subscribe.email')}
           </label>
           {wantsEmail && (
             <Input
-              label="Email address"
+              label={t('notices.subscribe.emailAddress')}
               type="email"
               value={email}
               placeholder="you@example.com"
@@ -273,7 +271,7 @@ function SubscribeSection({ identifier }) {
               checked={consent}
               onChange={(event) => setConsent(event.target.checked)}
             />
-            I agree to be contacted about this land's acquisition status.
+            {t('notices.subscribe.consent')}
           </label>
 
           {subscribeMutation.error && (
@@ -283,7 +281,7 @@ function SubscribeSection({ identifier }) {
           )}
 
           <Button type="submit" variant="secondary" disabled={!canSubmit || subscribeMutation.pending}>
-            {subscribeMutation.pending ? 'Subscribing…' : 'Subscribe'}
+            {subscribeMutation.pending ? t('notices.subscribe.subscribing') : t('notices.subscribe.subscribeButton')}
           </Button>
         </form>
       )}
@@ -296,6 +294,7 @@ function SubscribeSection({ identifier }) {
    there any more. This is the one place a landowner's account comes from:
    a verified land record, not a code someone handed them. */
 function ProvisionSection({ identifier }) {
+  const { t } = useI18n();
   const [credentials, setCredentials] = useState(null);
   const provisionMutation = useMutation((payload) => noticesApi.provision(payload));
 
@@ -311,27 +310,24 @@ function ProvisionSection({ identifier }) {
   if (credentials) {
     return (
       <div className="notice-credentials">
-        <h3 className="notice-credentials__title">Your BhoomiMitra login</h3>
+        <h3 className="notice-credentials__title">{t('notices.provision.yourLoginTitle')}</h3>
         <dl className="notice-credentials__facts">
           <div>
-            <dt>Username</dt>
+            <dt>{t('notices.provision.username')}</dt>
             <dd className="notice-credentials__value">{credentials.username}</dd>
           </div>
           <div>
-            <dt>Temporary password</dt>
+            <dt>{t('notices.provision.temporaryPassword')}</dt>
             <dd className="notice-credentials__value">{credentials.temporary_password}</dd>
           </div>
           <div>
-            <dt>Verification code</dt>
+            <dt>{t('notices.provision.verificationCode')}</dt>
             <dd className="notice-credentials__value">{credentials.login_code_hint}</dd>
           </div>
         </dl>
-        <p className="notice-credentials__note">
-          Write these down now — the password will not be shown again. You will be asked to
-          set a new password the first time you sign in.
-        </p>
+        <p className="notice-credentials__note">{t('notices.provision.writeDown')}</p>
         <Link to="/login">
-          <Button type="button" variant="primary">Go to sign in</Button>
+          <Button type="button" variant="primary">{t('notices.provision.goToSignIn')}</Button>
         </Link>
       </div>
     );
@@ -339,18 +335,15 @@ function ProvisionSection({ identifier }) {
 
   return (
     <div className="notice-subscribe">
-      <h3 className="notice-subscribe__title">Get your BhoomiMitra login</h3>
-      <p className="notice-subscribe__lede">
-        See this case's full record, objections and documents by signing in — BhoomiMitra
-        issues the login itself, from this land record; there is no form to fill in.
-      </p>
+      <h3 className="notice-subscribe__title">{t('notices.provision.title')}</h3>
+      <p className="notice-subscribe__lede">{t('notices.provision.lede')}</p>
       {provisionMutation.error && (
         <p className="notice-subscribe__error" role="alert">
           {provisionMutation.error.message}
         </p>
       )}
       <Button type="button" variant="secondary" onClick={onProvision} disabled={provisionMutation.pending}>
-        {provisionMutation.pending ? 'Creating your login…' : 'Get my login'}
+        {provisionMutation.pending ? t('notices.provision.creating') : t('notices.provision.getLogin')}
       </Button>
     </div>
   );
@@ -374,14 +367,12 @@ function ProvisionSection({ identifier }) {
 
 const PUBLISHED_NOTICE_TYPES = ['preliminary_notification', 'declaration'];
 
-const NOTICE_NOTE = {
-  preliminary_notification:
-    'Notified under Section 11. Objections may be filed within sixty days of publication.',
-  declaration:
-    'Declared under Section 19. The award follows; compensation and resettlement are determined from this point.',
-};
-
 export default function Notices() {
+  const { t } = useI18n();
+  const NOTICE_NOTE = {
+    preliminary_notification: t('notices.noteNotification'),
+    declaration: t('notices.noteDeclaration'),
+  };
   const [noticeType, setNoticeType] = useState('');
   const [districtId, setDistrictId] = useState('');
 
@@ -418,25 +409,18 @@ export default function Notices() {
       <PublicHeader />
 
       <main className="public-page" id="main">
-        <h1 className="public-page__title">Public notices</h1>
+        <h1 className="public-page__title">{t('notices.pageTitle')}</h1>
         <div className="public-page__rule" aria-hidden="true" />
 
-        <p className="public-page__lede">
-          Every notification issued under Section 11 and every declaration under
-          Section 19, published as the Act requires and listed by the date it was
-          issued. Entries stay on this record after the acquisition moves on. If
-          land recorded in your name appears here, the district office holds the
-          full record, and the period for filing an objection runs from the date
-          of publication shown against the notification.
-        </p>
+        <p className="public-page__lede">{t('notices.pageLede')}</p>
 
         <LookupCard />
 
         <div className="public-page__filters" style={{ marginTop: 'var(--s6)' }}>
           <Select
-            label="Instrument"
+            label={t('notices.instrument')}
             value={noticeType}
-            placeholder="Notifications and declarations"
+            placeholder={t('notices.instrumentPlaceholder')}
             options={PUBLISHED_NOTICE_TYPES.map((value) => ({
               value,
               label: noticeTypeLabel(value),
@@ -444,24 +428,24 @@ export default function Notices() {
             onChange={(event) => setNoticeType(event.target.value)}
           />
           <Select
-            label="District"
+            label={t('notices.district')}
             value={districtId}
-            placeholder="All districts"
+            placeholder={t('notices.allDistricts')}
             options={districtOptions}
             onChange={(event) => setDistrictId(event.target.value)}
           />
         </div>
 
-        {notices.loading && <Loading label="Loading notices" rows={6} />}
+        {notices.loading && <Loading label={t('notices.loading')} rows={6} />}
         {notices.error && <ErrorState error={notices.error} onRetry={notices.reload} />}
 
         {visible && visible.length === 0 && (
           <Empty
-            title="No notices published"
+            title={t('notices.noNoticesTitle')}
             body={
               districtId || noticeType
-                ? 'Nothing has been published under these filters. Widen them to see the rest.'
-                : 'No notification or declaration has been issued yet.'
+                ? t('notices.noNoticesFiltered')
+                : t('notices.noNoticesAtAll')
             }
           />
         )}
@@ -484,17 +468,16 @@ export default function Notices() {
                 <p className="notice__meta">
                   {notice.village_name}, {notice.district_name} · {notice.project_name}
                 </p>
-                <p className="notice__meta">Requiring body: {notice.requiring_body}</p>
+                <p className="notice__meta">{t('notices.requiringBody', notice.requiring_body)}</p>
                 <p className="notice__meta">
-                  {fmt.count(notice.parcel_count)} parcels ·{' '}
-                  {fmt.hectares(notice.total_area_ha)}
+                  {t('notices.parcelsAndArea', fmt.count(notice.parcel_count), fmt.hectares(notice.total_area_ha))}
                 </p>
                 {/* What makes this a citable record rather than an
                     announcement: the provision it issued under, the office
                     that issued it, and the gazette it appeared in. */}
                 <p className="notice__cite">
                   {notice.section_reference} · {notice.issuing_authority}
-                  {notice.gazette_number ? ` · Gazette ${notice.gazette_number}` : ''}
+                  {notice.gazette_number ? ` · ${t('notices.gazette', notice.gazette_number)}` : ''}
                 </p>
                 <p className="notice__meta" style={{ marginTop: 'var(--s2)' }}>
                   {NOTICE_NOTE[notice.notice_type]}
@@ -512,7 +495,7 @@ export default function Notices() {
                     instrument above it rather than badged alongside — two
                     pills would read as two states of one thing. */}
                 <p className="notice__since">
-                  Case now at {stageLabel(notice.current_stage)}
+                  {t('notices.caseNowAt', stageLabel(notice.current_stage))}
                 </p>
               </div>
             </article>
