@@ -79,9 +79,26 @@
 
 /* Below 768px the app's own mobile-tabbar (base.css) is also fixed to the
    viewport bottom — stack this bar just above it rather than letting the
-   two overlap and hide the wizard's own Next/Submit button. */
+   two overlap and hide the wizard's own Next/Submit button.
+
+   The offset is the tab bar's real height: 6px + 6px padding around a tab
+   that measures ~52px, so 64px — measured in the browser, not guessed.
+   The 60px this used to be left the action bar's bottom 4px underneath the
+   tab bar, which has the higher z-index (40 vs 20) and so won those 4px of
+   touch target. Small, but it is the strip a thumb lands on reaching for
+   Next.
+
+   The inset is added rather than assumed away because the tab bar carries
+   its own `env(safe-area-inset-bottom)` — on a device with a home
+   indicator the bar is that much taller, and a flat 64px would put the
+   overlap straight back. For the same reason this bar drops its own
+   inset padding here: it no longer touches the screen edge, so counting
+   the inset twice would only add dead space above the tab bar. */
 @media (max-width: 767px) {
-  .wizard-actions { bottom: 60px; }
+  .wizard-actions {
+    bottom: calc(var(--s8) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: var(--s4);
+  }
   .wizard-step { padding-bottom: 160px; }
 }
 
