@@ -36,10 +36,10 @@ export function register(payload, opts) {
   return api.post('/auth/register', payload, opts);
 }
 
-/* Face and kiosk-fingerprint. Enrollment and status are authenticated —
-   something you do to your own already-signed-in account — while
-   face-login is not, for the same reason /auth/login isn't: the whole
-   point is to establish a session, not use one. */
+/* Face biometrics. Enrollment and status are authenticated — something you
+   do to your own already-signed-in account — while face-login is not, for
+   the same reason /auth/login isn't: the whole point is to establish a
+   session, not use one. */
 
 export function biometricStatus(opts) {
   return api.get('/biometrics/status', opts);
@@ -51,8 +51,4 @@ export function enrollFace(imageBase64, opts) {
 
 export function faceLogin(username, imageBase64, opts) {
   return api.post('/biometrics/face/login', { username, image_base64: imageBase64 }, opts);
-}
-
-export function enrollFingerprint(templateBase64, opts) {
-  return api.post('/biometrics/fingerprint/enroll', { template_base64: templateBase64 }, opts);
 }

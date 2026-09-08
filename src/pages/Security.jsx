@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Fingerprint, KeyRound, ScanFace } from 'lucide-react';
+import { KeyRound, ScanFace } from 'lucide-react';
 import * as authApi from '../api/auth';
-import * as kioskApi from '../api/kiosk';
 import * as mfaApi from '../api/mfa';
 import { useApi, useMutation } from '../hooks/useApi';
 import PageHeader from '../components/layout/PageHeader';
@@ -13,10 +12,7 @@ import ErrorState from '../components/states/ErrorState';
 import './security.css';
 
 /* Every account can enroll a face — no role check on the route or on
-   anything here, the same way every account owns a password. Fingerprint
-   only ever works from a kiosk with a Mantra scanner physically attached,
-   so its section treats "no agent on this machine" as the ordinary case
-   a landowner or officer at a normal desk will see, not a fault.
+   anything here, the same way every account owns a password.
 
    The authenticator card is the same idea applied to the code every
    password login now asks for: set one up here, and Login.jsx starts
@@ -26,31 +22,6 @@ import './security.css';
 export default function Security() {
   const status = useApi((opts) => authApi.biometricStatus(opts), []);
   const [reenrollingFace, setReenrollingFace] = useState(false);
-
-  const [fingerprintMessage, setFingerprintMessage] = useState(null); // { tone, text }
-  const [reenrollingFingerprint, setReenrollingFingerprint] = useState(false);
-  const scanFingerprint = useMutation(async () => {
-    const { template_base64: template } = await kioskApi.agentCapture();
-    return authApi.enrollFingerprint(template);
-  });
-
-  async function onScanFingerprint() {
-    setFingerprintMessage(null);
-    try {
-      await scanFingerprint.run();
-      setFingerprintMessage({ tone: 'success', text: 'Fingerprint enrolled for kiosk sign-in.' });
-      setReenrollingFingerprint(false);
-      status.reload();
-    } catch (err) {
-      // agent_unreachable is the expected state on any machine without a
-      // kiosk scanner attached — worded as a fact, shown the same as the
-      // login screen's fallback, never as a red error banner.
-      setFingerprintMessage({
-        tone: err.code === 'agent_unreachable' ? 'info' : 'error',
-        text: err.message,
-      });
-    }
-  }
 
   const mfaStatus = useApi((opts) => mfaApi.status(opts), []);
   // null: nothing in progress. Otherwise the /mfa/totp/setup response,
@@ -102,7 +73,7 @@ export default function Security() {
     <>
       <PageHeader
         title="Security"
-        subtitle="Manage the face, fingerprint and authenticator options for your own account."
+        subtitle="Manage the face and authenticator options for your own account."
       />
 
       {status.loading && <Loading label="Loading your security settings" rows={4} />}
@@ -137,52 +108,6 @@ export default function Security() {
                   status.reload();
                 }}
               />
-            )}
-          </section>
-
-          <section className="security-card">
-            <div className="security-card__head">
-              <span className="security-card__icon" aria-hidden="true">
-                <Fingerprint size={20} strokeWidth={1.75} />
-              </span>
-              <div>
-                <h2 className="security-card__title">Fingerprint sign-in</h2>
-                <p className="security-card__lede">
-                  Only works at a kiosk with a Mantra fingerprint scanner attached.
-                </p>
-              </div>
-            </div>
-
-            {status.data.fingerprint_enrolled && !reenrollingFingerprint ? (
-              <div className="security-card__status">
-                <p className="security-card__status-text is-ok">Fingerprint is enrolled.</p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setReenrollingFingerprint(true);
-                    setFingerprintMessage(null);
-                  }}
-                >
-                  Re-enroll with a new scan
-                </Button>
-              </div>
-            ) : (
-              <div className="security-card__status">
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={onScanFingerprint}
-                  disabled={scanFingerprint.pending}
-                >
-                  {scanFingerprint.pending ? 'Scanning…' : 'Scan and enroll fingerprint'}
-                </Button>
-                {fingerprintMessage && (
-                  <p className={`security-card__status-text is-${fingerprintMessage.tone}`}>
-                    {fingerprintMessage.text}
-                  </p>
-                )}
-              </div>
             )}
           </section>
 

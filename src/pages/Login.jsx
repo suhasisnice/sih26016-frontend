@@ -10,7 +10,6 @@ import { setToken } from '../api/client';
 import Button from '../components/ui/Button';
 import PublicHeader from '../components/public/PublicHeader';
 import FaceLoginCard from '../components/auth/FaceLoginCard';
-import FingerprintFallback from '../components/auth/FingerprintFallback';
 import LoginSuccessOverlay from '../components/auth/LoginSuccessOverlay';
 import '../components/public/public.css';
 import '../components/auth/auth.css';
@@ -29,9 +28,8 @@ import './login.css';
      never will — their credential is a username and a password issued by
      the district office, full stop — so the toggle switches straight to
      that form with nothing else offered. An officer instead gets a fixed
-     precedence order, not a menu: face recognition first, a quiet
-     "issues with face?" link down to the kiosk fingerprint scanner,
-     and — if that has issues too — a further link down to username and
+     precedence order, not a menu: face recognition first, and — if that
+     has issues — a quiet "issues with face?" link down to username and
      password. Nobody has to know which factor "suits their desk"; the
      system just tries the strongest one first and steps down.
    - The floor of that chain is two steps now, not one: password, then a
@@ -123,11 +121,10 @@ export default function Login() {
      which demo accounts are listed. */
   const [accountKind, setAccountKind] = useState('landowner');
   /* Where an officer is in the precedence order — 'face', then
-     'fingerprint', then 'password', moved down one at a time by the
-     "issues with X?" link under whichever is showing. Starts at the top
-     every time; there's no memory of "this desk has no camera" yet. A
-     landowner never has a mode at all — there is only ever the one method
-     for that account kind. */
+     'password', moved down by the "issues with X?" link under whichever
+     is showing. Starts at the top every time; there's no memory of "this
+     desk has no camera" yet. A landowner never has a mode at all — there
+     is only ever the one method for that account kind. */
   const [mode, setMode] = useState('face');
   // Enter in the username field below calls faceCardRef.current.submitNow()
   // — the fast path past FaceLoginCard's own debounce, for anyone who
@@ -269,9 +266,9 @@ export default function Login() {
     setFailure(null);
   }
 
-  /* Face and fingerprint both resolve to the exact {access_token, user}
-     shape /auth/login does — adopted the same way Signup.jsx adopts a
-     freshly-registered session, since neither of them went through the
+  /* Face login resolves to the exact {access_token, user} shape
+     /auth/login does — adopted the same way Signup.jsx adopts a
+     freshly-registered session, since it didn't go through the
      useAuth().login() password path this component also uses. */
   function onBiometricSuccess(result) {
     setToken(result.access_token);
@@ -383,8 +380,8 @@ export default function Login() {
 
   /* The code step. Shown in exactly the two places passwordForm is, once
      mfaToken is set — never its own separate mode, since it isn't a
-     factor on the precedence order beside face/fingerprint/password, it's
-     the second half of "password" itself. */
+     factor on the precedence order beside face/password, it's the second
+     half of "password" itself. */
   const mfaCodeForm = (
     <form className="login-mfa" onSubmit={onSubmitMfaCode} noValidate>
       {mfaError && (
@@ -572,7 +569,7 @@ export default function Login() {
 
                 {accountKind === 'landowner' && (mfaToken ? mfaCodeForm : passwordForm)}
 
-                {accountKind === 'officer' && (mode === 'face' || mode === 'fingerprint') && (
+                {accountKind === 'officer' && mode === 'face' && (
                   <div className="login-biometric-username">
                     <label className="login-field" htmlFor="biometric-username">
                       <span className="login-field__label">Username</span>
@@ -602,19 +599,8 @@ export default function Login() {
                   <>
                     <FaceLoginCard ref={faceCardRef} username={values.username} onSuccess={onBiometricSuccess} />
                     <div className="login-biometric-fallbacks">
-                      <button type="button" className="login-biometric-fallback" onClick={() => setMode('fingerprint')}>
-                        Issues with face? Unlock through fingerprint
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {accountKind === 'officer' && mode === 'fingerprint' && (
-                  <>
-                    <FingerprintFallback username={values.username} onSuccess={onBiometricSuccess} />
-                    <div className="login-biometric-fallbacks">
                       <button type="button" className="login-biometric-fallback" onClick={() => setMode('password')}>
-                        Issues with fingerprint? Use password instead
+                        Issues with face? Use password instead
                       </button>
                     </div>
                   </>

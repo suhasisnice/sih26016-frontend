@@ -204,7 +204,7 @@ export default function AdvanceStageModal({ caseRecord, onClose, onDone }) {
           {needsStepup && (
             <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Moving to {stageLabel(selected)} needs a fresh identity check — you&rsquo;ll be asked
-              to confirm by face or fingerprint before this is recorded.
+              to confirm by face before this is recorded.
             </p>
           )}
         </>
