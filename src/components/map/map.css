@@ -261,13 +261,17 @@
     left: 0;
     right: 0;
     /* The mobile tab bar (base.css) is its own fixed bottom-0 element,
-       measured at 64px tall (48px min-height tab content + 6px top padding
-       + 6px bottom padding, before any safe-area inset) — the same overlap
-       the wizard's sticky action bar hit before (see wizard.css), fixed
-       here the same way: offset the sheet up by the tab bar's height
+       measured at 64px tall (6px + 6px padding around a ~52px tab) — the
+       same overlap the wizard's sticky action bar hit (see wizard.css),
+       fixed here the same way: offset the sheet up by the tab bar's height
        instead of stacking a z-index on top of it, so the tab bar stays
-       reachable under the peeking strip. */
-    bottom: 64px;
+       reachable under the peeking strip.
+
+       The inset is added for the same reason it is there: the tab bar
+       carries its own `env(safe-area-inset-bottom)`, so on a device with a
+       home indicator it is taller than 64px and a flat offset would put
+       the overlap back. */
+    bottom: calc(var(--s8) + env(safe-area-inset-bottom, 0px));
     z-index: 40;
     max-height: 45vh;
     background: var(--surface);
