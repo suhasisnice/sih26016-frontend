@@ -285,9 +285,8 @@ export default function Root() {
                 </RequireRole>
               }
             />
-            {/* Unguarded by role — enrolling a face or fingerprint is
-                something every account does to itself, the same as owning
-                a password. */}
+            {/* Unguarded by role — enrolling a face is something every
+                account does to itself, the same as owning a password. */}
             <Route
               path="/security"
               element={
