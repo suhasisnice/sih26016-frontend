@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nContext';
 
 /* Bleeds off both edges of the viewport, tight against the sections above
    and below it — the one place on the landing page that breaks the grid on
@@ -13,6 +14,7 @@ const PHOTOS = Array.from({ length: 11 }, (_, i) => `/photos/strip-${i + 1}.jpg`
 const TRACK = [...PHOTOS, ...PHOTOS];
 
 export default function PhotoStrip() {
+  const { t } = useI18n();
   const [hovering, setHovering] = useState(false);
   const [lightbox, setLightbox] = useState(null);
 
@@ -21,9 +23,9 @@ export default function PhotoStrip() {
       TRACK.map((src, i) => ({
         src,
         key: `${src}-${i}`,
-        caption: `Land acquisition project site, photograph ${(i % PHOTOS.length) + 1}`,
+        caption: t('photoStrip.caption', (i % PHOTOS.length) + 1),
       })),
-    [],
+    [t],
   );
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export default function PhotoStrip() {
                 className="photo-strip__item"
                 style={{ backgroundImage: `url(${item.src})` }}
                 onClick={() => setLightbox(item)}
-                aria-label={`${item.caption} — open larger view`}
+                aria-label={t('photoStrip.openLarger', item.caption)}
               />
             </div>
           ))}
@@ -71,7 +73,7 @@ export default function PhotoStrip() {
             type="button"
             className="photo-lightbox__close"
             onClick={() => setLightbox(null)}
-            aria-label="Close"
+            aria-label={t('photoStrip.close')}
           >
             <X size={20} strokeWidth={1.75} />
           </button>

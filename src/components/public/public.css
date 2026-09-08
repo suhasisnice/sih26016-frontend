@@ -48,7 +48,21 @@
 }
 .public-header__nav a:hover, .public-header__nav a.is-active { opacity: 1; text-decoration: none; }
 
-.public-header__actions { display: flex; gap: var(--s3); }
+.public-header__actions { display: flex; align-items: center; gap: var(--s3); }
+
+.public-header__lang select {
+  background: transparent;
+  color: inherit;
+  border: 1px solid currentColor;
+  opacity: 0.85;
+  border-radius: var(--r-sm);
+  padding: 5px var(--s2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.public-header__lang select:hover, .public-header__lang select:focus { opacity: 1; }
+.public-header__lang option { color: var(--text); }
 
 @media (max-width: 760px) {
   .public-header { padding: var(--s4); gap: var(--s4); }

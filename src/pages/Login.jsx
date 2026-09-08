@@ -4,6 +4,7 @@ import { Eye, EyeOff, KeyRound, Lock, ShieldCheck, User, UserCheck2 } from 'luci
 import { useAuth } from '../auth/AuthContext';
 import { isLandowner } from '../auth/permissions';
 import * as authApi from '../api/auth';
+import { useI18n } from '../i18n/I18nContext';
 import { roleLabel } from '../lib/labels';
 import { required, validate } from '../lib/validate';
 import { setToken } from '../api/client';
@@ -66,25 +67,13 @@ const ACCOUNTS = [
   { username: 'landowner', role: 'landowner', tab: 'landowner' },
 ];
 
-const TRUST = [
-  {
-    icon: ShieldCheck,
-    heading: 'Secure',
-    detail: 'Your data is protected',
-  },
-  {
-    icon: UserCheck2,
-    heading: 'Trusted',
-    detail: 'Used by officials nationwide',
-  },
-  {
-    icon: Lock,
-    heading: 'Reliable',
-    detail: 'Always available when you need us',
-  },
-];
-
 export default function Login() {
+  const { t } = useI18n();
+  const TRUST = [
+    { icon: ShieldCheck, heading: t('login.trustSecureHeading'), detail: t('login.trustSecureDetail') },
+    { icon: UserCheck2, heading: t('login.trustTrustedHeading'), detail: t('login.trustTrustedDetail') },
+    { icon: Lock, heading: t('login.trustReliableHeading'), detail: t('login.trustReliableDetail') },
+  ];
   const { login, verifyMfaCode, adopt, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -213,7 +202,7 @@ export default function Login() {
     event.preventDefault();
     setMfaError(null);
     if (!mfaCode.trim()) {
-      setMfaError('Enter the code to continue.');
+      setMfaError(t('login.enterCodeToContinue'));
       return;
     }
 
@@ -237,11 +226,11 @@ export default function Login() {
     setResetError(null);
 
     if (newPassword.length < 12) {
-      setResetError('Use at least 12 characters.');
+      setResetError(t('login.passwordTooShort'));
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      setResetError('The two passwords do not match.');
+      setResetError(t('login.passwordsDontMatch'));
       return;
     }
 
@@ -290,7 +279,7 @@ export default function Login() {
         )}
 
         <label className="login-field" htmlFor="username">
-          <span className="login-field__label">Username</span>
+          <span className="login-field__label">{t('login.username')}</span>
           <span className={`login-field__control${errors.username ? ' is-invalid' : ''}`}>
             <User size={17} strokeWidth={1.5} aria-hidden="true" />
             <input
@@ -298,7 +287,7 @@ export default function Login() {
               name="username"
               autoComplete="username"
               autoFocus
-              placeholder="Enter your username"
+              placeholder={t('login.usernamePlaceholder')}
               value={values.username}
               onChange={(event) => set('username', event.target.value)}
               aria-invalid={errors.username ? 'true' : undefined}
@@ -312,7 +301,7 @@ export default function Login() {
         </label>
 
         <label className="login-field" htmlFor="password">
-          <span className="login-field__label">Password</span>
+          <span className="login-field__label">{t('login.password')}</span>
           <span className={`login-field__control${errors.password ? ' is-invalid' : ''}`}>
             <Lock size={17} strokeWidth={1.5} aria-hidden="true" />
             <input
@@ -320,7 +309,7 @@ export default function Login() {
               name="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
-              placeholder="Enter your password"
+              placeholder={t('login.passwordPlaceholder')}
               value={values.password}
               onChange={(event) => set('password', event.target.value)}
               aria-invalid={errors.password ? 'true' : undefined}
@@ -329,7 +318,7 @@ export default function Login() {
               type="button"
               className="login-field__toggle"
               onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
             >
               {showPassword ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
             </button>
@@ -345,20 +334,18 @@ export default function Login() {
             self-service reset — saying so plainly beats a "Forgot
             password?" link that leads nowhere real. */}
         <p className="login-card__reset">
-          {accountKind === 'landowner'
-            ? 'Your username and password were issued by your district office.'
-            : 'Forgotten your password? Contact your district office.'}
+          {accountKind === 'landowner' ? t('login.resetNoteLandowner') : t('login.resetNoteOfficer')}
         </p>
 
         <Button type="submit" variant="primary" block className="login-card__submit" disabled={pending}>
-          {pending ? 'Signing in…' : 'Sign in'}
+          {pending ? t('login.signingIn') : t('login.signIn')}
         </Button>
       </form>
 
       {SHOW_DEMO_ACCOUNTS && (
         <div className="login-card__accounts">
           <p className="login-card__accounts-heading">
-            {accountKind === 'landowner' ? 'Landowner account' : 'Officer accounts'}
+            {accountKind === 'landowner' ? t('login.demoLandownerHeading') : t('login.demoOfficerHeading')}
           </p>
           <ul className="login-card__accounts-list">
             {ACCOUNTS.filter((account) => account.tab === accountKind).map((account) => (
@@ -370,9 +357,7 @@ export default function Login() {
               </li>
             ))}
           </ul>
-          <p className="login-card__accounts-note">
-            All use the password <code>{DEMO_PASSWORD}</code>.
-          </p>
+          <p className="login-card__accounts-note">{t('login.demoNote', DEMO_PASSWORD)}</p>
         </div>
       )}
     </>
@@ -391,13 +376,11 @@ export default function Login() {
       )}
 
       <p className="login-mfa__lede">
-        {totpEnabled
-          ? 'Enter the 6-digit code from your authenticator app.'
-          : "This account hasn't set up an authenticator app yet. Enter the temporary access code 123456 to continue — set up a real one from Security once you're signed in."}
+        {totpEnabled ? t('login.totpLede') : t('login.totpFallbackLede')}
       </p>
 
       <label className="login-field" htmlFor="mfa-code">
-        <span className="login-field__label">Verification code</span>
+        <span className="login-field__label">{t('login.verificationCode')}</span>
         <span className={`login-field__control${mfaError ? ' is-invalid' : ''}`}>
           <KeyRound size={17} strokeWidth={1.5} aria-hidden="true" />
           <input
@@ -414,12 +397,12 @@ export default function Login() {
       </label>
 
       <Button type="submit" variant="primary" block className="login-card__submit" disabled={mfaPending}>
-        {mfaPending ? 'Verifying…' : 'Verify and sign in'}
+        {mfaPending ? t('login.verifying') : t('login.verifyAndSignIn')}
       </Button>
 
       <div className="login-biometric-fallbacks">
         <button type="button" className="login-biometric-fallback" onClick={resetMfaStep}>
-          Wrong account? Start over
+          {t('login.wrongAccount')}
         </button>
       </div>
     </form>
@@ -431,10 +414,7 @@ export default function Login() {
      new one twice. */
   const passwordResetForm = (
     <form className="login-mfa" onSubmit={onSubmitPasswordReset} noValidate>
-      <p className="login-mfa__lede">
-        Your BhoomiMitra login was created with a temporary password. Set a new one to
-        continue.
-      </p>
+      <p className="login-mfa__lede">{t('login.resetLede')}</p>
 
       {resetError && (
         <p className="login-card__error" role="alert">
@@ -443,7 +423,7 @@ export default function Login() {
       )}
 
       <label className="login-field" htmlFor="new-password">
-        <span className="login-field__label">New password</span>
+        <span className="login-field__label">{t('login.newPassword')}</span>
         <span className="login-field__control">
           <Lock size={17} strokeWidth={1.5} aria-hidden="true" />
           <input
@@ -452,7 +432,7 @@ export default function Login() {
             type="password"
             autoComplete="new-password"
             autoFocus
-            placeholder="At least 12 characters"
+            placeholder={t('login.newPasswordPlaceholder')}
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
           />
@@ -460,7 +440,7 @@ export default function Login() {
       </label>
 
       <label className="login-field" htmlFor="confirm-new-password">
-        <span className="login-field__label">Confirm new password</span>
+        <span className="login-field__label">{t('login.confirmNewPassword')}</span>
         <span className="login-field__control">
           <Lock size={17} strokeWidth={1.5} aria-hidden="true" />
           <input
@@ -475,7 +455,7 @@ export default function Login() {
       </label>
 
       <Button type="submit" variant="primary" block className="login-card__submit" disabled={resetPending}>
-        {resetPending ? 'Saving…' : 'Set password and continue'}
+        {resetPending ? t('login.saving') : t('login.setPasswordAndContinue')}
       </Button>
     </form>
   );
@@ -483,7 +463,7 @@ export default function Login() {
   if (signingInAs) {
     return (
       <LoginSuccessOverlay
-        label={`Signed in as ${signingInAs.full_name}`}
+        label={t('login.signedInAs', signingInAs.full_name)}
         onDone={finishSignIn}
       />
     );
@@ -496,7 +476,7 @@ export default function Login() {
       <div className="login-page">
         <div className="login-card">
           <aside className="login-card__welcome">
-            <h1 className="login-card__welcome-title">Welcome back</h1>
+            <h1 className="login-card__welcome-title">{t('login.welcomeBack')}</h1>
             {/* The page header above already carries the full wordmark;
                 this is the same mark at card scale, so the brand still
                 reads once you're this far into the flow. */}
@@ -504,10 +484,7 @@ export default function Login() {
               <img src="/brand/logo.png" alt="" className="login-card__logo-mark" />
               <span className="login-card__logo-word">BHOOMIMITRA</span>
             </div>
-            <p className="login-card__welcome-sub">
-              Sign in to continue managing land acquisition cases, wherever you left
-              off.
-            </p>
+            <p className="login-card__welcome-sub">{t('login.welcomeSub')}</p>
 
             <img
               src="/brand/logo.png"
@@ -533,10 +510,10 @@ export default function Login() {
           <main className="login-card__form" id="main">
             <h2 className="login-card__form-title">
               {pendingReset
-                ? 'Set a new password'
+                ? t('login.titleResetPassword')
                 : accountKind === 'landowner'
-                  ? 'Sign in with your password'
-                  : 'Sign in to your account'}
+                  ? t('login.titleLandownerSignIn')
+                  : t('login.titleOfficerSignIn')}
             </h2>
 
             {pendingReset ? (
@@ -546,7 +523,7 @@ export default function Login() {
                 {/* Which account this is decides which methods are even
                     offered — a landowner has no camera or scanner enrolled
                     against their account and never will. */}
-                <div className="login-role-tabs" role="tablist" aria-label="Account type">
+                <div className="login-role-tabs" role="tablist" aria-label={t('login.accountType')}>
                   <button
                     type="button"
                     role="tab"
@@ -554,7 +531,7 @@ export default function Login() {
                     className={`login-role-tabs__tab${accountKind === 'landowner' ? ' is-active' : ''}`}
                     onClick={() => chooseAccountKind('landowner')}
                   >
-                    Land Owner
+                    {t('login.landOwnerTab')}
                   </button>
                   <button
                     type="button"
@@ -563,7 +540,7 @@ export default function Login() {
                     className={`login-role-tabs__tab${accountKind === 'officer' ? ' is-active' : ''}`}
                     onClick={() => chooseAccountKind('officer')}
                   >
-                    Officer
+                    {t('login.officerTab')}
                   </button>
                 </div>
 
@@ -572,7 +549,7 @@ export default function Login() {
                 {accountKind === 'officer' && mode === 'face' && (
                   <div className="login-biometric-username">
                     <label className="login-field" htmlFor="biometric-username">
-                      <span className="login-field__label">Username</span>
+                      <span className="login-field__label">{t('login.username')}</span>
                       <span className="login-field__control">
                         <User size={17} strokeWidth={1.5} aria-hidden="true" />
                         <input
@@ -580,7 +557,7 @@ export default function Login() {
                           name="username"
                           autoComplete="username"
                           autoFocus
-                          placeholder="Enter your username"
+                          placeholder={t('login.usernamePlaceholder')}
                           value={values.username}
                           onChange={(event) => set('username', event.target.value)}
                           onKeyDown={(event) => {
@@ -600,7 +577,7 @@ export default function Login() {
                     <FaceLoginCard ref={faceCardRef} username={values.username} onSuccess={onBiometricSuccess} />
                     <div className="login-biometric-fallbacks">
                       <button type="button" className="login-biometric-fallback" onClick={() => setMode('password')}>
-                        Issues with face? Use password instead
+                        {t('login.issuesWithFace')}
                       </button>
                     </div>
                   </>
@@ -610,7 +587,7 @@ export default function Login() {
 
                 {(accountKind === 'landowner' || mode === 'password') && !mfaToken && (
                   <p className="login-card__signup">
-                    Been issued an invitation code? <Link to="/signup">Create an account</Link>
+                    {t('login.hasInviteCode')} <Link to="/signup">{t('login.createAccount')}</Link>
                   </p>
                 )}
               </>
@@ -618,9 +595,7 @@ export default function Login() {
           </main>
         </div>
 
-        <p className="login-privacy">
-          Your data is safe with us. We value your privacy.
-        </p>
+        <p className="login-privacy">{t('login.privacyNote')}</p>
       </div>
     </div>
   );

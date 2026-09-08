@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import * as noticesApi from '../../api/notices';
 import { useApi } from '../../hooks/useApi';
+import { useI18n } from '../../i18n/I18nContext';
 import * as fmt from '../../lib/format';
 import { noticeSection } from '../../lib/labels';
 import StatusBadge from '../case/StatusBadge';
@@ -13,6 +14,7 @@ import StatusBadge from '../case/StatusBadge';
    fails there is no case for a full ErrorState, just fewer numbers on
    screen until a reload works. */
 export default function LandingHighlights() {
+  const { t } = useI18n();
   const notices = useApi(
     (opts) => noticesApi.list({ limit: 200 }, opts),
     [],
@@ -52,18 +54,18 @@ export default function LandingHighlights() {
             <span className="stat__value">
               {stats ? fmt.count(stats.notices) : '—'}
             </span>
-            <span className="stat__label">Notices published</span>
+            <span className="stat__label">{t('landingHighlights.noticesPublished')}</span>
           </div>
           <div className="stat">
             <span className="stat__value">
               {stats ? stats.hectares.toFixed(2) : '—'}
               <span className="stat__value-unit">ha</span>
             </span>
-            <span className="stat__label">Land under acquisition</span>
+            <span className="stat__label">{t('landingHighlights.landUnderAcquisition')}</span>
           </div>
           <div className="stat">
             <span className="stat__value">{stats ? fmt.count(stats.districts) : '—'}</span>
-            <span className="stat__label">Districts covered</span>
+            <span className="stat__label">{t('landingHighlights.districtsCovered')}</span>
           </div>
         </div>
       </section>
@@ -71,8 +73,8 @@ export default function LandingHighlights() {
       {(notices.loading || recent.length > 0) && (
         <section className="updates">
           <div className="updates__head">
-            <h2 className="updates__title">Latest notices</h2>
-            <Link to="/notices" className="updates__all">View all notices</Link>
+            <h2 className="updates__title">{t('landingHighlights.latestNotices')}</h2>
+            <Link to="/notices" className="updates__all">{t('landingHighlights.viewAllNotices')}</Link>
           </div>
 
           <div className="updates__grid">
