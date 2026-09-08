@@ -3,6 +3,7 @@ import PublicFooter from '../components/public/PublicFooter';
 import PhotoStrip from '../components/public/PhotoStrip';
 import LandingHighlights from '../components/public/LandingHighlights';
 import Button from '../components/ui/Button';
+import { useI18n } from '../i18n/I18nContext';
 import { ABOUT_PDF_URL } from '../lib/constants';
 import '../components/public/public.css';
 
@@ -14,6 +15,7 @@ import '../components/public/public.css';
    issued by the district office rather than self-serve, so that screen asks
    for the code first and shows which role it grants. */
 export default function Landing() {
+  const { t } = useI18n();
   return (
     <div className="public">
       <PublicHeader />
@@ -28,22 +30,17 @@ export default function Landing() {
 
         <div className="hero__inner">
           <h1 className="hero__title">
-            From Land to Lives &ndash;
+            {t('landing.heroTitle1')}
             <br />
-            Managing Every Step With Transparency.
+            {t('landing.heroTitle2')}
           </h1>
-          <p className="hero__body">
-            Designed to bring transparency and efficiency to land acquisition, our
-            platform helps officials navigate every stage of the process while
-            ensuring that affected families, landowners, and their rights remain at
-            the centre of every case.
-          </p>
+          <p className="hero__body">{t('landing.heroBody')}</p>
           <div className="hero__actions">
             <Button to="/login" variant="primary" size="public">
-              Login
+              {t('landing.login')}
             </Button>
             <Button to="/signup" variant="secondary" size="public">
-              Signup
+              {t('landing.signup')}
             </Button>
           </div>
         </div>
@@ -53,33 +50,26 @@ export default function Landing() {
 
       <section className="statement">
         <h2 className="statement__title">
-          Making Every Acquisition Count.
+          {t('landing.statementTitle1')}
           <br />
-          Making Every Decision Matter.
+          {t('landing.statementTitle2')}
         </h2>
-        <p className="statement__body">
-          Every parcel represents a family, a livelihood, and a future &mdash; we bring
-          clarity, transparency, and fairness to every step of the journey.
-        </p>
+        <p className="statement__body">{t('landing.statementBody')}</p>
         <div className="statement__actions">
           <Button to="/notices" variant="primary" size="public-lg">
-            Notices
+            {t('landing.noticesButton')}
           </Button>
           <Button to="/case-studies" variant="secondary" size="public-lg">
-            Case Studies
+            {t('landing.caseStudies')}
           </Button>
         </div>
 
         <div className="statement__about">
-          <h3 className="statement__about-title">About Us</h3>
+          <h3 className="statement__about-title">{t('landing.aboutTitle')}</h3>
           <p className="statement__about-text">
-            Bhoomimitra follows a land acquisition from first notification to final mutation
-            as one continuous, auditable case, in place of the paperwork scattered today
-            across RFCTLARR, the National Highways Act and a dozen other statutes. Every
-            parcel carries a single national identity, every affected family is recorded
-            individually, and every statutory deadline is tracked before it lapses.{' '}
+            {t('landing.aboutBody')}{' '}
             <a href={ABOUT_PDF_URL} target="_blank" rel="noopener noreferrer">
-              Read more
+              {t('landing.readMore')}
             </a>
           </p>
         </div>
