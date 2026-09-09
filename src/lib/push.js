@@ -52,13 +52,23 @@ export async function subscribeToPush() {
 
   const { public_key: publicKey } = await noticesApi.vapidPublicKey();
 
+  // Always unsubscribe any existing registration first, rather than
+  // reusing it. A subscription the browser already holds may have been
+  // created against a VAPID key from an earlier dev session (or simply
+  // gone stale on the push service's own side) — the push service ties a
+  // subscription to the exact applicationServerKey used to create it, and
+  // reusing a mismatched one fails with a bare "expired" error that gives
+  // no indication the actual cause was a stale local subscription, not a
+  // real problem with this send.
   const existing = await registration.pushManager.getSubscription();
-  const subscription =
-    existing ||
-    (await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    }));
+  if (existing) {
+    await existing.unsubscribe();
+  }
+
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicKey),
+  });
 
   return subscription.toJSON();
 }
