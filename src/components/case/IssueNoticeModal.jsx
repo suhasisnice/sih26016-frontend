@@ -10,7 +10,7 @@ import { Input, Select } from '../ui/Field';
 
 /* Publishing a statutory instrument — Sections 11, 19, 23 and 38. This is
    what puts a case on the public notice board (GET /notices) and onto a
-   subscribed landowner's WhatsApp or email; a case worked entirely through
+   subscribed landowner's SMS or email; a case worked entirely through
    this screen has no other way to reach either.
 
    `availableTypes` is computed by the caller from the case's own stage and
