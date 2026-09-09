@@ -33,6 +33,7 @@ const ENTITY_LABEL = {
   case: 'Case',
   document: 'Document',
   objection: 'Objection',
+  grievance: 'Grievance',
 };
 
 /* A stable reference for the "not loaded yet" case — `[]` inline would be a
