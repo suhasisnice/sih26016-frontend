@@ -32,6 +32,12 @@ export function subscribe(payload, opts) {
   return api.post('/notices/subscribe', payload, opts);
 }
 
+/* The VAPID public key a browser needs before it can create a
+   PushSubscription — see src/lib/push.js. Public by design; no auth. */
+export function vapidPublicKey(opts) {
+  return api.get('/notices/push/vapid-public-key', opts);
+}
+
 /* Creates a landowner login for whoever owns the parcel just looked up.
    Unauthenticated by necessity — the whole point is that this is how a
    landowner gets a login in the first place. Returns {username,
