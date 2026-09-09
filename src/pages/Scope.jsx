@@ -31,7 +31,7 @@ const SCOPE_ITEMS = [
     tone: 'info',
     stamp: 'Partial',
     title: 'Notifications',
-    body: 'SMS (Twilio) and email (SMTP) are live, pluggable channels — chosen over WhatsApp so a citizen never has to opt in to a sandbox or business template before this platform can reach them. There is no browser/mobile push. Sending SMS to an Indian number needs the sender registered under TRAI’s DLT framework, separate from this codebase.',
+    body: 'Email (SMTP) is live. SMS (Twilio) is fully built and tested against real Twilio credentials — the integration works — but is running in mock mode: a trial Twilio account can only send India-bound SMS from a fixed set of predefined templates, not the dynamic per-case text this feature needs, and reliable delivery additionally needs the sender registered under TRAI’s DLT framework. Both are Twilio/carrier account requirements, not code. There is no browser/mobile push.',
   },
   {
     tone: 'info',
