@@ -244,7 +244,7 @@ export default function CaseList() {
             <FilterBar.Search
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search by case number, village or project…"
+              placeholder="Search by case number, survey number, landowner, village or project…"
             />
             {districts.data && districts.data.length > 1 && (
               <FilterBar.Select

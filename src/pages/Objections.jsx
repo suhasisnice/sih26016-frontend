@@ -34,6 +34,7 @@ export default function Objections() {
 
   const [status, setStatus] = useState('');
   const [overdueOnly, setOverdueOnly] = useState('');
+  const [query, setQuery] = useState('');
 
   const objections = useApi(
     (opts) =>
@@ -47,7 +48,21 @@ export default function Objections() {
     [status, overdueOnly],
   );
 
-  const hasFilters = Boolean(status || overdueOnly);
+  const hasFilters = Boolean(status || overdueOnly || query);
+
+  // Client-side: GET /objections is already unpaginated and scoped (see
+  // api/objections.js), so the whole result set for this view is already in
+  // memory — filtering it here needs no new backend param.
+  const needle = query.trim().toLowerCase();
+  const visibleItems = objections.data
+    ? needle
+      ? objections.data.items.filter((row) =>
+          [row.case_number, row.person_name, row.grounds]
+            .filter(Boolean)
+            .some((field) => field.toLowerCase().includes(needle)),
+        )
+      : objections.data.items
+    : [];
 
   const columns = [
     {
@@ -116,6 +131,11 @@ export default function Objections() {
       />
 
       <FilterBar>
+        <FilterBar.Search
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search by case number or filer…"
+        />
         <FilterBar.Select
           label="Status"
           value={status}
@@ -132,10 +152,11 @@ export default function Objections() {
         />
         <FilterBar.Actions
           hasFilters={hasFilters}
-          filterCount={[status, overdueOnly].filter(Boolean).length}
+          filterCount={[status, overdueOnly, query].filter(Boolean).length}
           onClear={() => {
             setStatus('');
             setOverdueOnly('');
+            setQuery('');
           }}
         />
       </FilterBar>
@@ -160,25 +181,29 @@ export default function Objections() {
 
           <DataTable
             columns={columns}
-            rows={objections.data.items}
+            rows={visibleItems}
             getRowKey={(row) => row.id}
             onRowClick={(row) => navigate(`/objections/${row.id}`)}
             isRowFlagged={(row) => row.is_overdue}
             caption={
-              objections.data.items.length
+              visibleItems.length
                 ? 'A red rule marks an objection past its response window. Select a row to open it.'
                 : undefined
             }
             empty={
-              <Empty
-                center
-                title={status || overdueOnly ? 'Nothing matches those filters' : 'No objections filed'}
-                body={
-                  isLandowner(user)
-                    ? 'You have not filed an objection. During the objection period the district office accepts them in writing.'
-                    : 'No objection is outstanding in your jurisdiction.'
-                }
-              />
+              hasFilters ? (
+                <Empty center title="Nothing matches those filters" body="Try a different search term or clear the filters." />
+              ) : (
+                <Empty
+                  center
+                  title="No objections filed"
+                  body={
+                    isLandowner(user)
+                      ? 'You have not filed an objection. During the objection period the district office accepts them in writing.'
+                      : 'No objection is outstanding in your jurisdiction.'
+                  }
+                />
+              )
             }
           />
         </>
