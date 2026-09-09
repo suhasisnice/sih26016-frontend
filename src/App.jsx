@@ -23,6 +23,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Notices from './pages/Notices';
 import CaseStudies from './pages/CaseStudies';
+import Scope from './pages/Scope';
 import Dashboard from './pages/Dashboard';
 import FieldWork from './pages/FieldWork';
 import SurveyTasks from './pages/SurveyTasks';
@@ -71,6 +72,7 @@ export default function Root() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/notices" element={<Notices />} />
             <Route path="/case-studies" element={<CaseStudies />} />
+            <Route path="/scope" element={<Scope />} />
 
             {/* Anyone who works a caseload or oversees one. Deliberately
                 SUPERVISORY rather than OFFICERS: a state or ministry officer

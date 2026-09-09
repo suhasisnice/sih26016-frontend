@@ -442,6 +442,31 @@
   .public-page { padding: var(--s6) var(--s4); }
 }
 
+/* ---------- Scope & Security page ---------- */
+.scope__section-title {
+  font-size: 19px;
+  margin-top: var(--s7);
+  padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--border);
+}
+.scope__list { display: flex; flex-direction: column; }
+.scope__item {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: var(--s5);
+  padding: var(--s5) 0;
+  border-top: 1px solid var(--border);
+  align-items: baseline;
+}
+.scope__item--plain { grid-template-columns: 1fr; }
+.scope__stamp { justify-self: start; }
+.scope__item-title { font-size: 15px; margin: 0 0 var(--s2); }
+.scope__item-body { font-size: 14px; line-height: 1.65; color: var(--text-muted); max-width: 62ch; margin: 0; }
+
+@media (max-width: 640px) {
+  .scope__item { grid-template-columns: 1fr; gap: var(--s2); }
+}
+
 /* ---------- Citizen lookup ---------- */
 .notice-lookup {
   margin-top: var(--s6);

@@ -50,7 +50,7 @@ export default function PublicHeader() {
       </nav>
 
       <div className="public-header__actions">
-        <label className="public-header__lang">
+        <label className="public-header__lang" title="Covers these public pages today — the signed-in workspace is English-only for now.">
           <span className="sr-only">{t('publicHeader.language')}</span>
           <select value={locale} onChange={(event) => setLocale(event.target.value)}>
             {locales.map((l) => (

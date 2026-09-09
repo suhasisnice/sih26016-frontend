@@ -31,6 +31,7 @@
 }
 .section__title { font-size: 17px; }
 .section__count { font-size: 12px; color: var(--text-muted); }
+.section__note { font-size: 12.5px; color: var(--text-muted); margin: 0 0 var(--s4); max-width: 62ch; }
 
 /* ---------- Stage bars ---------- */
 /* Statutory order, never sorted by size — the sequence is the point. */
@@ -38,7 +39,7 @@
 
 .stage-bar {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 48px;
+  grid-template-columns: 200px minmax(0, 1fr) 68px;
   align-items: center;
   gap: var(--s4);
   padding: var(--s2) var(--s3);
@@ -58,17 +59,28 @@
   background: var(--surface-alt);
   overflow: hidden;
 }
-.stage-bar__fill { height: 100%; background: var(--brand); border-radius: var(--r-pill); }
+.stage-bar__fill { height: 100%; background: var(--brand); border-radius: var(--r-pill); position: relative; }
+.stage-bar__fill-breached {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  background: var(--danger);
+  border-radius: 0 var(--r-pill) var(--r-pill) 0;
+}
 .stage-bar__count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-size: 12.5px;
   color: var(--text);
 }
 .stage-bar.is-empty .stage-bar__count { color: var(--text-faint); }
+.stage-bar__overdue { font-size: 10px; font-weight: 600; color: var(--danger); white-space: nowrap; }
 
 @media (max-width: 760px) {
-  .stage-bar { grid-template-columns: 120px minmax(0, 1fr) 36px; gap: var(--s2); }
+  .stage-bar { grid-template-columns: 120px minmax(0, 1fr) 56px; gap: var(--s2); }
 }
 
 /* ---------- Trend chart ---------- */

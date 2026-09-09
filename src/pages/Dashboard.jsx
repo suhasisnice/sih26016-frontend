@@ -377,14 +377,28 @@ export default function Dashboard() {
           <h2 className="section__title">Where cases stand</h2>
           <span className="section__count">
             {stages.data
-              ? `${fmt.count(stages.data.reduce((sum, s) => sum + s.case_count, 0))} cases`
+              ? (() => {
+                  const total = stages.data.reduce((sum, s) => sum + s.case_count, 0);
+                  const overdue = stages.data.reduce((sum, s) => sum + s.breached_count, 0);
+                  return overdue > 0
+                    ? `${fmt.count(total)} cases · ${fmt.count(overdue)} past their stage deadline`
+                    : `${fmt.count(total)} cases`;
+                })()
               : ''}
           </span>
         </div>
 
         {stages.loading && <Loading label="Loading the stage breakdown" rows={9} />}
         {stages.error && <ErrorState error={stages.error} onRetry={stages.reload} />}
-        {stages.data && <StageBars rows={stages.data} onPick={(stage) => navigate(`/cases?stage=${stage}`)} />}
+        {stages.data && (
+          <>
+            <StageBars rows={stages.data} onPick={(stage) => navigate(`/cases?stage=${stage}`)} />
+            <p className="section__note" style={{ marginTop: 'var(--s3)' }}>
+              The red segment is each stage&rsquo;s share of cases past their statutory or
+              SLA-set deadline for this stage — timeline adherence, not just case volume.
+            </p>
+          </>
+        )}
       </section>
 
       {/* The time dimension. Every other figure on this page is a snapshot of
@@ -421,6 +435,11 @@ export default function Dashboard() {
           <h2 className="section__title">Cases likely to slip</h2>
           <span className="section__count">worst first</span>
         </div>
+        <p className="section__note">
+          Built from this office&rsquo;s own historical stage durations, not a black-box model —
+          every row names the single strongest reason it&rsquo;s flagged, so the score is
+          something an officer can act on and an auditor can question.
+        </p>
         <ForecastPanel state={forecast} />
       </section>
     </>
@@ -589,9 +608,22 @@ function StageBars({ rows, onPick }) {
             <span
               className="stage-bar__fill"
               style={{ width: `${(row.case_count / max) * 100}%` }}
-            />
+            >
+              {row.breached_count > 0 && (
+                <span
+                  className="stage-bar__fill-breached"
+                  style={{ width: `${(row.breached_count / row.case_count) * 100}%` }}
+                  title={`${row.breached_count} of ${row.case_count} past deadline in this stage`}
+                />
+              )}
+            </span>
           </span>
-          <span className="stage-bar__count">{row.case_count}</span>
+          <span className="stage-bar__count">
+            {row.case_count}
+            {row.breached_count > 0 && (
+              <span className="stage-bar__overdue">{row.breached_count} overdue</span>
+            )}
+          </span>
         </button>
       ))}
     </div>
