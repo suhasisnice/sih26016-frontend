@@ -69,6 +69,7 @@ export default function LandownerDashboard() {
   const [selectedCaseId, setSelectedCaseId] = useState(null);
   const [reportPending, setReportPending] = useState(false);
   const [reportError, setReportError] = useState(null);
+  const [docError, setDocError] = useState(null);
 
   const myCases = useApi((opts) => casesApi.list({ limit: 100 }, opts), []);
 
@@ -159,6 +160,15 @@ export default function LandownerDashboard() {
       setReportError('Could not generate the report. Please try again.');
     } finally {
       setReportPending(false);
+    }
+  }
+
+  async function onDownloadDocument(doc) {
+    setDocError(null);
+    try {
+      await documentsApi.download(doc.id, doc.filename);
+    } catch {
+      setDocError(`Could not download "${docTypeLabel(doc.doc_type)}". Please try again.`);
     }
   }
 
@@ -383,6 +393,11 @@ export default function LandownerDashboard() {
             </div>
             {documents.loading && <Loading label="Loading documents" rows={3} />}
             {documents.error && <ErrorState error={documents.error} onRetry={documents.reload} />}
+            {docError && (
+              <p role="alert" style={{ color: 'var(--danger)', fontSize: 13, margin: '0 0 var(--s3)' }}>
+                {docError}
+              </p>
+            )}
             {documents.data && documents.data.items.length === 0 && (
               <Empty center title="No documents yet" body="No documents are currently available." />
             )}
@@ -395,7 +410,7 @@ export default function LandownerDashboard() {
                       <span className="myland-doclist__name">{docTypeLabel(d.doc_type)}</span>
                       <span className="myland-doclist__meta">{fmt.date(d.uploaded_on)}</span>
                     </span>
-                    <Button variant="quiet" onClick={() => documentsApi.download(d.id, d.filename)}>
+                    <Button variant="quiet" onClick={() => onDownloadDocument(d)}>
                       Download
                     </Button>
                   </li>
