@@ -26,8 +26,29 @@ const OFFICERS = [ADMIN, DISTRICT_OFFICER, SLAO, FIELD_OFFICER, RNR_OFFICER];
    state- and national-read scopes. */
 const SUPERVISORY = [...OFFICERS, STATE_OFFICER, MINISTRY_OFFICER];
 
-/* Mirrors cases.CASE_WRITERS */
+/* Mirrors cases.CASE_WRITERS (itself sourced from
+   workflow.CASE_STAGE_OWNERS on the backend) — the roles that administer a
+   case across its whole lifecycle, as opposed to one stage of it. */
 const CASE_WRITERS = [ADMIN, DISTRICT_OFFICER, SLAO];
+
+/* Mirrors app.services.workflow.STAGE_RESPONSIBLE_ROLE — which role
+   normally owns each stage, i.e. who besides a CASE_WRITER may push a case
+   out of it. District Officer and SLAO are deliberately absent as values:
+   CASE_WRITERS already grants them every stage, the same way the backend's
+   can_advance checks CASE_STAGE_OWNERS first. Exported so CaseDetail's
+   "Responsible" field reads from the same mapping this decides
+   advanceCaseStage with, rather than keeping its own copy. */
+export const STAGE_RESPONSIBLE_ROLE = {
+  preliminary_notification: SLAO,
+  social_impact_assessment: SLAO,
+  land_verification: FIELD_OFFICER,
+  objection_period: SLAO,
+  declaration: SLAO,
+  award: SLAO,
+  rehabilitation_resettlement: RNR_OFFICER,
+  possession: FIELD_OFFICER,
+  monitoring: DISTRICT_OFFICER,
+};
 /* Mirrors persons.COMPENSATION_WRITERS */
 const COMPENSATION_WRITERS = [ADMIN, DISTRICT_OFFICER, SLAO];
 /* Mirrors persons.RNR_WRITERS — an SLAO is deliberately absent */
@@ -84,7 +105,23 @@ const has = (list) => (user) => Boolean(user) && list.includes(user.role);
 export const can = {
   createCase: has(CASE_WRITERS),
   editCase: has(CASE_WRITERS),
+  /* Gates "Put on hold" / "Resume case" — administrative actions available
+     to whoever administers the case, not tied to its current stage. The
+     "Advance stage" button itself uses advanceCaseStage below instead,
+     since that action IS tied to the current stage. */
   advanceStage: has(CASE_WRITERS),
+  /* Whether `user` may push THIS case out of its current stage — mirrors
+     app.services.workflow.can_advance, the backend's actual authority.
+     A CASE_WRITER (Admin/District Officer/SLAO) may move any case at any
+     stage, same as today. Field Officer and R&R Officer are narrower: each
+     only when the case is sitting at the one stage STAGE_RESPONSIBLE_ROLE
+     names them for. Everyone else gets nothing — this hides the button,
+     the backend refuses the request regardless. */
+  advanceCaseStage: (user, caseRecord) => {
+    if (!user || !caseRecord) return false;
+    if (CASE_WRITERS.includes(user.role)) return true;
+    return STAGE_RESPONSIBLE_ROLE[caseRecord.stage] === user.role;
+  },
   editCompensation: has(COMPENSATION_WRITERS),
   editRnr: has(RNR_WRITERS),
   /* Mirrors persons.RNR_WRITERS too — the itemised benefits underneath an
@@ -116,6 +153,11 @@ export const can = {
   /* A landowner files an objection about their own case; officers record one
      on a person's behalf. Both hit the same route. */
   fileObjection: (user) => Boolean(user),
+  /* Mirrors app.services.grievances.GRIEVANCE_RESPONDERS. A landowner
+     raises a grievance about their own case the same way they file an
+     objection; officers record one on a citizen's behalf. */
+  fileGrievance: (user) => Boolean(user),
+  respondToGrievance: has([ADMIN, DISTRICT_OFFICER, SLAO]),
 };
 
 export const isOfficer = has(OFFICERS);
@@ -124,6 +166,17 @@ export const isRequiringBody = has([REQUIRING_BODY]);
 /* Reads across districts and does not operate a case. Used to decide whether
    to offer a state or national scope selector at all. */
 export const isOversight = has([STATE_OFFICER, MINISTRY_OFFICER]);
+
+/* Where a role lands after signing in, and what the sidebar brand link
+   goes to — the same question asked from two places, so both are answered
+   by this one function rather than by two copies that could drift. A
+   landowner's home is the dedicated Landowner Portal dashboard; everyone
+   else's is unchanged from before that page existed. */
+export function homeRouteFor(user) {
+  if (!user) return '/login';
+  if (isLandowner(user)) return '/my-acquisition';
+  return '/dashboard';
+}
 
 export const ROLES = {
   ADMIN,

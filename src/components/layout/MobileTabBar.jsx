@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, Compass, FolderKanban, Home, Map as MapIcon, ShieldCheck } from 'lucide-react';
-import { OFFICERS, SUPERVISORY } from '../../auth/permissions';
+import { Bell, Compass, FolderKanban, Home, Map as MapIcon, MessageSquareWarning, ShieldCheck } from 'lucide-react';
+import { isLandowner, OFFICERS, SUPERVISORY } from '../../auth/permissions';
 
 /* Bottom tab bar for narrow viewports — hidden at >=768px by CSS
    (see base.css), where the sidebar takes over. Deliberately not the same
@@ -8,7 +8,8 @@ import { OFFICERS, SUPERVISORY } from '../../auth/permissions';
    small, obvious primary path, not the whole nav shrunk down. Every
    officer role is also SUPERVISORY (OFFICERS is a subset — see
    auth/permissions.js), so an officer always gets the full five; a
-   landowner or requiring body, who own no fieldwork or map, get three. */
+   landowner gets their own portal home plus a grievances tab; a requiring
+   body, who owns no fieldwork, map or grievance, gets three. */
 function tabsFor(user) {
   if (!user) return [];
   const isOfficer = OFFICERS.includes(user.role);
@@ -21,6 +22,9 @@ function tabsFor(user) {
   } else if (isSupervisory) {
     tabs.push({ to: '/dashboard', label: 'Home', icon: Home });
     tabs.push({ to: '/cases', label: 'Cases', icon: FolderKanban });
+  } else if (isLandowner(user)) {
+    tabs.push({ to: '/my-acquisition', label: 'Home', icon: Home });
+    tabs.push({ to: '/grievances', label: 'Grievances', icon: MessageSquareWarning });
   } else {
     tabs.push({ to: '/cases', label: 'Home', icon: Home });
   }
