@@ -4,8 +4,7 @@ import { CheckCircle2 } from 'lucide-react';
 import * as casesApi from '../api/cases';
 import * as grievancesApi from '../api/grievances';
 import { useApi, useMutation } from '../hooks/useApi';
-import { useEnums } from '../hooks/useEnums';
-import { grievanceCategoryLabel, roleLabel, stageLabel } from '../lib/labels';
+import { roleLabel, stageLabel } from '../lib/labels';
 import * as fmt from '../lib/format';
 import { required, minLength, validate } from '../lib/validate';
 import PageHeader from '../components/layout/PageHeader';
@@ -16,8 +15,8 @@ import ErrorState from '../components/states/ErrorState';
 import Empty from '../components/states/Empty';
 import './objections.css';
 
-/* Landowner Dashboard -> Raise Grievance -> Select Type -> Subject ->
-   Description -> Attach (optional) -> Submit -> Grievance ID -> Track.
+/* Landowner Dashboard -> Raise Grievance -> Subject -> Description ->
+   Attach (optional) -> Submit -> Grievance ID -> Track.
 
    The case a grievance is filed against is never a field the person types
    an id into — it is chosen from a dropdown built ONLY from cases GET
@@ -26,12 +25,14 @@ import './objections.css';
    point at somebody else's case even before the backend's own check runs. */
 export default function RaiseGrievance() {
   const navigate = useNavigate();
-  const { grievance_categories: categories } = useEnums();
 
   const myCases = useApi((opts) => casesApi.list({ limit: 100 }, opts), []);
 
   const [caseId, setCaseId] = useState('');
-  const [category, setCategory] = useState('');
+  // No "grievance type" field in the UI — every grievance is filed as
+  // "other" and routed to the SLAO (GRIEVANCE_CATEGORY_ROLE's catch-all),
+  // the same officer who fields most other categories anyway.
+  const [category] = useState('other');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [contactMethod, setContactMethod] = useState('sms');
@@ -52,10 +53,9 @@ export default function RaiseGrievance() {
 
   async function onSubmit() {
     const result = validate(
-      { caseId, category, subject, description },
+      { caseId, subject, description },
       {
         caseId: [required('Case')],
-        category: [required('Grievance type')],
         subject: [required('Subject'), minLength('Subject', 3)],
         description: [required('Description'), minLength('Description', 10)],
       },
@@ -139,18 +139,6 @@ export default function RaiseGrievance() {
   return (
     <>
       <PageHeader back={{ to: '/grievances', label: 'My grievances' }} title="Raise a grievance" />
-
-      <Select
-        label="Grievance type *"
-        value={category}
-        error={errors.category}
-        placeholder="Select"
-        options={categories.map((value) => ({ value, label: grievanceCategoryLabel(value) }))}
-        onChange={(event) => {
-          setCategory(event.target.value);
-          if (errors.category) setErrors((e) => ({ ...e, category: undefined }));
-        }}
-      />
 
       <Select
         label="Case reference *"
