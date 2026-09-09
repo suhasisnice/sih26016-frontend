@@ -29,6 +29,7 @@ export default function PublicFooter() {
           <Link to="/">{t('publicFooter.home')}</Link>
           <Link to="/notices">{t('publicFooter.notices')}</Link>
           <Link to="/login">{t('publicFooter.login')}</Link>
+          <Link to="/scope">{t('publicFooter.scope')}</Link>
         </div>
 
         <div className="public-footer__col">
