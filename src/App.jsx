@@ -36,6 +36,10 @@ import AuditTrail from './pages/AuditTrail';
 import CaseCreate from './pages/CaseCreate';
 import Objections from './pages/Objections';
 import ObjectionDetail from './pages/ObjectionDetail';
+import Grievances from './pages/Grievances';
+import GrievanceDetail from './pages/GrievanceDetail';
+import RaiseGrievance from './pages/RaiseGrievance';
+import LandownerDashboard from './pages/LandownerDashboard';
 import ParcelDetail from './pages/ParcelDetail';
 import Proposals from './pages/Proposals';
 import ProposalDetail from './pages/ProposalDetail';
@@ -273,6 +277,53 @@ export default function Root() {
                 <RequireRole>
                   <App>
                     <ObjectionDetail />
+                  </App>
+                </RequireRole>
+              }
+            />
+            {/* The Landowner Portal home — its own dashboard, distinct from
+                the officer /dashboard, since a landowner has no district
+                caseload to oversee. */}
+            <Route
+              path="/my-acquisition"
+              element={
+                <RequireRole roles={[ROLES.LANDOWNER]}>
+                  <App>
+                    <LandownerDashboard />
+                  </App>
+                </RequireRole>
+              }
+            />
+            {/* Grievances: any signed-in role, scoped by the backend —
+                same pattern as /cases and /objections. `new` is declared
+                before `:grievanceId` for the same reason /proposals/new
+                is declared before /proposals/:proposalId. */}
+            <Route
+              path="/grievances"
+              element={
+                <RequireRole>
+                  <App>
+                    <Grievances />
+                  </App>
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/grievances/new"
+              element={
+                <RequireRole roles={[ROLES.LANDOWNER]}>
+                  <App>
+                    <RaiseGrievance />
+                  </App>
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/grievances/:grievanceId"
+              element={
+                <RequireRole>
+                  <App>
+                    <GrievanceDetail />
                   </App>
                 </RequireRole>
               }

@@ -11,7 +11,7 @@ import * as noticesApi from '../api/notices';
 import { useApi } from '../hooks/useApi';
 import { useEnums } from '../hooks/useEnums';
 import { useAuth } from '../auth/AuthContext';
-import { can, isLandowner, ROLES } from '../auth/permissions';
+import { can, isLandowner, ROLES, STAGE_RESPONSIBLE_ROLE } from '../auth/permissions';
 import * as fmt from '../lib/format';
 import { discrepancyTypeLabel, docTypeLabel, noticeTypeLabel, roleLabel, stageLabel } from '../lib/labels';
 import PageHeader from '../components/layout/PageHeader';
@@ -176,7 +176,7 @@ export default function CaseDetail() {
                 Put on hold
               </Button>
             )}
-            {can.advanceStage(user) && c.allowed_next_stages.length > 0 && c.status !== 'stalled' && (
+            {can.advanceCaseStage(user, c) && c.allowed_next_stages.length > 0 && c.status !== 'stalled' && (
               <Button variant="primary" onClick={() => setModal({ kind: 'advance' })}>
                 Advance stage
               </Button>
@@ -463,23 +463,6 @@ export default function CaseDetail() {
     </>
   );
 }
-
-/* Which of the five core roles a stage normally sits with, before any of
-   the more specific rules below override it. Field Officer for the two
-   on-ground stages, R&R Officer for rehabilitation, SLAO for everything
-   else that writes a case, District Officer once there's nothing left to
-   do but monitor. */
-const STAGE_RESPONSIBLE_ROLE = {
-  preliminary_notification: ROLES.SLAO,
-  social_impact_assessment: ROLES.SLAO,
-  land_verification: ROLES.FIELD_OFFICER,
-  objection_period: ROLES.SLAO,
-  declaration: ROLES.SLAO,
-  award: ROLES.SLAO,
-  rehabilitation_resettlement: ROLES.RNR_OFFICER,
-  possession: ROLES.FIELD_OFFICER,
-  monitoring: ROLES.DISTRICT_OFFICER,
-};
 
 const OPEN_SURVEY_STATUSES = ['assigned', 'in_progress', 'returned'];
 const OPEN_RNR_STATUSES = ['pending', 'in_progress'];

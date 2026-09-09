@@ -5,6 +5,7 @@ import {
   compensationStatusLabel,
   discrepancyStatusLabel,
   documentVerificationStatusLabel,
+  grievanceStatusLabel,
   noticeTypeLabel,
   objectionStatusLabel,
   parcelStatusLabel,
@@ -47,6 +48,7 @@ const LABEL_BY_KIND = {
   noticeType: noticeTypeLabel,
   discrepancy: discrepancyStatusLabel,
   boundaryCondition: boundaryConditionLabel,
+  grievance: grievanceStatusLabel,
 };
 
 export default function StatusBadge({ kind, value, title }) {

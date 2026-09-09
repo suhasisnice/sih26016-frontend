@@ -26,6 +26,9 @@ const EMPTY = {
   data_sources: [],
   provenance_statuses: [],
   survey_task_statuses: [],
+  grievance_categories: [],
+  grievance_statuses: [],
+  grievance_contact_methods: [],
 };
 
 export function EnumsProvider({ children }) {

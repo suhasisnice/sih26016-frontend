@@ -14,7 +14,14 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-import { OFFICERS, PROPOSAL_VIEWERS, REPORT_READERS, ROLES, SUPERVISORY } from '../../auth/permissions';
+import {
+  homeRouteFor,
+  OFFICERS,
+  PROPOSAL_VIEWERS,
+  REPORT_READERS,
+  ROLES,
+  SUPERVISORY,
+} from '../../auth/permissions';
 import { roleLabel } from '../../lib/labels';
 import MobileTabBar from './MobileTabBar';
 
@@ -24,12 +31,14 @@ import MobileTabBar from './MobileTabBar';
    page a role will then be bounced from. */
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: SUPERVISORY },
+  { to: '/my-acquisition', label: 'My Acquisition', icon: LayoutDashboard, roles: [ROLES.LANDOWNER] },
   { to: '/field-work', label: 'Field Work', icon: ClipboardCheck, roles: OFFICERS },
   { to: '/survey-tasks', label: 'My Surveys', icon: Compass, roles: OFFICERS },
   { to: '/projects', label: 'Projects', icon: Building2, roles: SUPERVISORY },
   { to: '/cases', label: 'Cases', icon: FolderKanban, roles: null },
   { to: '/proposals', label: 'Proposals', icon: FileBarChart2, roles: PROPOSAL_VIEWERS },
   { to: '/objections', label: 'Objections', icon: MessageSquareWarning, roles: null },
+  { to: '/grievances', label: 'Grievances', icon: MessageSquareWarning, roles: null },
   { to: '/map', label: 'Map', icon: MapIcon, roles: SUPERVISORY },
   { to: '/reports', label: 'Reports', icon: FileBarChart2, roles: REPORT_READERS },
   { to: '/admin', label: 'Admin', icon: KeyRound, roles: [ROLES.ADMIN] },
@@ -54,7 +63,7 @@ export default function AppShell({ children }) {
       </a>
 
       <aside className="sidebar">
-        <Link to="/dashboard" className="sidebar__brand">
+        <Link to={homeRouteFor(user)} className="sidebar__brand">
           <img src="/brand/logo.png" alt="" className="sidebar__brand-mark" aria-hidden="true" />
           <span className="sidebar__brand-word">BHOOMIMITRA</span>
         </Link>

@@ -1,0 +1,232 @@
+/* Landowner Portal dashboard. Deliberately plainer than the officer
+   Dashboard's KPI-grid-plus-charts layout — this reuses the same .panel/
+   .kpi building blocks (case.css, base.css) rather than introducing a new
+   visual language, in a single stacked column so it reads top to bottom
+   on a phone without any layout switch. */
+
+.myland-case-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s4);
+}
+
+.myland-case-switch__label {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.myland-case-switch__pill {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--r-pill);
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.myland-case-switch__pill.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--text-on-brand);
+}
+
+.myland-summary {
+  margin-bottom: var(--s5);
+}
+
+.myland-summary__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s4);
+  margin: 0;
+}
+
+.myland-summary__facts dt {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+  margin-bottom: 2px;
+}
+
+.myland-summary__facts dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.myland-kpis {
+  margin-bottom: var(--s5);
+}
+
+.myland-kpi-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Every dashboard section is a .panel with this section class added,
+   stacked with a consistent gap — the same rhythm case.css's panels
+   already use on CaseDetail, so this page and the officer case page read
+   as the same product. Scoped to this class rather than a bare `.panel`
+   selector, which would also restyle every other page's panels. */
+.myland-section {
+  margin-bottom: var(--s5);
+}
+
+.myland-stage-explain {
+  margin: var(--s4) 0 0;
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.myland-action {
+  background: var(--warn-bg);
+  border-radius: var(--r-md);
+  padding: var(--s4);
+}
+
+.myland-action__title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.myland-action__body {
+  margin: 0 0 var(--s3);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.myland-subhead {
+  font-size: 13px;
+  font-weight: 600;
+  margin: var(--s5) 0 var(--s3);
+}
+
+.myland-disclaimer {
+  margin: var(--s3) 0 0;
+  font-size: 12px;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.myland-note {
+  margin: var(--s3) 0 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.myland-panel-link {
+  font-size: 12.5px;
+  color: var(--brand);
+}
+
+.myland-doclist,
+.myland-notiflist,
+.myland-history,
+.myland-help {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.myland-doclist__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.myland-doclist__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.myland-doclist__name {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.myland-doclist__meta {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.myland-notiflist__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+}
+
+.myland-notiflist__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.myland-notiflist__dot.is-unread {
+  background: var(--brand);
+}
+
+.myland-notiflist__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.myland-notiflist__title {
+  font-size: 13.5px;
+}
+
+.myland-notiflist__date {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.myland-history__item {
+  display: flex;
+  gap: var(--s3);
+  font-size: 13px;
+}
+
+.myland-history__date {
+  flex-shrink: 0;
+  width: 90px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.myland-help li {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.myland-help strong {
+  color: var(--text);
+}
+
+@media (max-width: 767px) {
+  .myland-summary__facts {
+    grid-template-columns: 1fr;
+  }
+}

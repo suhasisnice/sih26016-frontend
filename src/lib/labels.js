@@ -256,6 +256,34 @@ const DISCREPANCY_STATUS = {
   resolved: 'Resolved',
 };
 
+const GRIEVANCE_CATEGORY = {
+  land_property: 'Land / Property Details',
+  compensation: 'Compensation Issue',
+  document: 'Document Issue',
+  survey_measurement: 'Survey / Measurement Issue',
+  notice_notification: 'Notice / Notification Issue',
+  rehabilitation_resettlement: 'Rehabilitation & Resettlement',
+  acquisition_objection: 'Acquisition Objection',
+  delay_in_processing: 'Delay in Processing',
+  other: 'Other',
+};
+
+const GRIEVANCE_STATUS = {
+  submitted: 'Submitted',
+  assigned: 'Assigned',
+  under_review: 'Under review',
+  info_required: 'Additional information required',
+  response_provided: 'Response provided',
+  resolved: 'Resolved',
+  closed: 'Closed',
+};
+
+const GRIEVANCE_CONTACT_METHOD = {
+  sms: 'SMS',
+  email: 'Email',
+  both: 'SMS and email',
+};
+
 /* Physical features observed on site — a fixed small set of tags stored as
    a JSON list on SurveyTask.physical_features rather than an enum, since
    nothing on the backend validates or queries individual values. */
@@ -310,6 +338,9 @@ export const surveyPhotoCategoryLabel = lookup(SURVEY_PHOTO_CATEGORY);
 export const discrepancyTypeLabel = lookup(DISCREPANCY_TYPE);
 export const discrepancyStatusLabel = lookup(DISCREPANCY_STATUS);
 export const physicalFeatureLabel = lookup(PHYSICAL_FEATURE);
+export const grievanceCategoryLabel = lookup(GRIEVANCE_CATEGORY);
+export const grievanceStatusLabel = lookup(GRIEVANCE_STATUS);
+export const grievanceContactMethodLabel = lookup(GRIEVANCE_CONTACT_METHOD);
 
 /* Which status colour a value carries. `--brand` is never returned: the mauve
    means "navigation or a thing you can click", never a state. CLAUDE.md 3.3. */
@@ -388,6 +419,12 @@ const TONE = {
   // status above.
   partially_verified: 'warn',
   not_clearly_identifiable: 'danger',
+  // grievance status. `submitted` and `resolved` are shared with proposal/
+  // objection status above and already correct for this too.
+  assigned: 'info',
+  info_required: 'warn',
+  response_provided: 'info',
+  // `closed` is shared with case status above.
 };
 
 /* The values where sharing a word is not sharing a meaning, and the flat map
