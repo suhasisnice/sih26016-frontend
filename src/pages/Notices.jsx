@@ -163,15 +163,15 @@ function LookupCard() {
   );
 }
 
-/* "Get updates about this land" — WhatsApp and/or email, independent of
+/* "Get updates about this land" — SMS and/or email, independent of
    whether the citizen ever provisions a login below. Consent is a real
    checkbox, not implied by clicking Subscribe: POST /notices/subscribe
    refuses the request without it. */
 function SubscribeSection({ identifier }) {
   const { t } = useI18n();
-  const [wantsWhatsapp, setWantsWhatsapp] = useState(false);
+  const [wantsSms, setWantsSms] = useState(false);
   const [wantsEmail, setWantsEmail] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
   const [done, setDone] = useState(null);
@@ -183,7 +183,7 @@ function SubscribeSection({ identifier }) {
     try {
       const result = await subscribeMutation.run({
         ...identifier,
-        whatsapp_number: wantsWhatsapp ? whatsappNumber.trim() : undefined,
+        phone_number: wantsSms ? phoneNumber.trim() : undefined,
         email: wantsEmail ? email.trim() : undefined,
         consent,
       });
@@ -194,7 +194,7 @@ function SubscribeSection({ identifier }) {
   }
 
   const canSubmit =
-    consent && ((wantsWhatsapp && whatsappNumber.trim()) || (wantsEmail && email.trim()));
+    consent && ((wantsSms && phoneNumber.trim()) || (wantsEmail && email.trim()));
 
   return (
     <div className="notice-subscribe">
@@ -204,13 +204,13 @@ function SubscribeSection({ identifier }) {
       {done ? (
         <div className="notice-subscribe__done">
           <p className="notice-subscribe__done-title">{t('notices.subscribe.doneTitle')}</p>
-          {done.whatsapp_status && (
+          {done.sms_status && (
             <p className="notice-subscribe__channel-result">
-              {t('notices.subscribe.whatsapp')} {done.whatsapp_status === 'sent' ? '✓' : '—'}{' '}
+              {t('notices.subscribe.sms')} {done.sms_status === 'sent' ? '✓' : '—'}{' '}
               {done.is_mock && (
                 <span className="notice-subscribe__mode">{t('notices.subscribe.prototypeMode')}</span>
               )}
-              {done.whatsapp_status === 'failed' && (
+              {done.sms_status === 'failed' && (
                 <span className="notice-subscribe__failed"> {t('notices.subscribe.sendFailed')}</span>
               )}
             </p>
@@ -232,18 +232,18 @@ function SubscribeSection({ identifier }) {
           <label className="notice-subscribe__check">
             <input
               type="checkbox"
-              checked={wantsWhatsapp}
-              onChange={(event) => setWantsWhatsapp(event.target.checked)}
+              checked={wantsSms}
+              onChange={(event) => setWantsSms(event.target.checked)}
             />
-            {t('notices.subscribe.whatsapp')}
+            {t('notices.subscribe.sms')}
           </label>
-          {wantsWhatsapp && (
+          {wantsSms && (
             <Input
               label={t('notices.subscribe.mobileNumber')}
               type="tel"
-              value={whatsappNumber}
+              value={phoneNumber}
               placeholder="98765 43210"
-              onChange={(event) => setWhatsappNumber(event.target.value)}
+              onChange={(event) => setPhoneNumber(event.target.value)}
             />
           )}
 
