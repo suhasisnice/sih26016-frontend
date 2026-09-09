@@ -4,6 +4,7 @@ import * as noticesApi from '../api/notices';
 import { useApi, useMutation } from '../hooks/useApi';
 import { useI18n } from '../i18n/I18nContext';
 import * as fmt from '../lib/format';
+import { isSupported as isPushSupported, subscribeToPush } from '../lib/push';
 import { noticeSection, noticeTypeLabel, stageLabel, stageSection } from '../lib/labels';
 import PublicHeader from '../components/public/PublicHeader';
 import PublicFooter from '../components/public/PublicFooter';
@@ -163,28 +164,47 @@ function LookupCard() {
   );
 }
 
-/* "Get updates about this land" — SMS and/or email, independent of
-   whether the citizen ever provisions a login below. Consent is a real
-   checkbox, not implied by clicking Subscribe: POST /notices/subscribe
-   refuses the request without it. */
+/* "Get updates about this land" — SMS, email, and/or browser push,
+   independent of whether the citizen ever provisions a login below.
+   Consent is a real checkbox, not implied by clicking Subscribe: POST
+   /notices/subscribe refuses the request without it. */
 function SubscribeSection({ identifier }) {
   const { t } = useI18n();
   const [wantsSms, setWantsSms] = useState(false);
   const [wantsEmail, setWantsEmail] = useState(false);
+  const [wantsPush, setWantsPush] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
   const [done, setDone] = useState(null);
+  const [pushError, setPushError] = useState(null);
   const subscribeMutation = useMutation((payload) => noticesApi.subscribe(payload));
 
   async function onSubscribe(event) {
     event.preventDefault();
     setDone(null);
+    setPushError(null);
+
+    let pushSubscription;
+    if (wantsPush) {
+      try {
+        pushSubscription = await subscribeToPush();
+      } catch (error) {
+        // A denied permission or an unsupported browser stops the whole
+        // submit — the person asked for push specifically, so silently
+        // dropping it and subscribing them to only SMS/email would not be
+        // what they consented to.
+        setPushError(error.message);
+        return;
+      }
+    }
+
     try {
       const result = await subscribeMutation.run({
         ...identifier,
         phone_number: wantsSms ? phoneNumber.trim() : undefined,
         email: wantsEmail ? email.trim() : undefined,
+        push_subscription: pushSubscription,
         consent,
       });
       setDone(result);
@@ -194,7 +214,8 @@ function SubscribeSection({ identifier }) {
   }
 
   const canSubmit =
-    consent && ((wantsSms && phoneNumber.trim()) || (wantsEmail && email.trim()));
+    consent &&
+    ((wantsSms && phoneNumber.trim()) || (wantsEmail && email.trim()) || wantsPush);
 
   return (
     <div className="notice-subscribe">
@@ -222,6 +243,14 @@ function SubscribeSection({ identifier }) {
                 <span className="notice-subscribe__mode">{t('notices.subscribe.prototypeMode')}</span>
               )}
               {done.email_status === 'failed' && (
+                <span className="notice-subscribe__failed"> {t('notices.subscribe.sendFailed')}</span>
+              )}
+            </p>
+          )}
+          {done.push_status && (
+            <p className="notice-subscribe__channel-result">
+              {t('notices.subscribe.push')} {done.push_status === 'sent' ? '✓' : '—'}
+              {done.push_status === 'failed' && (
                 <span className="notice-subscribe__failed"> {t('notices.subscribe.sendFailed')}</span>
               )}
             </p>
@@ -265,6 +294,17 @@ function SubscribeSection({ identifier }) {
             />
           )}
 
+          {isPushSupported() && (
+            <label className="notice-subscribe__check">
+              <input
+                type="checkbox"
+                checked={wantsPush}
+                onChange={(event) => setWantsPush(event.target.checked)}
+              />
+              {t('notices.subscribe.push')}
+            </label>
+          )}
+
           <label className="notice-subscribe__check notice-subscribe__check--consent">
             <input
               type="checkbox"
@@ -274,6 +314,11 @@ function SubscribeSection({ identifier }) {
             {t('notices.subscribe.consent')}
           </label>
 
+          {pushError && (
+            <p className="notice-subscribe__error" role="alert">
+              {pushError}
+            </p>
+          )}
           {subscribeMutation.error && (
             <p className="notice-subscribe__error" role="alert">
               {subscribeMutation.error.message}

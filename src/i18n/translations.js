@@ -120,7 +120,7 @@ export const translations = {
       },
       subscribe: {
         title: 'Get updates about this land',
-        lede: 'Be told by SMS or email when this acquisition moves to its next stage.',
+        lede: 'Be told by SMS, email, or a browser notification when this acquisition moves to its next stage.',
         doneTitle: 'Notifications enabled successfully.',
         prototypeMode: '(Prototype mode — logged, not actually delivered)',
         sendFailed: 'Unable to send notification. Please try again.',
@@ -128,6 +128,7 @@ export const translations = {
         mobileNumber: 'Mobile number',
         email: 'Email',
         emailAddress: 'Email address',
+        push: 'Browser notifications',
         consent: "I agree to be contacted about this land's acquisition status.",
         subscribing: 'Subscribing…',
         subscribeButton: 'Subscribe',
@@ -310,7 +311,7 @@ export const translations = {
       },
       subscribe: {
         title: 'इस भूमि के बारे में अपडेट पाएं',
-        lede: 'जब यह अधिग्रहण अगले चरण में बढ़े, तो SMS या ईमेल द्वारा सूचित हों।',
+        lede: 'जब यह अधिग्रहण अगले चरण में बढ़े, तो SMS, ईमेल या ब्राउज़र सूचना द्वारा सूचित हों।',
         doneTitle: 'सूचनाएं सफलतापूर्वक सक्षम की गईं।',
         prototypeMode: '(प्रोटोटाइप मोड — दर्ज किया गया, वास्तव में नहीं भेजा गया)',
         sendFailed: 'सूचना भेजने में असमर्थ। कृपया पुनः प्रयास करें।',
@@ -318,6 +319,7 @@ export const translations = {
         mobileNumber: 'मोबाइल नंबर',
         email: 'ईमेल',
         emailAddress: 'ईमेल पता',
+        push: 'ब्राउज़र सूचनाएं',
         consent: 'मैं इस भूमि की अधिग्रहण स्थिति के बारे में संपर्क किए जाने के लिए सहमत हूं।',
         subscribing: 'सदस्यता ली जा रही है…',
         subscribeButton: 'सदस्यता लें',
