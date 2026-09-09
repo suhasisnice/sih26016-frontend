@@ -12,6 +12,7 @@ import StatusBadge from '../components/case/StatusBadge';
 import CaptureParcelModal from '../components/case/CaptureParcelModal';
 import UploadDocumentModal from '../components/case/UploadDocumentModal';
 import Button from '../components/ui/Button';
+import FilterBar from '../components/ui/FilterBar';
 import Loading from '../components/states/Loading';
 import ErrorState from '../components/states/ErrorState';
 import Empty from '../components/states/Empty';
@@ -40,6 +41,20 @@ export default function FieldWork() {
   const [modal, setModal] = useState(null); // { kind: 'capture'|'upload', item, people? }
   const [preparingFor, setPreparingFor] = useState(null);
   const [prepareError, setPrepareError] = useState(null);
+  const [query, setQuery] = useState('');
+
+  // Client-side: GET /dashboard/field-work returns the whole queue (capped
+  // at 50) in one shot, so filtering it here needs no new backend param.
+  const needle = query.trim().toLowerCase();
+  const visibleItems = queue.data
+    ? needle
+      ? queue.data.items.filter((item) =>
+          [item.case_number, item.village_name, item.project_name, item.district_name]
+            .filter(Boolean)
+            .some((field) => field.toLowerCase().includes(needle)),
+        )
+      : queue.data.items
+    : [];
 
   const startSurvey = useMutation((caseId) => surveyApi.create({ caseId }));
   const [startingFor, setStartingFor] = useState(null);
@@ -80,6 +95,16 @@ export default function FieldWork() {
 
       {mySurveys.data && <SurveyStatusBuckets tasks={mySurveys.data.items} />}
 
+      {queue.data && queue.data.items.length > 0 && (
+        <FilterBar>
+          <FilterBar.Search
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by case number, village, project or district…"
+          />
+        </FilterBar>
+      )}
+
       {queue.loading && <Loading label="Loading field work" rows={3} />}
       {queue.error && <ErrorState error={queue.error} onRetry={queue.reload} />}
       {prepareError && (
@@ -105,9 +130,13 @@ export default function FieldWork() {
         />
       )}
 
-      {queue.data && queue.data.items.length > 0 && (
+      {queue.data && queue.data.items.length > 0 && visibleItems.length === 0 && (
+        <Empty center title="No matches" body={`Nothing in field work matches "${query.trim()}".`} />
+      )}
+
+      {queue.data && visibleItems.length > 0 && (
         <div className="field-queue">
-          {queue.data.items.map((item) => (
+          {visibleItems.map((item) => (
             <article
               key={item.case_id}
               className={`field-card${item.timeline_status === 'breached' ? ' is-overdue' : ''}`}
