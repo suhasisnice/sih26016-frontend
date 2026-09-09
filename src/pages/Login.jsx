@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, KeyRound, Lock, ShieldCheck, User, UserCheck2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { isLandowner } from '../auth/permissions';
+import { homeRouteFor } from '../auth/permissions';
 import * as authApi from '../api/auth';
 import { useI18n } from '../i18n/I18nContext';
 import { roleLabel } from '../lib/labels';
@@ -128,12 +128,12 @@ export default function Login() {
 
   const from = location.state && location.state.from;
 
-  /* Where a role belongs after signing in. A landowner has no dashboard, so
-     sending them to one would bounce them straight to NotAuthorised. */
+  /* Where a role belongs after signing in — homeRouteFor also decides the
+     sidebar brand link, so the two can never disagree about a role's home. */
   const landingFor = useCallback(
     (who) => {
       if (from) return from;
-      return isLandowner(who) ? '/cases' : '/dashboard';
+      return homeRouteFor(who);
     },
     [from],
   );
