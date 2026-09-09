@@ -81,6 +81,8 @@ export default function CaseDetail() {
   const { stages, notice_types: allNoticeTypes } = useEnums();
 
   const [modal, setModal] = useState(null);
+  const [reportPending, setReportPending] = useState(false);
+  const [reportError, setReportError] = useState(null);
 
   const detail = useApi((opts) => casesApi.get(caseId, opts), [caseId]);
   const parcels = useApi((opts) => parcelsApi.forCase(caseId, opts), [caseId]);
@@ -147,6 +149,23 @@ export default function CaseDetail() {
             <Button variant="quiet" onClick={() => window.print()}>
               Print
             </Button>
+            <Button
+              variant="quiet"
+              disabled={reportPending}
+              onClick={async () => {
+                setReportPending(true);
+                setReportError(null);
+                try {
+                  await casesApi.downloadReport(c.id, c.case_number);
+                } catch {
+                  setReportError('Could not generate the report. Please try again.');
+                } finally {
+                  setReportPending(false);
+                }
+              }}
+            >
+              {reportPending ? 'Preparing report…' : 'Download report'}
+            </Button>
             {can.advanceStage(user) && c.status === 'stalled' && (
               <Button variant="quiet" onClick={() => setModal({ kind: 'resume' })}>
                 Resume case
@@ -165,6 +184,12 @@ export default function CaseDetail() {
           </>
         }
       />
+
+      {reportError && (
+        <p role="alert" style={{ color: 'var(--danger)', fontSize: 13, margin: '0 0 var(--s3)' }}>
+          {reportError}
+        </p>
+      )}
 
       <div className="case-title-row">
         <span className="case-number">{c.case_number}</span>
