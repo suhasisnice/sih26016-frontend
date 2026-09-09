@@ -136,7 +136,7 @@ export default function CompensationModal({ person, onClose, onDone }) {
         error={errors.amount_paid}
         inputMode="numeric"
         onChange={(event) => set('amount_paid', event.target.value)}
-        hint="Cannot exceed the computed award."
+        hint="Cannot exceed the computed award. Recorded manually — not connected to PFMS, treasury, or a bank feed; this field reflects payment that happened elsewhere."
       />
       <Select
         label="Status"

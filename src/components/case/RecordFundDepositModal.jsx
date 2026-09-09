@@ -69,7 +69,7 @@ export default function RecordFundDepositModal({ caseRecord, onClose, onDone }) 
         error={errors.amount}
         inputMode="numeric"
         onChange={(event) => set('amount', event.target.value)}
-        hint="Whole rupees, as the requiring body's challan states."
+        hint="Whole rupees, as the requiring body's challan states. Recorded manually against that proof — not a live treasury or bank feed."
       />
       <Input
         label="Deposited on"
