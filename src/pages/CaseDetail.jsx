@@ -699,7 +699,7 @@ function FundDepositsPanel({ state, user, onRecord }) {
 
 /* The published instruments under the Act — what actually puts this case on
    the public notice board (GET /notices) and reaches a subscribed
-   landowner's WhatsApp or email. Distinct from the stage timeline above:
+   landowner's SMS or email. Distinct from the stage timeline above:
    reaching the declaration stage internally is not the same fact as the
    declaration having been published, and this panel is where that gap
    would otherwise go unnoticed. */

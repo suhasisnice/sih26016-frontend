@@ -31,7 +31,7 @@ const SCOPE_ITEMS = [
     tone: 'info',
     stamp: 'Partial',
     title: 'Notifications',
-    body: 'WhatsApp (Twilio) and email (SMTP) are live, pluggable channels. There is no SMS gateway and no browser/mobile push — WhatsApp reaches further in rural India today than either would.',
+    body: 'SMS (Twilio) and email (SMTP) are live, pluggable channels — chosen over WhatsApp so a citizen never has to opt in to a sandbox or business template before this platform can reach them. There is no browser/mobile push. Sending SMS to an Indian number needs the sender registered under TRAI’s DLT framework, separate from this codebase.',
   },
   {
     tone: 'info',
