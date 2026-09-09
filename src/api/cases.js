@@ -62,3 +62,21 @@ export function fundDeposits(caseId, opts) {
 export function recordFundDeposit(caseId, payload, opts) {
   return api.post(`/cases/${caseId}/fund-deposits`, payload, opts);
 }
+
+/* Downloads the printable case status report. Goes through api.raw, not
+   api.get: the response is a PDF, not JSON, and the bearer token has to
+   travel in the header — a plain <a href> would send no Authorization and
+   get a 401. Same pattern as api/exports.js's CSV downloads. */
+export async function downloadReport(caseId, caseNumber, opts) {
+  const res = await api.raw(`/cases/${caseId}/report.pdf`, opts);
+  const blob = await res.blob();
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${caseNumber.replace(/\//g, '-')}-status-report.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
