@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as surveyApi from '../api/survey';
 import { useApi } from '../hooks/useApi';
@@ -7,6 +7,7 @@ import { can } from '../auth/permissions';
 import * as fmt from '../lib/format';
 import PageHeader from '../components/layout/PageHeader';
 import StatusBadge from '../components/case/StatusBadge';
+import FilterBar from '../components/ui/FilterBar';
 import Loading from '../components/states/Loading';
 import ErrorState from '../components/states/ErrorState';
 import Empty from '../components/states/Empty';
@@ -28,15 +29,30 @@ const SECTIONS = [
 export default function SurveyTasks() {
   const { user } = useAuth();
   const tasks = useApi((opts) => surveyApi.list({}, opts), []);
+  const [query, setQuery] = useState('');
+
+  // Client-side: GET /survey-tasks returns the caller's whole scoped set in
+  // one shot (see app/routers/survey.py), so filtering it here needs no new
+  // backend param.
+  const needle = query.trim().toLowerCase();
+  const visibleTasks = useMemo(() => {
+    const items = (tasks.data && tasks.data.items) || [];
+    if (!needle) return items;
+    return items.filter((task) =>
+      [task.case_number, task.village_name, task.project_name, task.parcel_survey_number]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(needle)),
+    );
+  }, [tasks.data, needle]);
 
   const grouped = useMemo(() => {
     const map = {};
     for (const section of SECTIONS) map[section.status] = [];
-    for (const task of (tasks.data && tasks.data.items) || []) {
+    for (const task of visibleTasks) {
       (map[task.status] || (map[task.status] = [])).push(task);
     }
     return map;
-  }, [tasks.data]);
+  }, [visibleTasks]);
 
   return (
     <>
@@ -49,6 +65,16 @@ export default function SurveyTasks() {
         }
       />
 
+      {tasks.data && tasks.data.items.length > 0 && (
+        <FilterBar>
+          <FilterBar.Search
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by case number, survey number, village or project…"
+          />
+        </FilterBar>
+      )}
+
       {tasks.loading && <Loading label="Loading surveys" rows={3} />}
       {tasks.error && <ErrorState error={tasks.error} onRetry={tasks.reload} />}
 
@@ -60,8 +86,12 @@ export default function SurveyTasks() {
         />
       )}
 
+      {tasks.data && tasks.data.items.length > 0 && visibleTasks.length === 0 && (
+        <Empty center title="No matches" body={`No survey task matches "${query.trim()}".`} />
+      )}
+
       {tasks.data &&
-        tasks.data.items.length > 0 &&
+        visibleTasks.length > 0 &&
         SECTIONS.map((section) => {
           const items = grouped[section.status] || [];
           if (items.length === 0) return null;
