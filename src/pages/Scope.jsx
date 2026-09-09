@@ -28,10 +28,16 @@ const SCOPE_ITEMS = [
     body: 'Real Aadhaar authentication needs an AUA/KUA license this project doesn’t hold. A landowner can self-provision an account with only a survey number or ULPIN already on the public record — no OTP, no officer approval. That’s a real, deliberately accepted trust boundary for a prototype, not a discovered flaw.',
   },
   {
+    tone: 'ok',
+    stamp: 'Covered',
+    title: 'Notifications — email &amp; browser push',
+    body: 'Email (SMTP) and browser push (Web Push / VAPID) are both live, on the same subscribe form on the public Notices page. Push needed no vendor account or approval — the keypair is self-generated, so it carries none of SMS’s trial-tier or DLT gating.',
+  },
+  {
     tone: 'info',
     stamp: 'Partial',
-    title: 'Notifications',
-    body: 'Email (SMTP) is live. SMS (Twilio) is fully built and tested against real Twilio credentials — the integration works — but is running in mock mode: a trial Twilio account can only send India-bound SMS from a fixed set of predefined templates, not the dynamic per-case text this feature needs, and reliable delivery additionally needs the sender registered under TRAI’s DLT framework. Both are Twilio/carrier account requirements, not code. There is no browser/mobile push.',
+    title: 'Notifications — SMS',
+    body: 'Fully built and tested against real Twilio credentials — the integration works — but running in mock mode: a trial Twilio account can only send India-bound SMS from a fixed set of predefined templates, not the dynamic per-case text this feature needs, and reliable delivery additionally needs the sender registered under TRAI’s DLT framework. Both are Twilio/carrier account requirements, not code.',
   },
   {
     tone: 'info',
